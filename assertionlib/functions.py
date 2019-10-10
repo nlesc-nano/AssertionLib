@@ -27,7 +27,6 @@ API
 import os
 import types
 import inspect
-from collections import OrderedDict
 from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping
 
 
@@ -132,7 +131,7 @@ MODULE_DICT: Dict[str, str] = {
 def _is_builtin_func(func) -> bool: return inspect.isbuiltin(func) and '.' not in func.__qualname__
 
 
-def get_sphinx_domain(func: Callable, module_mapping: Dict[str, str] = MODULE_DICT) -> str:
+def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE_DICT) -> str:
     """Create a Sphinx domain for **func**.
 
     Examples
@@ -199,10 +198,8 @@ def get_sphinx_domain(func: Callable, module_mapping: Dict[str, str] = MODULE_DI
     raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
 
 
-REPLACE: Mapping[str, str] = OrderedDict({'``_': '|', '``': '|', '(': '', ')': ''})
-
-
-def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = REPLACE,
+def load_readme(readme: str = 'README.rst',
+                replace: Mapping[str, str] = {'``': '|', '()': ''},
                 **kwargs: Any) -> str:
     r"""Load and return the content of a readme file located in the same directory as this file.
 
