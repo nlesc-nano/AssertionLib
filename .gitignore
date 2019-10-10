@@ -65,6 +65,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs_out/
 
 # PyBuilder
 target/
@@ -100,8 +101,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
-# mypy
-.mypy_cache/
-
+# Mac
 .DS_Store
+
+# Visual Studio Code
 .vscode/
+.mypy_cache/

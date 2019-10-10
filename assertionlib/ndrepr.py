@@ -53,13 +53,33 @@ BuiltinType = Union[types.BuiltinFunctionType, types.BuiltinMethodType]
 
 
 class NDRepr(reprlib.Repr):
-    """A subclass of :class:`reprlib.Repr` with methods for handling parsing object types.
+    """A subclass of :class:`reprlib.Repr` with methods for handling additional object types.
 
     Has additional methods for handling:
-        * Objects distributed in PLAMS
-        * Objects distributed in NumPy
-        * Objects distributed in Pandas
+
+        * PLAMS Molecules, Atoms, Bonds and Settings
+        * NumPy arrays
+        * Pandas Series and DataFrames
         * Callables
+
+    Examples
+    --------
+    See :mod:`reprlib` for more details.
+
+    code:: python
+
+        >>> from assertionlib.ndrepr import aNDRepr
+        >>> import numpy as np
+
+        >>> object = np.ones((100, 100), dtype=float)
+        >>> print(aNDRepr.repr(object))
+        array([[1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
+               [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
+               [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
+               ...,
+               [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
+               [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
+               [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000]])
 
     Parameters
     ----------
@@ -205,7 +225,7 @@ class NDRepr(reprlib.Repr):
     def repr_builtin_function_or_method(self, obj: BuiltinType, level: int) -> str:
         """Create a :class:`str` representation of a builtin function or method."""
         name, signature = self._parse_callable(obj, level)
-        if isinstance(obj, types.BuiltinMethodType):
+        if '.' in obj.__qualname__:
             return f"<built-in bound method '{name}{signature}'>"
         return f"<built-in function '{name}{signature}'>"
 
