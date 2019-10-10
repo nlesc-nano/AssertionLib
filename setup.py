@@ -29,6 +29,9 @@ setup(
     license='GNU Lesser General Public License v3 or later',
     zip_safe=False,
     keywords=[
+        'assertion',
+        'assertions',
+        'assertion-library',
         'python-3',
         'python-3-6',
         'python-3-7',
