@@ -27,7 +27,8 @@ API
 import os
 import types
 import inspect
-from typing import Callable, Any, Optional, Union, Sized, Dict
+from collections import OrderedDict
+from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping
 
 
 def bind_callable(class_type: Union[type, Any], func: Callable,
@@ -198,7 +199,10 @@ def get_sphinx_domain(func: Callable, module_mapping: Dict[str, str] = MODULE_DI
     raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
 
 
-def load_readme(readme: str = 'README.rst', replace: Dict[str, str] = {'``': '|'},
+REPLACE: Mapping[str, str] = OrderedDict({'``_': '|', '``': '|', '(': '', ')': ''})
+
+
+def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = REPLACE,
                 **kwargs: Any) -> str:
     r"""Load and return the content of a readme file located in the same directory as this file.
 
