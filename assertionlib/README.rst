@@ -1,27 +1,27 @@
-|assertionlib|
+`assertionlib`
 ==============
 A package for performing assertion operations.
 
 
-|assertionlib.dataclass|
+`assertionlib.dataclass`
 ------------------------
 A class with a number of generic pre-defined (magic) methods inspired by
-the builtin |dataclasses| module introduced in Python 3.7.
+the builtin `dataclasses` module introduced in Python 3.7.
 
 
-|assertionlib.functions|
+`assertionlib.functions`
 ------------------------
-Various functions related to the |assertionlib.AssertionManager| class.
+Various functions related to the `assertionlib.AssertionManager` class.
 
 
-|assertionlib.manager|
+`assertionlib.manager`
 ----------------------
-A module containing the actual |assertionlib.AssertionManager| class.
+A module containing the actual `assertionlib.AssertionManager` class.
 
 
-|assertionlib.ndrepr|
+`assertionlib.ndrepr`
 ---------------------
-A module for holding the |assertionlib.NDRepr| class, a subclass of the builtin |reprlib.Repr| class.
+A module for holding the `assertionlib.NDRepr` class, a subclass of the builtin `reprlib.Repr` class.
 
 
 .. |dataclasses| replace:: :mod:`dataclasses`
