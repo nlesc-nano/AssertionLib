@@ -2,7 +2,7 @@
 assertionlib.dataclass
 ======================
 
-A dataclass with a number of generic pre-defined (magic) methods.
+A class with a number of generic pre-defined (magic) methods inspired by dataclass of Python 3.7.
 
 Index
 -----

@@ -1,7 +1,8 @@
 AssertionLib
-=================
+============
 
 A package for performing assertions.
 
 .. toctree::
-    1_get_started
+    1_usage
+    2_api
