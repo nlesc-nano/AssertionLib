@@ -1,27 +1,36 @@
-:mod:`assertionlib`
-===================
+|assertionlib|
+==============
 A package for performing assertion operations.
 
 
-:mod:`assertionlib.dataclass`
-----------------------------
+|assertionlib.dataclass|
+------------------------
 A class with a number of generic pre-defined (magic) methods inspired by
-the :mod:`dataclasses` module introduced in Python 3.7.
+the builtin |dataclasses| module introduced in Python 3.7.
 
 
-:mod:`assertionlib.functions`
------------------------------
+|assertionlib.functions|
+------------------------
 Various functions related to the |assertionlib.AssertionManager| class.
 
 
-:mod:`assertionlib.manager`
----------------------------
+|assertionlib.manager|
+----------------------
 A module containing the actual |assertionlib.AssertionManager| class.
 
 
-:mod:`assertionlib.ndrepr`
---------------------------
-A module for holding the :class:`NDRepr<assertionlib.ndrepr.NDRepr>` class, a subclass of the builtin :class:`reprlib.Repr` class.
+|assertionlib.ndrepr|
+---------------------
+A module for holding the |assertionlib.NDRepr| class, a subclass of the builtin |reprlib.Repr| class.
 
+
+.. |dataclasses| replace:: :mod:`dataclasses`
+.. |assertionlib| replace:: :mod:`assertionlib`
+.. |assertionlib.dataclass| replace:: :mod:`assertionlib.dataclass`
+.. |assertionlib.functions| replace:: :mod:`assertionlib.functions`
+.. |assertionlib.manager| replace:: :mod:`assertionlib.manager`
+.. |assertionlib.ndrepr| replace:: :mod:`assertionlib.ndrepr`
 
 .. |assertionlib.AssertionManager| replace:: :class:`assertionlib.AssertionManager<assertionlib.manager.AssertionManager>`
+.. |assertionlib.NDRepr| replace:: :class:`NDRepr<assertionlib.ndrepr.NDRepr>`
+.. |reprlib.Repr| replace:: :class:`reprlib.Repr`
