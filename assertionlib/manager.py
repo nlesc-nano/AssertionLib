@@ -2,7 +2,7 @@
 assertionlib.manager
 ====================
 
-Various assertion-related classes for the testing of CAT.
+A module containing the actual AssertionManager class.
 
 Index
 -----

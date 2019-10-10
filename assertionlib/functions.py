@@ -2,7 +2,7 @@
 assertionlib.functions
 ======================
 
-Functions!
+Various functions related to the `AssertionManager()` class.
 
 Index
 -----

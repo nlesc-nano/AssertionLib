@@ -2,7 +2,7 @@
 assertionlib.ndrepr
 ====================
 
-A module for holding the :class:`NDRepr` class.
+A module for holding the :class:`NDRepr` class, a subclass of the builtin :class:`reprlib.Repr` class.
 
 Index
 -----
@@ -17,7 +17,7 @@ API
     :private-members:
     :special-members:
 
-"""
+"""  # noqa
 
 import types
 import inspect

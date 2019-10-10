@@ -1,0 +1,4 @@
+AbstractDataClass
+=================
+
+automodule:: assertionlib.dataclass
