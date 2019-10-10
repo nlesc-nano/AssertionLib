@@ -9,13 +9,40 @@ Index
 .. currentmodule:: assertionlib.ndrepr
 .. autosummary::
     NDRepr
+    NDRepr.repr_float
+    NDRepr.repr_Signature
+    NDRepr.repr_method
+    NDRepr.repr_method_descriptor
+    NDRepr.repr_function
+    NDRepr.repr_builtin_function_or_method
+    NDRepr.repr_type
+    NDRepr.repr_module
+    NDRepr.repr_Molecule
+    NDRepr.repr_Settings
+    NDRepr.repr_Atom
+    NDRepr.repr_Bond
+    NDRepr.repr_ndarray
+    NDRepr.repr_DataFrame
+    NDRepr.repr_Series
 
 API
 ---
 .. autoclass:: NDRepr
-    :members:
-    :private-members:
-    :special-members:
+.. automethod:: NDRepr.repr_float
+.. automethod:: NDRepr.repr_Signature
+.. automethod:: NDRepr.repr_method
+.. automethod:: NDRepr.repr_method_descriptor
+.. automethod:: NDRepr.repr_function
+.. automethod:: NDRepr.repr_builtin_function_or_method
+.. automethod:: NDRepr.repr_type
+.. automethod:: NDRepr.repr_module
+.. automethod:: NDRepr.repr_Molecule
+.. automethod:: NDRepr.repr_Settings
+.. automethod:: NDRepr.repr_Atom
+.. automethod:: NDRepr.repr_Bond
+.. automethod:: NDRepr.repr_ndarray
+.. automethod:: NDRepr.repr_DataFrame
+.. automethod:: NDRepr.repr_Series
 
 """  # noqa
 
@@ -91,12 +118,15 @@ class NDRepr(reprlib.Repr):
     ----------
     maxSignature : :class:`int`
         The maximum length of callables' signatures before further parameters are truncated.
+        See also :meth:`NDRepr.repr_Signature`.
 
     maxfloat : :class:`int`
         The number of to-be displayed :class:`float` decimals.
+        See also :meth:`NDRepr.repr_float`.
 
     maxMolecule : :class:`int`
         The maximum number of to-be displayed atoms and bonds in PLAMS molecules.
+        See also :meth:`NDRepr.repr_Molecule`.
 
     maxndarray : :class:`int`
         The maximum number of items in a :class:`numpy.ndarray` row.
@@ -105,18 +135,24 @@ class NDRepr(reprlib.Repr):
         * :code:`threshold = self.maxndarray`
         * :code:`edgeitems = self.maxndarray // 2`
 
-    maxseries : :class:`int`
+        See also :meth:`NDRepr.repr_ndarray`.
+
+    maxSeries : :class:`int`
         The maximum number of rows per :class:`pandas.Series` instance.
         Passed as value to :attr:`pandas.options.display`.
 
         * :code:`pandas.options.display.max_rows = self.series`
 
-    maxdataframe : :class:`int`
+        See also :meth:`NDRepr.repr_Series`.
+
+    maxDataFrame : :class:`int`
         The maximum number of rows per :class:`pandas.DataFrame` instance.
         Passed as values to :attr:`pandas.options.display`:
 
         * :code:`pandas.options.display.max_rows = self.maxdataframe`
         * :code:`pandas.options.display.max_columns = self.maxdataframe // 2`
+
+        See also :meth:`NDRepr.repr_DataFrame`.
 
     np_printoptions : :class:`dict`
         Additional keyword arguments for :func:`numpy.printoptions`.

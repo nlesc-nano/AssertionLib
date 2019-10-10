@@ -87,11 +87,11 @@ class AbstractDataClass:
         return ret
 
     def __copy__(self) -> 'AbstractDataClass':
-        """Return a shallow copy of this instance."""
+        """Return a shallow copy of this instance; see :meth:`AbstractDataClass.copy`."""
         return self.copy(deep=False)
 
     def __deepcopy__(self, memo=None) -> 'AbstractDataClass':
-        """Return a deep copy of this instance."""
+        """Return a deep copy of this instance; see :meth:`AbstractDataClass.copy`."."""
         return self.copy(deep=True)
 
     def as_dict(self, return_private: bool = False) -> Dict[str, Any]:
@@ -153,6 +153,9 @@ class AbstractDataClass:
 
         Can be applied to methods of :class:`AbstractDataClass` subclasses to automatically
         inherit the docstring and annotations of identical-named functions of its superclass.
+
+        References to :class:`AbstractDataClass` are replaced with ones pointing to the
+        respective subclass.
 
         Examples
         --------

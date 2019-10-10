@@ -14,7 +14,6 @@ Index
     allclose
     len_eq
 
-
 API
 ---
 .. autofunction:: get_sphinx_domain
@@ -25,6 +24,7 @@ API
 
 """
 
+import os
 import types
 import inspect
 from typing import Callable, Any, Optional, Union, Sized, Dict
@@ -196,6 +196,30 @@ def get_sphinx_domain(func: Callable, module_mapping: Dict[str, str] = MODULE_DI
     elif inspect.isclass(func):
         return f':class:`{name}<{module}{name}>`'
     raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
+
+
+def load_readme(readme: str = 'README.rst', **kwargs: Any) -> str:
+    r"""Load and return the content of a readme file located in the same directory as this file.
+
+    Equivalent to importing the content of ``../README.rst``.
+
+    Parameters
+    ----------
+    readme : :class:`str`
+        The name of the readme file.
+
+    \**kwargs: :data:`Any<typing.Any>`
+        Optional keyword arguments for the :meth:`read<io.TextIOBase.read>` method.
+
+    Returns
+    -------
+    :class:`str`
+        The content of ``../README.rst``.
+
+    """
+    readme: str = os.path.join(os.path.dirname(__file__), readme)
+    with open(readme, 'r') as f:
+        return f.read(**kwargs)
 
 
 def len_eq(a: Sized, b: int) -> bool:
