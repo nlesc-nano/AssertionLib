@@ -108,7 +108,7 @@ class AbstractDataClass:
 
         Returns
         -------
-        :class:`dict` [:class:`str`, :data:`Any<typing.Any>`]
+        :class:`dict` [:class:`str`, :class:`object`]
             A dictionary of arrays with keyword arguments for initializing a new
             instance of this class.
 
@@ -130,7 +130,7 @@ class AbstractDataClass:
 
         Parameters
         ----------
-        dct : :class:`dict` [:class:`str`, :data:`Any<typing.Any>`]
+        dct : :class:`dict` [:class:`str`, :class:`.Any`]
             A dictionary with keyword arguments for constructing a new
             :class:`AbstractDataClass` instance.
 

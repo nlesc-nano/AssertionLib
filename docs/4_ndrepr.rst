@@ -1,2 +1,4 @@
-.. automodule::
-    assertionlib.ndrepr
+NDRepr
+======
+
+automodule:: assertionlib.ndrepr

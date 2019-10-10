@@ -11,37 +11,27 @@ Index
     get_sphinx_domain
     wrap_docstring
     bind_callable
-    allclose
-    len_eq
-
 
 API
 ---
 .. autofunction:: get_sphinx_domain
 .. autofunction:: wrap_docstring
 .. autofunction:: bind_callable
-.. autofunction:: allclose
-.. autofunction:: len_eq
 
 """
 
 import types
 import inspect
-from typing import Callable, Any, Optional, Union, Sized, Dict
+from typing import Callable, Any, Optional, Union, Sized
 
 
 def bind_callable(class_type: Union[type, Any], func: Callable,
                   name: Optional[str] = None) -> None:
     """Take a callable and use it to create a new assertion method for **class_type**.
 
-    Examples
-    --------
-    Supplying the :func:`len` will create (and bind) a callable which
-    performs :code:`assert len(*args, **kwargs)`
-
-    Parameters
-    ----------
-    class_type : :class:`type` or :data:`Any<typing.Any>`
+    Parameter
+    ---------
+    class_type : :class:`type` or :class:`Any<typing.Any>`
         A class (*i.e.* a :class:`type` instance) or class instance.
 
     func : :class:`Callable<typing.Callable>`
@@ -50,9 +40,6 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     name : :class:`str`, optional
         The name of the name of the new method.
         If ``None``, use the name of **func**.
-
-
-    :rtype: :data:`None`
 
     """
     func_name = name if name is not None else func.__name__
@@ -74,35 +61,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
 
 
 def wrap_docstring(func: Callable) -> str:
-    """Create a new NumPy style assertion docstring from the docstring of **func**.
-
-    The summary of **funcs'** docstring, if available, is added to the ``"See also"`` section,
-    in addition with an intersphinx-compatible link to **func**.
-
-    Examples
-    --------
-    .. code:: python
-
-        >>> docstring: str = wrap_docstring(isinstance)
-        >>> print(docstring)
-        Perform the following assertion: :code:`assert isinstance(*args, **kwargs)`.
-
-            See also
-            --------
-            :func:`isinstance<isinstance>`:
-                Return whether an object is an instance of a class or of a subclass thereof.
-
-    Parameters
-    ----------
-    func : :data:`Callable<typing.Callable>`
-        A callable whose output is to-be asserted.
-
-    Returns
-    -------
-    :class:`str`
-        A new docstring constructed from **funcs'** docstring.
-
-    """
+    """Create a new NumPy style assertion docstring from the docstring of **func**."""
     domain = get_sphinx_domain(func)
 
     # Extract the first line from the func docstring
@@ -119,82 +78,19 @@ def wrap_docstring(func: Callable) -> str:
             f'        {func_summary}\n\n    ')
 
 
-#: A dictionary which translates certain __module__ values to actual valid modules
-MODULE_DICT: Dict[str, str] = {
-    'builtins': '',
-    'genericpath': 'os.path.',
-    'posixpath': 'os.path.',
-    '_operator': 'operator.'
-}
+def get_sphinx_domain(func: Callable) -> str:
+    """Create a Sphinx domain from func.
 
-
-def _is_builtin_func(func) -> bool: return inspect.isbuiltin(func) and '.' not in func.__qualname__
-
-
-def get_sphinx_domain(func: Callable, module_mapping: Dict[str, str] = MODULE_DICT) -> str:
-    """Create a Sphinx domain for **func**.
-
-    Examples
-    --------
-    .. code:: python
-
-        >>> from collections import OrderedDict
-
-        >>> value1: str = get_sphinx_domain(int)
-        >>> print(value1)
-        :class:`int<int>`
-
-        >>> value2: str = get_sphinx_domain(list.count)
-        >>> print(value2)
-        :meth:`list.count<list.count>`
-
-        >>> value3: str = get_sphinx_domain(OrderedDict)
-        >>> print(value3)
-        :class:`OrderedDict<collections.OrderedDict>`
-
-        >>> value4: str = get_sphinx_domain(OrderedDict.keys)
-        >>> print(value4)
-        :meth:`OrderedDict.keys<collections.OrderedDict.keys>`
-
-    Parameters
-    ----------
-    func : :data:`Callable<typing.Callable>`
-        A class or (builtin) method or function.
-
-    module_mapping : :class:`dict` [:class:`str`, :class:`str`]
-        A dictionary for mapping :attr:`__module__` values to actual module names.
-        Useful for whenever there is a discrepancy between the two,
-        *e.g.* the `genericpath` module of :func:`os.path.join`.
-
-    Returns
-    -------
-    :class:`str`
-        A string with a valid Sphinx refering to **func**.
-
-    Raises
-    ------
-    TypeError
-        Raised if **func** is neither a class or a (builtin) function or method.
+    Accepts function, classes and methods; raises a :exc:`TypeError` otherwise.
 
     """
     name = func.__qualname__ if hasattr(func, '__qualname__') else func.__name__
-
-    try:
-        _module = func.__module__
-    except AttributeError:  # Unbound methods don't have the `__module__` attribute
-        _module = func.__objclass__.__module__
-
-    try:
-        module = MODULE_DICT[_module]
-    except KeyError:
-        module = _module + '.' if _module is not None else ''
-
-    if inspect.isbuiltin(func) or inspect.isfunction(func) or _is_builtin_func(func):
-        return f':func:`{name}<{module}{name}>`'
-    elif inspect.ismethod(func) or inspect.ismethoddescriptor(func) or inspect.isbuiltin(func):
-        return f':meth:`{name}<{module}{name}>`'
+    if inspect.isbuiltin(func) or inspect.isfunction(func):
+        return f':func:`{name}<{func.__module__}.{name}>`'
+    elif inspect.ismethod(func):
+        return f':meth:`{name}<{func.__module__}.{name}>`'
     elif inspect.isclass(func):
-        return f':class:`{name}<{module}{name}>`'
+        return f':class:`{name}<{func.__module__}.{name}>`'
     raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
 
 
@@ -205,5 +101,5 @@ def len_eq(a: Sized, b: int) -> bool:
 
 def allclose(a: float, b: float, rtol: float = 1e-07) -> bool:
     """Check if the absolute differnce between **a** and **b** is smaller than **rtol**."""
-    delta = abs(a - b)
+    delta = abs(a) - abs(b)
     return delta < rtol

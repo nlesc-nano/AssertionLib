@@ -43,7 +43,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
-    # 'sphinx_autodoc_typehints'  # ?????? AttributeError: 'function' object has no attribute '<locals>'
+    'sphinx_autodoc_typehints'
 ]
 
 
@@ -242,8 +242,7 @@ napoleon_use_admonition_for_references = True
 # A string of reStructuredText that will be included at the end of every source file that is read.
 # This is a possible place to add substitutions that should be available in every file (another being rst_prolog).
 rst_epilog = """
-.. |plams.Settings| replace:: :class:`plams.Molecule<scm.plams.core.settings.Settings>`
-.. |plams.Molecule| replace:: :class:`plams.Molecule<scm.plams.mol.molecule.Molecule>`
-.. |plams.Bond| replace:: :class:`plams.Bond<scm.plams.mol.bond.Bond>`
-.. |plams.Atom| replace:: :class:`plams.Atom<scm.plams.mol.atom.Atom>`
+.. |Sequence| replace:: :class:`Sequence<collections.abc.Sequence>`
+.. |Iterable| replace:: :class:`Iterable<collections.abc.Iterable>`
+.. |Any| replace:: :class:`Any<object>`
 """

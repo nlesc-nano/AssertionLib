@@ -1,2 +1,4 @@
-.. automodule::
-    assertionlib.dataclass
+AbstractDataClass
+=================
+
+automodule:: assertionlib.dataclass

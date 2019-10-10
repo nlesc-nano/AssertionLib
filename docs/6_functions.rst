@@ -1,2 +1,4 @@
-.. automodule::
-    assertionlib.functions
+Various functions
+=================
+
+automodule:: assertionlib.functions
