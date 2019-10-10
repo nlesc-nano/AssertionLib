@@ -22,11 +22,10 @@ A module containing the actual ``assertionlib.AssertionManager()`` class.
 ``assertionlib.ndrepr``
 -----------------------
 A module for holding the ``assertionlib.NDRepr()`` class,
-a subclass of the builtin ``reprlib.Repr()``_ class.
+a subclass of the builtin ``reprlib.Repr()`` class.
 
 
 .. _`Python 3.7`: https://www.python.org/dev/peps/pep-0557/
-.. _``reprlib.Repr()``: https://docs.python.org/3/library/reprlib.html#reprlib.Repr
 
 .. |dataclasses| replace:: :mod:`dataclasses`
 .. |assertionlib| replace:: :mod:`assertionlib`
