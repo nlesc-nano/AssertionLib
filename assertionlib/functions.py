@@ -44,7 +44,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     class_type : :class:`type` or :data:`Any<typing.Any>`
         A class (*i.e.* a :class:`type` instance) or class instance.
 
-    func : :class:`Callable<typing.Callable>`
+    func : :data:`Callable<typing.Callable>`
         A callable object whose output will be asserted by the created method.
 
     name : :class:`str`, optional
@@ -198,7 +198,8 @@ def get_sphinx_domain(func: Callable, module_mapping: Dict[str, str] = MODULE_DI
     raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
 
 
-def load_readme(readme: str = 'README.rst', **kwargs: Any) -> str:
+def load_readme(readme: str = 'README.rst', replace: Dict[str, str] = {'``': '|'},
+                **kwargs: Any) -> str:
     r"""Load and return the content of a readme file located in the same directory as this file.
 
     Equivalent to importing the content of ``../README.rst``.
@@ -208,7 +209,10 @@ def load_readme(readme: str = 'README.rst', **kwargs: Any) -> str:
     readme : :class:`str`
         The name of the readme file.
 
-    \**kwargs: :data:`Any<typing.Any>`
+    replace : :class:`dict` [:class:`str`, :class:`str`]
+        A mapping of to-be replaced substrings contained within the readme file.
+
+    \**kwargs : :data:`Any<typing.Any>`
         Optional keyword arguments for the :meth:`read<io.TextIOBase.read>` method.
 
     Returns
@@ -219,7 +223,10 @@ def load_readme(readme: str = 'README.rst', **kwargs: Any) -> str:
     """
     readme: str = os.path.join(os.path.dirname(__file__), readme)
     with open(readme, 'r') as f:
-        return f.read(**kwargs)
+        ret = f.read(**kwargs)
+    for old, new in replace.items():
+        ret = ret.replace(old, new)
+    return ret
 
 
 def len_eq(a: Sized, b: int) -> bool:
@@ -231,3 +238,6 @@ def allclose(a: float, b: float, rtol: float = 1e-07) -> bool:
     """Check if the absolute differnce between **a** and **b** is smaller than **rtol**."""
     delta = abs(a - b)
     return delta < rtol
+
+
+yup = load_readme()
