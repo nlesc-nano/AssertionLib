@@ -1,4 +1,2 @@
-AssertionManager
-================
-
-automodule:: assertionlib.manager
+.. automodule::
+    assertionlib.manager

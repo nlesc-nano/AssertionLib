@@ -2,7 +2,7 @@
 assertionlib.manager
 ====================
 
-A module containing the actual AssertionManager class.
+A module containing the actual :class:`AssertionManager` class.
 
 Index
 -----
@@ -10,7 +10,73 @@ Index
 .. autosummary::
     assertion
     AssertionManager
-    _MetaAM
+    AssertionManager.assert_
+    AssertionManager.add_to_instance
+    AssertionManager.exception
+
+Assertions based on the builtin :mod:`operator` module.
+
+.. autosummary::
+    :nosignatures:
+
+    AssertionManager.abs
+    AssertionManager.add
+    AssertionManager.and_
+    AssertionManager.concat
+    AssertionManager.contains
+    AssertionManager.countOf
+    AssertionManager.eq
+    AssertionManager.floordiv
+    AssertionManager.ge
+    AssertionManager.getitem
+    AssertionManager.gt
+    AssertionManager.index
+    AssertionManager.indexOf
+    AssertionManager.inv
+    AssertionManager.invert
+    AssertionManager.is_
+    AssertionManager.is_not
+    AssertionManager.itemgetter
+    AssertionManager.le
+    AssertionManager.length_hint
+    AssertionManager.lshift
+    AssertionManager.lt
+    AssertionManager.matmul
+    AssertionManager.mod
+    AssertionManager.mul
+    AssertionManager.ne
+    AssertionManager.neg
+    AssertionManager.not_
+    AssertionManager.or_
+    AssertionManager.pos
+    AssertionManager.pow
+    AssertionManager.rshift
+    AssertionManager.sub
+    AssertionManager.truediv
+    AssertionManager.truth
+
+Assertions based on the builtin :mod:`os.path` module.
+
+.. autosummary::
+    :nosignatures:
+
+    AssertionManager.isabs
+    AssertionManager.isdir
+    AssertionManager.isfile
+    AssertionManager.islink
+    AssertionManager.ismount
+
+Miscellaneous assertions.
+
+.. autosummary::
+    :nosignatures:
+
+    AssertionManager.allclose
+    AssertionManager.hasattr
+    AssertionManager.callable
+    AssertionManager.isinstance
+    AssertionManager.issubclass
+    AssertionManager.len_eq
 
 API
 ---
@@ -18,14 +84,64 @@ API
     :annotation: = <AssertionManager object>
 
 .. autoclass:: AssertionManager
-    :members:
-    :special-members:
-    :private-members:
+.. automethod:: AssertionManager.assert_
+.. automethod:: AssertionManager.add_to_instance
+.. automethod:: AssertionManager.exception
 
-.. autoclass:: _MetaAM
-    :members:
-    :special-members:
-    :private-members:
+Assertions based on the builtin :mod:`operator` module
+------------------------------------------------------
+.. automethod:: AssertionManager.abs
+.. automethod:: AssertionManager.add
+.. automethod:: AssertionManager.and_
+.. automethod:: AssertionManager.concat
+.. automethod:: AssertionManager.contains
+.. automethod:: AssertionManager.countOf
+.. automethod:: AssertionManager.eq
+.. automethod:: AssertionManager.floordiv
+.. automethod:: AssertionManager.ge
+.. automethod:: AssertionManager.getitem
+.. automethod:: AssertionManager.gt
+.. automethod:: AssertionManager.index
+.. automethod:: AssertionManager.indexOf
+.. automethod:: AssertionManager.inv
+.. automethod:: AssertionManager.invert
+.. automethod:: AssertionManager.is_
+.. automethod:: AssertionManager.is_not
+.. automethod:: AssertionManager.itemgetter
+.. automethod:: AssertionManager.le
+.. automethod:: AssertionManager.length_hint
+.. automethod:: AssertionManager.lshift
+.. automethod:: AssertionManager.lt
+.. automethod:: AssertionManager.matmul
+.. automethod:: AssertionManager.mod
+.. automethod:: AssertionManager.mul
+.. automethod:: AssertionManager.ne
+.. automethod:: AssertionManager.neg
+.. automethod:: AssertionManager.not_
+.. automethod:: AssertionManager.or_
+.. automethod:: AssertionManager.pos
+.. automethod:: AssertionManager.pow
+.. automethod:: AssertionManager.rshift
+.. automethod:: AssertionManager.sub
+.. automethod:: AssertionManager.truediv
+.. automethod:: AssertionManager.truth
+
+Assertions based on the builtin :mod:`os.path` module
+-----------------------------------------------------
+.. automethod:: AssertionManager.isabs
+.. automethod:: AssertionManager.isdir
+.. automethod:: AssertionManager.isfile
+.. automethod:: AssertionManager.islink
+.. automethod:: AssertionManager.ismount
+
+Miscellaneous assertions
+------------------------
+.. automethod:: AssertionManager.allclose
+.. automethod:: AssertionManager.callable
+.. automethod:: AssertionManager.hasattr
+.. automethod:: AssertionManager.isinstance
+.. automethod:: AssertionManager.issubclass
+.. automethod:: AssertionManager.len_eq
 
 """
 
@@ -53,25 +169,29 @@ class _MetaAM(type):
     """
 
     #: A :class:`frozenset` of to-be ignored functions in :mod:`operator`.
-    EXCLUDE: FrozenSet[str] = frozenset({'setitem', 'delitem'})
+    EXCLUDE: FrozenSet[str] = frozenset({'setitem', 'delitem', 'attrgetter', 'methodcaller'})
 
     #: A :class:`frozenset` of callables which need an assertion function.
     INCLUDE: FrozenSet[Callable] = frozenset({
-        os.path.isfile, os.path.isdir, isinstance, issubclass, callable, hasattr, len_eq, allclose
+        os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
+        isinstance, issubclass, callable, hasattr, len_eq, allclose
     })
 
     def __new__(cls, name, bases, namespace, **kwargs) -> type:
         sub_cls = super().__new__(cls, name, bases, namespace, **kwargs)
 
         # Iterature over the __all__ attribute of the operator builtin module
-        for name in operator.__all__:
-            if name[1:] in operator.__all__ or name in _MetaAM.EXCLUDE:
-                pass  # Exclude inplace operations
+        func_list = operator.__all__
+        exclude = cls.EXCLUDE
+        include = cls.INCLUDE
+        for name in func_list:
+            if name[1:] in func_list or name[1:] + '_' in func_list or name in exclude:
+                continue  # Exclude inplace operations
 
             func = getattr(operator, name)
             bind_callable(sub_cls, func, name)
 
-        for func in _MetaAM.INCLUDE:
+        for func in include:
             name = func.__name__
             bind_callable(sub_cls, func, name)
 
@@ -81,7 +201,7 @@ class _MetaAM(type):
 class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
     """An assertion manager.
 
-    Paramaters
+    Parameters
     ----------
     repr_instance : :class:`reprlib.Repr`, optional
         An instance of :class:`reprlib.Repr` for formatting Exception messages.
@@ -144,16 +264,16 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         ex : :class:`Exception`
             The exception raised by :meth:`AssertionManager.assert_`.
 
-        func : :class:`Callable<typing.Callable>`
+        func : :data:`Callable<typing.Callable>`
             The callable whose output has been evaluated.
 
-        \*args : :class:`Any<typing.Any>`
+        \*args : :data:`Any<typing.Any>`
             Positional arguments supplied to **func**.
 
         invert :class:`bool`
             If ``True``, invert the output of the assertion: :code:`not func(a, b, **kwargs)`.
 
-        \**kwargs : :class:`Any<typing.Any>`, optional
+        \**kwargs : :data:`Any<typing.Any>`, optional
             Further optional keyword arguments supplied to **func**.
 
         Returns
@@ -194,17 +314,20 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         Parameters
         ----------
-        func : :class:`Callable<typing.Callable>`
+        func : :data:`Callable<typing.Callable>`
             The callable whose output will be evaluated.
 
-        \*args : :class:`Any<typing.Any>`
+        \*args : :data:`Any<typing.Any>`
             Positional arguments for **func**.
 
-        invert :class:`bool`
+        invert : :class:`bool`
             If ``True``, invert the output of the assertion: :code:`not func(a, b, **kwargs)`.
 
-        \**kwargs : :class:`Any<typing.Any>`, optional
+        \**kwargs : :data:`Any<typing.Any>`, optional
             Keyword arguments for **func**.
+
+
+        :rtype: :data:`None`
 
         """  # noqa
         __tracebackhide__ = True
@@ -224,7 +347,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         Parameters
         ----------
-        func : :class:`Callable<typing.Callable>`
+        func : :data:`Callable<typing.Callable>`
             The callable whose output will be asserted in the to-be created method.
 
         override_attr : :class:`bool`
@@ -235,8 +358,11 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             The name of the name of the new method.
             If ``None``, use the name of **func**.
 
-        Exception
-        ---------
+
+        :rtype: :data:`None`
+
+        Raises
+        ------
         AttributeError
             Raised if ``override_attr=False`` and a method with the same name already
             exists in this instance.
@@ -254,18 +380,21 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         Parameters
         ----------
-        exception : class`type` [:exc:`Exception`]
+        exception : :class:`type` [:exc:`Exception`]
             An exception that should be raised by :code:`func(*args, **kwargs)`.
             Note: :exc:`AssertionError` is dissallowed as value.
 
-        func : :class:`Callable<typing.Callable>`
+        func : :data:`Callable<typing.Callable>`
             The callable whose output will be evaluated.
 
-        \*args : :class:`Any<typing.Any>`
+        \*args : :data:`Any<typing.Any>`
             Positional arguments for **func**.
 
-        \**kwargs : :class:`Any<typing.Any>`, optional
+        \**kwargs : :data:`Any<typing.Any>`, optional
             Keyword arguments for **func**.
+
+
+        :rtype: :data:`None`
 
         See also
         --------
