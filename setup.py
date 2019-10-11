@@ -24,7 +24,6 @@ setup(
     author_email='b.f.van.beek@vu.nl',
     url='https://github.com/nlesc-nano/AssertionLib',
     packages=['assertionlib'],
-    package_dir={'assertionlib': 'assertionlib'},
     include_package_data=True,
     license='GNU Lesser General Public License v3 or later',
     zip_safe=False,
