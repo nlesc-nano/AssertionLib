@@ -25,6 +25,7 @@ setup(
     url='https://github.com/nlesc-nano/AssertionLib',
     packages=['assertionlib'],
     package_dir={'assertionlib': 'assertionlib'},
+    package_data={'assertionlib': ['*.rst']},
     include_package_data=True,
     license='GNU Lesser General Public License v3 or later',
     zip_safe=False,
