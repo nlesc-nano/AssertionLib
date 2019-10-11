@@ -35,5 +35,5 @@ a subclass of the builtin ``reprlib.Repr()`` class.
 .. |assertionlib.ndrepr| replace:: :mod:`assertionlib.ndrepr`
 
 .. |assertionlib.AssertionManager| replace:: :class:`assertionlib.AssertionManager<assertionlib.manager.AssertionManager>`
-.. |assertionlib.NDRepr| replace:: :class:`NDRepr<assertionlib.ndrepr.NDRepr>`
+.. |assertionlib.NDRepr| replace:: :class:`assertionlib.NDRepr<assertionlib.ndrepr.NDRepr>`
 .. |reprlib.Repr| replace:: :class:`reprlib.Repr`

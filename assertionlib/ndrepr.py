@@ -9,7 +9,14 @@ Index
 .. currentmodule:: assertionlib.ndrepr
 .. autosummary::
     NDRepr
+
+Type-specific repr methods:
+
+.. autosummary::
+    :nosignatures:
+
     NDRepr.repr_float
+    NDRepr.repr_Exception
     NDRepr.repr_Signature
     NDRepr.repr_method
     NDRepr.repr_method_descriptor
@@ -29,6 +36,7 @@ API
 ---
 .. autoclass:: NDRepr
 .. automethod:: NDRepr.repr_float
+.. automethod:: NDRepr.repr_Exception
 .. automethod:: NDRepr.repr_Signature
 .. automethod:: NDRepr.repr_method
 .. automethod:: NDRepr.repr_method_descriptor
@@ -173,10 +181,11 @@ class NDRepr(reprlib.Repr):
     def __init__(self, **kwargs: Any) -> None:
         """Initialize a :class:`NDRepr` instance."""
         super().__init__()
-        self.maxstring: int = 60
+        self.maxstring: int = 80
 
         # New instance attributes
         self.maxSignature: int = self.maxstring - 15
+        self.maxException: int = 1000
         self.maxfloat: int = 4
         self.maxndarray: int = 6
         self.maxSeries: int = 12
@@ -193,55 +202,26 @@ class NDRepr(reprlib.Repr):
                                      f'has no attribute {repr(k)}')
             setattr(self, k, v)
 
+    def repr1(self, obj: Any, level: int):
+        if isinstance(obj, Exception):  # Refer all exceptions NDRepr.repr_Exception()
+            return self.repr_Exception(obj, level)
+        return super().repr1(obj, level)
+    repr1.__doc__ = reprlib.Repr.repr1.__doc__
+
     def repr_float(self, obj: float, level: int) -> str:
         """Create a :class:`str` representation of a :class:`float` instance."""  # noqa
         i = self.maxfloat
-        return f'{obj:{i}.{i}f}'
+        if 10**i > obj > 10**-i:
+            return f'{obj:{i}.{i}f}'
+        return f'{obj:{i}.{i}e}'  # Exponential notation
+
+    def repr_Exception(self, obj: Exception, level: int) -> str:
+        """Create a :class:`str` representation of an :exc`Exception` instance."""
+        value = str(obj)
+        i = self.maxException
+        return f'{obj.__class__.__name__}({value[:i]})'
 
     # New methods for parsing callables
-
-    def _parse_callable(self, obj: Callable, level: int) -> Tuple[str, str]:
-        """Create a :class:`str` representation of the name and signature of a callable."""
-        # Construct the name of the callable
-        try:
-            name = obj.__qualname__
-        except AttributeError:
-            name = obj.__name__
-
-        # Construct the signature
-        try:
-            _signature = inspect.signature(obj)
-            signature = self.repr1(_signature, level - 1)
-        except ValueError:
-            signature = '(...)'
-
-        return name, signature
-
-    def repr_Signature(self, obj: inspect.Signature, level: int) -> str:
-        """Create a :class:`str` representation of a :class:`inspect.Signature` instance."""
-        i = self.maxSignature
-        signature = str(obj)
-
-        # Return the signature without parameter truncation
-        if len(signature) <= i:
-            return signature
-
-        # Truncate the number of to-be displayed parameters based the 'level' parameter
-        param, ret = signature.rsplit(')', 1)
-        if level <= 0:
-            return f'(...){ret}'
-
-        # Truncate the number of to-be displayed parameters based on self.maxSignature
-        iterator = iter(param.split(', '))
-        param_accumulate = next(iterator)
-        for param in iterator:
-            signature = f'{param_accumulate}, {param}){ret}'
-            if len(signature) > i:
-                param_accumulate += ', ...'
-                break
-            param_accumulate += f', {param}'
-
-        return f'{param_accumulate}){ret}'
 
     def repr_method(self, obj: types.MethodType, level: int) -> str:
         """Create a :class:`str` representation of a bound method."""
@@ -274,6 +254,49 @@ class NDRepr(reprlib.Repr):
         """Create a :class:`str` representation of a module."""
         name, _ = self._parse_callable(obj, level)
         return f"<module '{name}'>"
+
+    def repr_Signature(self, obj: inspect.Signature, level: int) -> str:
+        """Create a :class:`str` representation of a :class:`inspect.Signature` instance."""
+        i = self.maxSignature
+        signature = str(obj)
+
+        # Return the signature without parameter truncation
+        if len(signature) <= i:
+            return signature
+
+        # Truncate the number of to-be displayed parameters based the 'level' parameter
+        param, ret = signature.rsplit(')', 1)
+        if level <= 0:
+            return f'(...){ret}'
+
+        # Truncate the number of to-be displayed parameters based on self.maxSignature
+        iterator = iter(param.split(', '))
+        param_accumulate = next(iterator)
+        for param in iterator:
+            signature = f'{param_accumulate}, {param}){ret}'
+            if len(signature) > i:
+                param_accumulate += ', ...'
+                break
+            param_accumulate += f', {param}'
+
+        return f'{param_accumulate}){ret}'
+
+    def _parse_callable(self, obj: Callable, level: int) -> Tuple[str, str]:
+        """Create a :class:`str` representation of the name and signature of a callable."""
+        # Construct the name of the callable
+        try:
+            name = obj.__qualname__
+        except AttributeError:
+            name = obj.__name__
+
+        # Construct the signature
+        try:
+            _signature = inspect.signature(obj)
+            signature = self.repr1(_signature, level - 1)
+        except ValueError:
+            signature = '(...)'
+
+        return name, signature
 
     # New PLAMS-related methods
 
