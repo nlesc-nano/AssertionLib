@@ -27,17 +27,24 @@ API
 import os
 import types
 import inspect
-from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping
+from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple
+
+from .signature import generate_signature, _signature_to_str
 
 
 def bind_callable(class_type: Union[type, Any], func: Callable,
                   name: Optional[str] = None) -> None:
     """Take a callable and use it to create a new assertion method for **class_type**.
 
+    The created callable will have the same signature as **func** except for one additional
+    keyword argument by the name of ``func`` (default value: ``False``).
+    Setting this keyword argument to ``True`` will invert the output of the assertion,
+    *i.e.* it changes ``assert func(...)`` into ``assert not func(...)``.
+
     Examples
     --------
-    Supplying the :func:`len` will create (and bind) a callable which
-    performs :code:`assert len(*args, **kwargs)`
+    Supplying the builtin :func:`len` function will create (and bind) a callable which
+    performs the :code:`assert len(obj)` assertion.
 
     Parameters
     ----------
@@ -55,25 +62,61 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     :rtype: :data:`None`
 
     """
-    func_name = name if name is not None else func.__name__
+    name = name if name is not None else func.__name__
 
-    # Create the to-be added method
-    def method(self, *args, invert=False, **kwargs):
-        self.assert_(func, *args, invert=invert, **kwargs)
+    # Create the new function
+    method, proto_signature = _generate_function(func)
 
-    # Update docstrings and annotations
-    method.__doc__ = wrap_docstring(func)
-    method.__annotations__ = {'args': Any, 'kwargs': Any, 'invert': bool, 'return': None}
+    # Update the docstring
+    signature = proto_signature.replace(f'{func.__name__}, ', '').replace(', invert=invert', '')
+    signature = signature.replace(', *args', '').replace(', **kwargs', '')
+    method.__doc__ = wrap_docstring(func, signature)
+
+    # Update annotations
+    try:
+        method.__annotations__ = func.__annotations__.copy()
+        method.__annotations__['return'] = None
+        method.__annotations__['invert'] = bool
+    except AttributeError:
+        method.__annotations__ = {'return': None, 'invert': bool}
 
     # Set the new method
     if isinstance(class_type, type):  # A class
-        setattr(class_type, func_name, method)
+        setattr(class_type, name, method)
     else:  # A class instance
         _method = types.MethodType(method, class_type)
-        setattr(class_type, func_name, _method)
+        setattr(class_type, name, _method)
 
 
-def wrap_docstring(func: Callable) -> str:
+def _generate_function(func: Callable) -> Tuple[types.FunctionType, str]:
+    """Generate the assertion function for :func:`bind_callable`."""
+    # sgn1 is a Signature instance with the signature for the to-be returned FunctionType
+    # sgn2 is a string with all arguments for self.assert_()
+    sgn = generate_signature(func)
+    sgn_str = _signature_to_str(sgn, func.__name__)
+
+    # Create the code object for the to-be returned function
+    code_compile = compile(f'def func{sgn}: self.assert_{sgn_str}', "<string>", "exec")
+    for code in code_compile.co_consts:
+        if code.__class__.__name__ == 'code':
+            break
+
+    # Extract the default arguments for positional or keyword parameters
+    defaults = code_compile.co_consts[-1]
+    if isinstance(defaults, str):  # no default arguments
+        defaults = None
+    func_new = types.FunctionType(code, {func.__name__: func}, func.__name__, defaults)
+
+    # Set default values for keyword-only parameters
+    KO = inspect.Parameter.KEYWORD_ONLY
+    kwdefault = {k: v.default for k, v in sgn.parameters.items() if v.kind is KO}
+    if kwdefault:
+        func_new.__kwdefaults__ = kwdefault
+
+    return func_new, sgn_str
+
+
+def wrap_docstring(func: Callable, signature: Optional[str] = None) -> str:
     """Create a new NumPy style assertion docstring from the docstring of **func**.
 
     The summary of **funcs'** docstring, if available, is added to the ``"See also"`` section,
@@ -87,15 +130,21 @@ def wrap_docstring(func: Callable) -> str:
         >>> print(docstring)
         Perform the following assertion: :code:`assert isinstance(*args, **kwargs)`.
 
-            See also
-            --------
-            :func:`isinstance<isinstance>`:
-                Return whether an object is an instance of a class or of a subclass thereof.
+        Setting **invert** to ``True`` will invert the assertion output.
+
+        See also
+        --------
+        :func:`isinstance<isinstance>`:
+            Return whether an object is an instance of a class or of a subclass thereof.
 
     Parameters
     ----------
     func : :data:`Callable<typing.Callable>`
         A callable whose output is to-be asserted.
+
+    signature : :class:`str`, optional
+        Provide a custom signature for **func**.
+        If ``None``, default to ``(*args, **kwargs)``.
 
     Returns
     -------
@@ -104,6 +153,7 @@ def wrap_docstring(func: Callable) -> str:
 
     """
     domain = get_sphinx_domain(func)
+    signature_ = signature if signature is not None else '(*args, **kwargs)'
 
     # Extract the first line from the func docstring
     try:
@@ -114,9 +164,11 @@ def wrap_docstring(func: Callable) -> str:
     # Return a new docstring
     name = func.__qualname__ if hasattr(func, '__qualname__') else func.__name__
     return ('Perform the following assertion: '
-            f':code:`assert {name}(*args, **kwargs)`.\n\n    See also\n    --------\n'
-            f'    {domain}:\n'
-            f'        {func_summary}\n\n    ')
+            f':code:`assert {name}{signature_}`.\n\n'
+            'Setting **invert** to ``True`` will invert the assertion output.\n\n'
+            'See also\n--------\n'
+            f'{domain}:\n'
+            f'    {func_summary}\n\n')
 
 
 #: A dictionary which translates certain __module__ values to actual valid modules
@@ -128,7 +180,12 @@ MODULE_DICT: Dict[str, str] = {
 }
 
 
-def _is_builtin_func(func) -> bool: return inspect.isbuiltin(func) and '.' not in func.__qualname__
+def _is_builtin_func(func: Callable) -> bool:
+    """Check if **func** is a builtin function."""
+    try:
+        return inspect.isbuiltin(func) and '.' not in func.__qualname__
+    except AttributeError:
+        return False
 
 
 def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE_DICT) -> str:

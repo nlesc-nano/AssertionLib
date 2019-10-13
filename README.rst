@@ -5,7 +5,7 @@
 
 
 ##################
-AssertionLib 0.0.1
+AssertionLib 0.1.0
 ##################
 
 A package for performing assertions.

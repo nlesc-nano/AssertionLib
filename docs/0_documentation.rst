@@ -1,8 +1,11 @@
-AssertionLib
-============
+API
+===
 
 A package for performing assertions.
 
 .. toctree::
-    1_usage
-    2_api
+    3_assertionmanager
+    4_ndrepr
+    5_dataclass
+    6_functions
+	
