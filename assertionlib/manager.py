@@ -154,7 +154,7 @@ import builtins
 import textwrap
 import operator
 from string import ascii_lowercase
-from typing import Callable, Any, Type, FrozenSet, Optional, Container, Mapping, Sequence
+from typing import Callable, Any, Type, FrozenSet, Optional, Mapping, Sequence
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, allclose
@@ -183,10 +183,11 @@ class _MetaAM(type):
     def __new__(cls, name, bases, namespace, **kwargs) -> type:
         sub_cls = super().__new__(cls, name, bases, namespace, **kwargs)
 
-        # Iterature over the __all__ attribute of the operator builtin module
         func_list = operator.__all__
         exclude = cls.EXCLUDE
         include = cls.INCLUDE
+
+        # Iterature over the __all__ attribute of the operator builtin module
         for name in func_list:
             if name[1:] in func_list or name[1:] + '_' in func_list or name in exclude:
                 continue  # Exclude inplace operations
@@ -438,7 +439,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             parameters = signature.parameters
         except ValueError:  # Not all callables have a signature
             signature = '(...)'
-            parameters = ascii_lowercase
+            parameters = (f'_{i}' for i in ascii_lowercase)
 
         not_ = '' if not invert else ' not'
         ret = f'output ={not_} {name}{signature}; assert output'
