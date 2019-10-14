@@ -211,15 +211,17 @@ class NDRepr(reprlib.Repr):
     def repr_float(self, obj: float, level: int) -> str:
         """Create a :class:`str` representation of a :class:`float` instance."""  # noqa
         i = self.maxfloat
-        if 10**i > obj > 10**-i:
-            return f'{obj:{i}.{i}f}'
-        return f'{obj:{i}.{i}e}'  # Exponential notation
+        if 10**i < obj or obj < 10**-i:
+            return f'{obj:{i}.{i}e}'
+        return f'{obj:{i}.{i}f}'  # Exponential notation
 
     def repr_Exception(self, obj: Exception, level: int) -> str:
         """Create a :class:`str` representation of an :exc`Exception` instance."""
         value = str(obj)
         i = self.maxException
-        return f'{obj.__class__.__name__}({value[:i]})'
+        if len(value) > i:
+            value = value[:i] + '...'
+        return f'{obj.__class__.__name__}({value})'
 
     # New methods for parsing callables
 
@@ -228,7 +230,7 @@ class NDRepr(reprlib.Repr):
         name, signature = self._parse_callable(obj, level)
         return f"<bound method '{name}{signature}'>"
 
-    def repr_method_descriptor(self, obj: types.MethodDescriptorType, level: int) -> str:
+    def repr_method_descriptor(self, obj: 'types.MethodDescriptorType', level: int) -> str:
         """Create a :class:`str` representation of an unbound method."""
         name, signature = self._parse_callable(obj, level)
         return f"<method '{name}{signature}'>"
@@ -252,8 +254,7 @@ class NDRepr(reprlib.Repr):
 
     def repr_module(self, obj: types.ModuleType, level: int) -> str:
         """Create a :class:`str` representation of a module."""
-        name, _ = self._parse_callable(obj, level)
-        return f"<module '{name}'>"
+        return f"<module '{obj.__name__}'>"
 
     def repr_Signature(self, obj: inspect.Signature, level: int) -> str:
         """Create a :class:`str` representation of a :class:`inspect.Signature` instance."""

@@ -12,7 +12,6 @@ Index
     AssertionManager
     AssertionManager.assert_
     AssertionManager.add_to_instance
-    AssertionManager.exception
 
 Assertions based on the builtin :mod:`operator` module.
 
@@ -36,9 +35,7 @@ Assertions based on the builtin :mod:`operator` module.
     AssertionManager.invert
     AssertionManager.is_
     AssertionManager.is_not
-    AssertionManager.itemgetter
     AssertionManager.le
-    AssertionManager.length_hint
     AssertionManager.lshift
     AssertionManager.lt
     AssertionManager.matmul
@@ -85,16 +82,16 @@ Miscellaneous assertions.
 
     AssertionManager.allclose
     AssertionManager.len_eq
+    AssertionManager.str_eq
 
 API
 ---
 .. autodata:: assertion
-    :annotation: = <AssertionManager object>
+    :annotation:  = <AssertionManager object>
 
 .. autoclass:: AssertionManager
 .. automethod:: AssertionManager.assert_
 .. automethod:: AssertionManager.add_to_instance
-.. automethod:: AssertionManager.exception
 
 Assertions based on the builtin :mod:`operator` module
 ------------------------------------------------------
@@ -115,9 +112,7 @@ Assertions based on the builtin :mod:`operator` module
 .. automethod:: AssertionManager.invert
 .. automethod:: AssertionManager.is_
 .. automethod:: AssertionManager.is_not
-.. automethod:: AssertionManager.itemgetter
 .. automethod:: AssertionManager.le
-.. automethod:: AssertionManager.length_hint
 .. automethod:: AssertionManager.lshift
 .. automethod:: AssertionManager.lt
 .. automethod:: AssertionManager.matmul
@@ -154,6 +149,7 @@ Miscellaneous assertions
 ------------------------
 .. automethod:: AssertionManager.allclose
 .. automethod:: AssertionManager.len_eq
+.. automethod:: AssertionManager.str_eq
 
 """
 
@@ -167,7 +163,7 @@ from string import ascii_lowercase
 from typing import Callable, Any, Type, FrozenSet, Optional, Mapping, Sequence
 
 from .ndrepr import aNDRepr
-from .functions import bind_callable, len_eq, allclose
+from .functions import bind_callable, len_eq, allclose, str_eq
 from .dataclass import AbstractDataClass
 
 __all__ = ['AssertionManager', 'assertion']
@@ -182,12 +178,14 @@ class _MetaAM(type):
     """
 
     #: A :class:`frozenset` of to-be ignored functions in :mod:`operator`.
-    EXCLUDE: FrozenSet[str] = frozenset({'setitem', 'delitem', 'attrgetter', 'methodcaller'})
+    EXCLUDE: FrozenSet[str] = frozenset({
+        'setitem', 'delitem', 'attrgetter', 'methodcaller', 'itemgetter', 'length_hint'
+    })
 
     #: A :class:`frozenset` of callables which need an assertion function.
     INCLUDE: FrozenSet[Callable] = frozenset({
         os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
-        isinstance, issubclass, callable, hasattr, len_eq, allclose, len, bool
+        isinstance, issubclass, callable, hasattr, len_eq, allclose, str_eq, len, bool
     })
 
     def __new__(cls, name, bases, namespace, **kwargs) -> type:
@@ -220,11 +218,15 @@ class _Str:
 
 
 class _NoneException(Exception):
-    pass
+    """An empty exception used by :meth:`AssertionManager.assert_` incase the **exception** parameter is ``None``."""  # noqa
 
 
 class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
-    """An assertion manager.
+    """A class for performing assertions and providing informative exception messages.
+
+    A number of usage examples are provided in the the documentation_.
+
+    .. _documentation: https://assertionlib.readthedocs.io/en/latest/includeme.html#usage
 
     Parameters
     ----------
@@ -250,6 +252,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         A fallback value in case :attr:`AssertionManager.repr_instance` is ``None``.
 
     """
+
+    _PRIVATE_ATTR: FrozenSet[str] = frozenset({'_repr_fallback', '_maxstring_fallback'})
 
     def __init__(self, repr_instance: Optional[reprlib.Repr] = aNDRepr) -> None:
         """Initialize an :class:`AssertionManager` instance."""
@@ -300,7 +304,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         exception : :class:`type` [:exc:`Exception`], optional
             Assert that **exception** is raised during/before the assertion operation.
-            The only dissalowed value is :exc:`AssertionError`
+            The only dissalowed value is :exc:`AssertionError`.
 
         \**kwargs : :data:`Any<typing.Any>`, optional
             Keyword arguments for **func**.
@@ -316,6 +320,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         if not issubclass(exception, Exception):
             raise TypeError("The 'exception' parameter should be either 'None' or an exception type"
                             f"; observed type: '{exception.__class__.__name__}'")
+        elif exception is AssertionError:
+            raise ValueError("'AssertionError' is a disallowed value for the 'exception' parameter")
 
         output = None
         try:
@@ -372,7 +378,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     def _get_exc_message(self, ex: Exception, func: Callable, *args: Any,
                          invert: bool = False, output: Any = None, **kwargs: Any) -> str:
-        """Return a formatted exception message for failed assertions.
+        r"""Return a formatted exception message for failed assertions.
 
         Examples
         --------

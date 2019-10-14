@@ -2,31 +2,34 @@
 assertionlib.functions
 ======================
 
-Various functions related to the `AssertionManager()` class.
+Various functions related to the :class:`.AssertionManager` class.
 
 Index
 -----
 .. currentmodule:: assertionlib.functions
 .. autosummary::
     get_sphinx_domain
-    wrap_docstring
+    create_assertion_doc
     bind_callable
     allclose
     len_eq
+    str_eq
 
 API
 ---
 .. autofunction:: get_sphinx_domain
-.. autofunction:: wrap_docstring
+.. autofunction:: create_assertion_doc
 .. autofunction:: bind_callable
 .. autofunction:: allclose
 .. autofunction:: len_eq
+.. autofunction:: str_eq
 
 """
 
 import os
 import types
 import inspect
+import textwrap
 from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple, Type
 
 from .signature import generate_signature, _signature_to_str
@@ -65,53 +68,60 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     name = name if name is not None else func.__name__
 
     # Create the new function
-    method, proto_signature = _generate_function(func)
+    function, signature_str = _create_assertion_func(func)
 
-    # Update the docstring
-    signature = proto_signature.replace(f'{func.__name__}, ', '')
-    signature = signature.replace(', *args', '').replace(', **kwargs', '')
-    signature = signature.replace(', invert=invert, exception=exception', '')
-    method.__doc__ = wrap_docstring(func, signature)
+    # Update the docstring and sanitize the signature
+    signature_str = signature_str.replace(f'({func.__name__}, ', '(')
+    signature_str = signature_str.replace(', *args', '').replace(', **kwargs', '')
+    signature_str = signature_str.replace(', invert=invert, exception=exception', '')
+    function.__doc__ = create_assertion_doc(func, signature_str)
 
     # Update annotations
     try:
-        method.__annotations__ = func.__annotations__.copy()
+        function.__annotations__ = func.__annotations__.copy()
     except AttributeError:
-        method.__annotations__ = {}
+        function.__annotations__ = {}
     finally:
-        method.__annotations__['return'] = None
-        method.__annotations__['invert'] = bool
-        method.__annotations__['exception'] = Optional[Type[Exception]]
+        function.__annotations__['return'] = None
+        function.__annotations__['invert'] = bool
+        function.__annotations__['exception'] = Optional[Type[Exception]]
 
     # Set the new method
     if isinstance(class_type, type):  # A class
-        setattr(class_type, name, method)
+        setattr(class_type, name, function)
     else:  # A class instance
-        _method = types.MethodType(method, class_type)
-        setattr(class_type, name, _method)
+        method = types.MethodType(function, class_type)
+        setattr(class_type, name, method)
 
 
-def _generate_function(func: Callable) -> Tuple[types.FunctionType, str]:
-    """Generate the assertion function for :func:`bind_callable`."""
+def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
+    """Generate the assertion function for :func:`bind_callable`.
+
+    Parameters
+    ----------
+    func : :data:`Callable<typing.Callable>`
+        A callable object forming the basis of the to-be created assertion function.
+
+    """
     # sgn1 is a Signature instance with the signature for the to-be returned FunctionType
     # sgn2 is a string with all arguments for self.assert_()
     sgn = generate_signature(func)
-    sgn_str = _signature_to_str(sgn, func.__name__)
+    sgn_str = _signature_to_str(sgn, 'func')
 
     # Create the code object for the to-be returned function
     code_compile = compile(
-        f'def func{sgn}: self.assert_{sgn_str}',
+        f'def {func.__name__}{sgn}: self.assert_{sgn_str}',
         "<string>", "exec"
     )
     for code in code_compile.co_consts:
-        if code.__class__.__name__ == 'code':
+        if isinstance(code, types.CodeType):
             break
 
     # Extract the default arguments for positional or keyword parameters
     defaults = code_compile.co_consts[-1]
     if isinstance(defaults, str):  # no default arguments
         defaults = None
-    func_new = types.FunctionType(code, {func.__name__: func}, func.__name__, defaults)
+    func_new = types.FunctionType(code, {'func': func}, func.__name__, defaults)
 
     # Set default values for keyword-only parameters
     KO = inspect.Parameter.KEYWORD_ONLY
@@ -122,7 +132,26 @@ def _generate_function(func: Callable) -> Tuple[types.FunctionType, str]:
     return func_new, sgn_str
 
 
-def wrap_docstring(func: Callable, signature: Optional[str] = None) -> str:
+#: A string with the (to-be formatted) docstring returned by :func:`wrap_docstring`
+BASE_DOCSTRING: str = """Perform the following assertion: :code:`assert {name}{signature}`.
+
+Parameters
+----------
+invert : :class:`bool`
+    Invert the output of the assertion: :code:`assert not {name}{signature}`.
+
+exception : :class:`type` [:exc:`Exception`], optional
+    Assert that **exception** is raised during/before the assertion operation.
+
+See also
+--------
+{domain}:
+{summary}
+
+"""
+
+
+def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str:
     """Create a new NumPy style assertion docstring from the docstring of **func**.
 
     The summary of **funcs'** docstring, if available, is added to the ``"See also"`` section,
@@ -134,13 +163,19 @@ def wrap_docstring(func: Callable, signature: Optional[str] = None) -> str:
 
         >>> docstring: str = wrap_docstring(isinstance)
         >>> print(docstring)
-        Perform the following assertion: :code:`assert isinstance(*args, **kwargs)`.
+        Perform the following assertion: :code:`assert isinstance(obj, class_or_tuple)`.
 
-        Setting **invert** to ``True`` will invert the assertion output.
+        Parameters
+        ----------
+        invert : :class:`bool`
+            Invert the output of the assertion: :code:`assert not isinstance(obj, class_or_tuple)`.
+
+        exception : :class:`type` [:exc:`Exception`], optional
+            Assert that **exception** is raised during/before the assertion operation.
 
         See also
         --------
-        :func:`isinstance<isinstance>`:
+        :func:`isinstance`:
             Return whether an object is an instance of a class or of a subclass thereof.
 
     Parameters
@@ -159,32 +194,20 @@ def wrap_docstring(func: Callable, signature: Optional[str] = None) -> str:
 
     """
     domain = get_sphinx_domain(func)
-    signature_ = signature if signature is not None else '(*args, **kwargs)'
+    sgn = signature if signature is not None else '(*args, **kwargs)'
 
     # Extract the first line from the func docstring
     try:
-        func_summary = func.__doc__.split('\n', 1)[0]
+        func_summary = textwrap.indent(func.__doc__, 4 * ' ')
     except AttributeError:
-        func_summary = 'No description.'
+        func_summary = '    No description.'
 
     # Return a new docstring
-    name = func.__qualname__ if hasattr(func, '__qualname__') else func.__name__
-    return f"""Perform the following assertion: :code:`assert {name}{signature_}`.
-
-           Parameters
-           ----------
-           invert : :class:`bool`
-               Invert the output of the assertion: :code:`assert not {name}{signature_}`.
-
-           exception : :class:`type` [:exc:`Exception`], optional
-               Assert that **exception** is raised during/before the assertion operation.
-
-           See also
-           --------
-           {domain}:
-               {func_summary}
-
-           """
+    try:
+        name = func.__qualname__
+    except AttributeError:
+        name = func.__name__
+    return BASE_DOCSTRING.format(name=name, signature=sgn, domain=domain, summary=func_summary)
 
 
 #: A dictionary which translates certain __module__ values to actual valid modules
@@ -271,8 +294,11 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
     raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
 
 
-def load_readme(readme: str = 'README.rst',
-                replace: Mapping[str, str] = {'``': '|', '()': ''},
+#: A dictionary mapping to-be replaced substring to their replacements
+README_MAPPING: Dict[str, str] = {'``': '|', '()': ''}
+
+
+def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = README_MAPPING,
                 **kwargs: Any) -> str:
     r"""Load and return the content of a readme file located in the same directory as this file.
 
@@ -295,8 +321,8 @@ def load_readme(readme: str = 'README.rst',
         The content of ``../README.rst``.
 
     """
-    readme: str = os.path.join(os.path.dirname(__file__), readme)
-    with open(readme, 'r') as f:
+    readme_abs: str = os.path.join(os.path.dirname(__file__), readme)
+    with open(readme_abs, 'r') as f:
         ret = f.read(**kwargs)
     for old, new in replace.items():
         ret = ret.replace(old, new)
@@ -314,4 +340,8 @@ def allclose(a: float, b: float, rtol: float = 1e-07) -> bool:
     return delta < rtol
 
 
-yup = load_readme()
+def str_eq(a: Any, b: str, use_repr: bool = True) -> bool:
+    """Check if the string-representation of **a** is equivalent to **b**."""
+    if use_repr:
+        return repr(a) == b
+    return str(a) == b

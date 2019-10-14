@@ -9,17 +9,35 @@ Index
 .. currentmodule:: assertionlib.dataclass
 .. autosummary::
     AbstractDataClass
+    AbstractDataClass._PRIVATE_ATTR
+    AbstractDataClass.__str__
+    AbstractDataClass._str_iterator
+    AbstractDataClass.__eq__
+    AbstractDataClass.copy
+    AbstractDataClass.__copy__
+    AbstractDataClass.__deepcopy__
+    AbstractDataClass.as_dict
+    AbstractDataClass.from_dict
+    AbstractDataClass.inherit_annotations
 
 API
 ---
 .. autoclass:: AbstractDataClass
-    :members:
-    :private-members:
-    :special-members:
+.. autoattribute:: AbstractDataClass._PRIVATE_ATTR
+.. automethod:: AbstractDataClass.__str__
+.. automethod:: AbstractDataClass._str_iterator
+.. automethod:: AbstractDataClass.__eq__
+.. automethod:: AbstractDataClass.copy
+.. automethod:: AbstractDataClass.__copy__
+.. automethod:: AbstractDataClass.__deepcopy__
+.. automethod:: AbstractDataClass.as_dict
+.. automethod:: AbstractDataClass.from_dict
+.. automethod:: AbstractDataClass.inherit_annotations
 
 """
 
 import textwrap
+from types import FunctionType
 from copy import deepcopy
 from typing import (Any, Dict, FrozenSet, Iterable, Tuple)
 
@@ -37,7 +55,7 @@ class AbstractDataClass:
         def _str(k: str, v: Any) -> str:
             return f'{k:{width}} = ' + textwrap.indent(repr(v), indent2)[len(indent2):]
 
-        width = max(len(k) for k in vars(self))
+        width = max(len(k) for k in vars(self) if k not in self._PRIVATE_ATTR)
         indent1 = ' ' * 4
         indent2 = ' ' * (3 + width)
         iterable = self._str_iterator()
@@ -52,7 +70,7 @@ class AbstractDataClass:
         return ((k, v) for k, v in vars(self).items() if k not in self._PRIVATE_ATTR)
 
     def __eq__(self, value: Any) -> bool:
-        """Check if this instance is equivalent to **value**."""
+        """Check if this instance is equivalent to **value** by comparing instance variables."""
         if type(self) is not type(value):
             return False
 
@@ -112,7 +130,7 @@ class AbstractDataClass:
             A dictionary of arrays with keyword arguments for initializing a new
             instance of this class.
 
-        See also
+        See Also
         --------
         :meth:`AbstractDataClass.from_dict`:
             Construct a instance of this objects' class from a dictionary with keyword arguments.
@@ -139,7 +157,7 @@ class AbstractDataClass:
         :class:`AbstractDataClass`
             A new instance of this object's class constructed from **dct**.
 
-        See also
+        See Also
         --------
         :meth:`AbstractDataClass.as_dict`:
             Construct a dictionary from this instance with all non-private instance variables.
@@ -174,7 +192,7 @@ class AbstractDataClass:
             True
 
         """
-        def decorator(sub_attr: type) -> type:
+        def decorator(sub_attr: FunctionType) -> FunctionType:
             super_attr = getattr(cls, sub_attr.__name__)
             sub_cls_name = sub_attr.__qualname__.split('.')[0]
 

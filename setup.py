@@ -17,7 +17,7 @@ with open('README.rst') as readme_file:
 setup(
     name='AssertionLib',
     version=version['__version__'],
-    description=('A package for performing assertions.'),
+    description=('A package for performing assertions and providing informative exception messages.'),
     long_description=readme + '\n\n',
     long_description_content_type='text/x-rst',
     author=['B. F. van Beek'],
@@ -52,9 +52,10 @@ setup(
         'pytest',
         'pytest-cov',
         'pycodestyle',
+        'numpy'
     ],
     extras_require={
-        'test': ['pytest', 'pytest-cov', 'pycodestyle'],
+        'test': ['pytest', 'pytest-cov', 'pycodestyle', 'numpy'],
         'doc': ['sphinx>=2.0', 'sphinx_rtd_theme', 'sphinx-autodoc-typehints']
     }
 )
