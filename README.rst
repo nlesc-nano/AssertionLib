@@ -106,7 +106,7 @@ method and adding it to an instance with :meth:`AssertionManager.add_to_instance
     >>> my_fancy_func(a):
     ...     return False
 
-    # Approach #1, supply to function to assertion.assert_()
+    # Approach #1, supply to-be asserted callable to assertion.assert_()
     >>> assertion.assert_(my_fancy_func, 5)
     AssertionError: output = my_fancy_func(a); assert output
 
@@ -115,7 +115,7 @@ method and adding it to an instance with :meth:`AssertionManager.add_to_instance
     output: bool = False
     a: int = 5
 
-    # Approach #2, permanantly add a new bound method to an AssertionManager instance
+    # Approach #2, permanantly add a new bound method using assertion.add_to_instance()
     >>> assertion.add_to_instance(my_fancy_func)
     >>> assertion.my_fancy_func(5)
     AssertionError: output = my_fancy_func(a); assert output
