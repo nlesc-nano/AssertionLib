@@ -103,14 +103,23 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
         A callable object forming the basis of the to-be created assertion function.
 
     """
-    # sgn1 is a Signature instance with the signature for the to-be returned FunctionType
-    # sgn2 is a string with all arguments for self.assert_()
-    sgn = generate_signature(func)
-    sgn_str = _signature_to_str(sgn, 'func')
+    _empty = inspect._empty
+
+    def _to_str(prm: inspect.Parameter) -> str:
+        """Create a string from **prm**; ensure that callables are represented by their __name__."""
+        ret = str(prm)
+        default = prm.default
+        if callable(default) and default is not _empty:
+            ret = ret.replace(str(default), default.__name__)
+        return ret
+
+    sgn: inspect.Signature = generate_signature(func)
+    sgn_str1: str = '(' + ', '.join(_to_str(v) for v in sgn.parameters.values()) + ')'
+    sgn_str2: str = _signature_to_str(sgn, 'func')
 
     # Create the code object for the to-be returned function
     code_compile = compile(
-        f'def {func.__name__}{sgn}: self.assert_{sgn_str}',
+        f'def {func.__name__}{sgn_str1}: self.assert_{sgn_str2}',
         "<string>", "exec"
     )
     for code in code_compile.co_consts:
@@ -129,7 +138,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
     if kwdefault:
         func_new.__kwdefaults__ = kwdefault
 
-    return func_new, sgn_str
+    return func_new, sgn_str2
 
 
 #: A string with the (to-be formatted) docstring returned by :func:`wrap_docstring`
@@ -340,8 +349,6 @@ def allclose(a: float, b: float, rtol: float = 1e-07) -> bool:
     return delta < rtol
 
 
-def str_eq(a: Any, b: str, use_repr: bool = True) -> bool:
+def str_eq(a: Any, b: str, str_converter: Callable[[Any], str] = repr) -> bool:
     """Check if the string-representation of **a** is equivalent to **b**."""
-    if use_repr:
-        return repr(a) == b
-    return str(a) == b
+    return str_converter(a) == b
