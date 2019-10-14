@@ -1,6 +1,7 @@
 """Tests for the :mod:`NDRepr<assertionlib.ndrepr.NDRepr>` class."""
 
 import inspect
+from sys import version_info
 
 import numpy as np
 
@@ -43,16 +44,25 @@ def test_callables() -> None:
     mod = aNDRepr.repr(inspect)
 
     ref1 = "<built-in bound method 'list.count(value, /)'>"
+    ref1_backup = "<built-in bound method 'list.count(...)'>"
     ref2 = "<method 'list.count(self, value, /)'>"
+    ref2_backup = "<method 'list.count(...)'>"
     ref3 = "<built-in function 'hasattr(obj, name, /)'>"
     ref4 = "<class 'list(iterable=(), /)'>"
+    ref4_backup = "<class 'list(...)'>"
     ref5 = "<function '_test_func(a, b, *args, c=1)'>"
     ref6 = "<module 'inspect'>"
 
-    assertion.eq(builtin_bound_meth, ref1)
-    assertion.eq(builtin_meth, ref2)
+    if version_info.minor >= 7:  # Python 3.7 and later
+        assertion.eq(builtin_bound_meth, ref1)
+        assertion.eq(builtin_meth, ref2)
+        assertion.eq(class_, ref4)
+    else:  # Python versions predating 3.7
+        assertion.eq(builtin_bound_meth, ref1_backup)
+        assertion.eq(builtin_meth, ref2_backup)
+        assertion.eq(class_, ref4_backup)
+
     assertion.eq(builtin_func, ref3)
-    assertion.eq(class_, ref4)
     assertion.eq(func, ref5)
     assertion.eq(mod, ref6)
 

@@ -13,6 +13,7 @@ Index
     bind_callable
     allclose
     len_eq
+    str_eq
 
 API
 ---
@@ -21,6 +22,7 @@ API
 .. autofunction:: bind_callable
 .. autofunction:: allclose
 .. autofunction:: len_eq
+.. autofunction:: str_eq
 
 """
 
@@ -336,3 +338,10 @@ def allclose(a: float, b: float, rtol: float = 1e-07) -> bool:
     """Check if the absolute differnce between **a** and **b** is smaller than **rtol**."""
     delta = abs(a - b)
     return delta < rtol
+
+
+def str_eq(a: Any, b: str, use_repr: bool = True) -> bool:
+    """Check if the string-representation of **a** is equivalent to **b**."""
+    if use_repr:
+        return repr(a) == b
+    return str(a) == b

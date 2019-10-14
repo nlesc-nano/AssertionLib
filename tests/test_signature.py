@@ -1,5 +1,7 @@
 """Tests for :mod:`assertionlib.signature`."""
 
+from sys import version_info
+
 from assertionlib import assertion
 from assertionlib.signature import (
     _get_backup_signature, BACK_SIGNATURE, generate_signature, _signature_to_str
@@ -8,23 +10,30 @@ from assertionlib.signature import (
 
 def test_get_backup_signature() -> None:
     """Test :func:`assertionlib.signature._get_backup_signature`."""
-    sgn_str = '<Signature (self, *args, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, **kwargs) -> None>'  # noqa
-    assertion.eq(sgn_str, repr(BACK_SIGNATURE))
-    assertion.eq(sgn_str, repr(_get_backup_signature()))
+    if version_info.minor >= 7:  # Python >= 3.7
+        sgn_str = '<Signature (self, *args, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, **kwargs) -> None>'  # noqa
+    else:  # Python < 3.7
+        sgn_str = '<Signature (self, *args, invert:bool=False, exception:Union[Type[Exception], NoneType]=None, **kwargs) -> None>'  # noqa
+    assertion.str_eq(BACK_SIGNATURE, sgn_str)
+    assertion.str_eq(_get_backup_signature(), sgn_str)
+
+
+def _test_func(a, *args, b=1, **kwargs): pass
 
 
 def test_generate_signature() -> None:
     """Test :func:`assertionlib.signature.generate_signature`."""
-    def test(a, *args, b=1, **kwargs):
-        pass
+    if version_info.minor >= 7:  # Python >= 3.7
+        ref1 = '<Signature (self, a, *args, b=1, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, **kwargs) -> None>'  # noqa
+        ref2 = '<Signature (self, *args, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, **kwargs) -> None>'  # noqa
+    else:  # Python < 3.6
+        ref1 = "<Signature (self, a, *args, b=1, invert:bool=False, exception:Union[Type[Exception], NoneType]=None, **kwargs) -> None>"  # noqa
+        ref2 = '<Signature (self, *args, invert:bool=False, exception:Union[Type[Exception], NoneType]=None, **kwargs) -> None>'  # noqa
 
-    ref1 = '<Signature (self, a, *args, b=1, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, **kwargs) -> None>'  # noqa
-    sgn1 = generate_signature(test)
-    assertion.eq(ref1, repr(sgn1))
-
-    ref2 = '<Signature (self, *args, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, **kwargs) -> None>'  # noqa
+    sgn1 = generate_signature(_test_func)
     sgn2 = generate_signature(bool)
-    assertion.eq(ref2, repr(sgn2))
+    assertion.str_eq(sgn1, ref1)
+    assertion.str_eq(sgn2, ref2)
 
 
 def test_signature_to_str() -> None:

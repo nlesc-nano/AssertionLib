@@ -28,7 +28,7 @@ from collections import OrderedDict
 from typing import Callable, Optional, Type, Dict, Container
 from inspect import Parameter, Signature, signature, _empty, _ParameterKind
 
-from assertionlib.ndrepr import aNDRepr
+from .ndrepr import aNDRepr
 
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
 POK: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD
