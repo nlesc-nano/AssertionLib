@@ -284,7 +284,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     def assert_(self, func: Callable, *args: Any, invert: bool = False,
                 exception: Optional[Type[Exception]] = None, **kwargs: Any) -> None:
-        r"""Assert the output of :code:`func(a, b, **kwargs)`.
+        r"""Assert the output of :code:`func(*args, **kwargs)`.
 
         Examples
         --------
@@ -355,7 +355,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             exists in this instance.
 
         name : :class:`str`, optional
-            The name of the name of the new method.
+            The name of the new method.
             If ``None``, use the name of **func**.
 
 

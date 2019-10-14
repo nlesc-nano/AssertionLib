@@ -71,7 +71,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     function, signature_str = _create_assertion_func(func)
 
     # Update the docstring and sanitize the signature
-    signature_str = signature_str.replace(f'({func.__name__}, ', '(')
+    signature_str = signature_str.replace(f'(func, ', '(')
     signature_str = signature_str.replace(', *args', '').replace(', **kwargs', '')
     signature_str = signature_str.replace(', invert=invert, exception=exception', '')
     function.__doc__ = create_assertion_doc(func, signature_str)
