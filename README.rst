@@ -10,7 +10,7 @@
 
 
 ##################
-AssertionLib 0.1.0
+AssertionLib 0.1.1
 ##################
 
 A package for performing assertions and providing informative exception messages.
@@ -86,8 +86,8 @@ during/before the assertion process:
     >>> len(5)
     TypeError: object of type 'int' has no len()
 
-    >>> assertion.len(5, exception=TypeError)  # i.e. len(5) should raise a TypeError
-    >>> assertion.len([5], exception=TypeError)
+    >>> assertion.len(5, exception_=TypeError)  # i.e. len(5) should raise a TypeError
+    >>> assertion.len([5], exception_=TypeError)
     AssertionError: output = len(obj); assert output
 
     exception: AssertionError = AssertionError("Failed to raise 'TypeError'")
@@ -96,8 +96,8 @@ during/before the assertion process:
     obj: list = [5]
 
 Lastly, the output of custom callables can be asserted in one of the following two ways,
-supplying the callable to :meth:`AssertionManager.assert` or creating a custom assertion
-method and adding it to an instance with :meth:`AssertionManager.add_to_instance`:
+supplying the callable to :meth:`.AssertionManager.assert_` or creating a custom assertion
+method and adding it to an instance with :meth:`.AssertionManager.add_to_instance`:
 
 .. code:: python
 

@@ -107,3 +107,4 @@ venv.bak/
 # Visual Studio Code
 .vscode/
 .mypy_cache/
+ipython.html

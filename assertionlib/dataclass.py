@@ -37,7 +37,7 @@ class AbstractDataClass:
         def _str(k: str, v: Any) -> str:
             return f'{k:{width}} = ' + textwrap.indent(repr(v), indent2)[len(indent2):]
 
-        width = max(len(k) for k in vars(self))
+        width = max(len(k) for k in vars(self) if k not in self._PRIVATE_ATTR)
         indent1 = ' ' * 4
         indent2 = ' ' * (3 + width)
         iterable = self._str_iterator()
@@ -112,7 +112,7 @@ class AbstractDataClass:
             A dictionary of arrays with keyword arguments for initializing a new
             instance of this class.
 
-        See also
+        See Also
         --------
         :meth:`AbstractDataClass.from_dict`:
             Construct a instance of this objects' class from a dictionary with keyword arguments.
@@ -139,7 +139,7 @@ class AbstractDataClass:
         :class:`AbstractDataClass`
             A new instance of this object's class constructed from **dct**.
 
-        See also
+        See Also
         --------
         :meth:`AbstractDataClass.as_dict`:
             Construct a dictionary from this instance with all non-private instance variables.
