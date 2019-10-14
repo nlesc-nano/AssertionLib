@@ -27,6 +27,7 @@ API
 import os
 import types
 import inspect
+import textwrap
 from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple, Type
 
 from .signature import generate_signature, _signature_to_str
@@ -111,7 +112,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
         "<string>", "exec"
     )
     for code in code_compile.co_consts:
-        if code.__class__.__name__ == 'code':
+        if isinstance(code, types.CodeType):
             break
 
     # Extract the default arguments for positional or keyword parameters
@@ -143,7 +144,7 @@ exception : :class:`type` [:exc:`Exception`], optional
 See also
 --------
 {domain}:
-    {summary}
+{summary}
 
 """
 
@@ -195,9 +196,9 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
 
     # Extract the first line from the func docstring
     try:
-        func_summary = func.__doc__.split('\n', 1)[0]
+        func_summary = textwrap.indent(func.__doc__, 4 * ' ')
     except AttributeError:
-        func_summary = 'No description.'
+        func_summary = '    No description.'
 
     # Return a new docstring
     try:

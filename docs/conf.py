@@ -195,7 +195,7 @@ texinfo_documents = [
      project,
      f'{project} Documentation',
      author,
-     'A package for performing assertions.',
+     'A package for performing assertions and providing informative exception messages.',
      'Miscellaneous'),
 ]
 

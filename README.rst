@@ -1,3 +1,5 @@
+.. image:: https://travis-ci.org/nlesc-nano/AssertionLib.svg?branch=master
+   :target: https://travis-ci.org/nlesc-nano/AssertionLib
 .. image:: https://readthedocs.org/projects/cat/badge/?version=latest
    :target: https://assertionlib.readthedocs.io/en/latest
 
@@ -125,4 +127,4 @@ method and adding it to an instance with :meth:`.AssertionManager.add_to_instanc
     output: bool = False
     a: int = 5
 
-.. _documentation: https://assertionlib.readthedocs.io/en/latest/
+.. _documentation: https://assertionlib.readthedocs.io/en/latest/3_assertionmanager.html

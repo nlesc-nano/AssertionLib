@@ -22,8 +22,13 @@ API
 
 """
 
-from typing import Callable, Optional, Type, Dict
+import warnings
+from itertools import chain
+from collections import OrderedDict
+from typing import Callable, Optional, Type, Dict, Container
 from inspect import Parameter, Signature, signature, _empty, _ParameterKind
+
+from assertionlib.ndrepr import aNDRepr
 
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
 POK: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD
@@ -102,49 +107,51 @@ def generate_signature(func: Callable) -> Signature:
     -------
     :class:`Signature<inspect.Signature>`
         The signature of **func** with the ``self`` and ``invert`` parameters.
-        Return :data:`.BACK_SIGNATURE` if funcs' signature cannot be read.
+        Return :data:`BACK_SIGNATURE` if funcs' signature cannot be read.
 
     """  # noqa
     try:
         sgn = signature(func)
-    except ValueError:  # Not all callables have a signature that can be read.
+    except ValueError:  # Not all callables have a signature which can be read.
         return BACK_SIGNATURE
 
-    has_VP = False  # Does the signature contain an *args-like argument?
-    has_VK = False  # Does the signature contain a **kwargs-like argument?
+    prm_dict = OrderedDict({
+        POK: [Parameter(name='self', kind=POK)], VP: [], KO: [], VK: []
+    })
 
-    parameters = [Parameter(name='self', kind=POK)]
-    for name, prm in sgn.parameters.items():
-        if prm.kind is VP:
-            has_VP = True
-            parameters.append(Parameter(name=prm.name, kind=VP, default=prm.default, annotation=prm.annotation))  # noqa
-            continue
-        elif not has_VP and prm.default is not _empty:
-            parameters.append(Parameter(name='args', kind=VP))
-            has_VP = True
-        elif prm.kind is VK:  # Add the `invert` argument before a **kwargs-like argument
-            parameters.append(Parameter(name='invert', kind=KO, default=False, annotation=bool))
-            parameters.append(Parameter(name='exception', kind=KO, default=None, annotation=ExType))
-            parameters.append(Parameter(name=prm.name, kind=VK, default=prm.default, annotation=prm.annotation))  # noqa
-            has_VK = True
-            break
+    # Fill the parameter dict
+    for prm in sgn.parameters.values():
+        if prm.kind is PO:  # Positional-only to positional or keyword
+            prm = prm.replace(kind=POK)
+        elif prm.kind is POK and prm.default is not _empty:  # keyword or positional to keyword only
+            prm = prm.replace(kind=KO)
+        prm_dict[prm.kind].append(prm)
 
-        if has_VP:  # Convert positional-only to positional or keyword
-            prm = Parameter(name=prm.name, kind=KO, default=prm.default, annotation=prm.annotation)
-        elif prm.kind is PO:  # Convert positional-only to positional or keyword
-            prm = Parameter(name=prm.name, kind=POK, default=prm.default, annotation=prm.annotation)
-        parameters.append(prm)
+    # Double check if the invert and exception parameters are already defined by **func**
+    invert_name = _sanitize_name('invert', func, prm_dict[KO])
+    exception_name = _sanitize_name('exception', func, prm_dict[KO])
 
-    # The signature does not contain a **kwargs-like argument; the invert parameter has not been set
-    if not has_VP:
-        parameters.append(Parameter(name='args', kind=VP))
-    if not has_VK:
-        parameters.append(Parameter(name='invert', kind=KO, default=False, annotation=bool))
-        parameters.append(Parameter(name='exception', kind=KO, default=None, annotation=ExType))
-        parameters.append(Parameter(name='kwargs', kind=VK))
+    # Ensure the parameter dict contains the following 4 parameters
+    prm_dict[KO].append(Parameter(name=invert_name, kind=KO, default=False, annotation=bool))
+    prm_dict[KO].append(Parameter(name=exception_name, kind=KO, default=None, annotation=ExType))
+    if not prm_dict[VP]:
+        prm_dict[VP].append(Parameter(name='args', kind=VP))
+    if not prm_dict[VK]:
+        prm_dict[VK].append(Parameter(name='kwargs', kind=VK))
 
-    # print(repr([p.kind for p in parameters]))
+    # Construct and return a new signature
+    parameters = chain.from_iterable(prm_dict.values())
     return Signature(parameters=parameters, return_annotation=None)
+
+
+def _sanitize_name(name: str, func: Callable, container: Container) -> str:
+    """Return **name** if it is not present in **container**, otherwise append it with ``'_'`` and try again."""  # noqa
+    if name in container:
+        warnings.warn(f"The '{name}' parameter is already defined in {aNDRepr.repr(func)}; "
+                      f"renaming new parameter to '{name}_'", RuntimeWarning)
+        return _sanitize_name(name + '_', func, container)
+    else:
+        return name
 
 
 #: A dictionary for creating format string for specific parameter kinds.

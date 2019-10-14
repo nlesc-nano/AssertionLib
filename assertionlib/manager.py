@@ -36,7 +36,6 @@ Assertions based on the builtin :mod:`operator` module.
     AssertionManager.is_
     AssertionManager.is_not
     AssertionManager.le
-    AssertionManager.length_hint
     AssertionManager.lshift
     AssertionManager.lt
     AssertionManager.matmul
@@ -113,7 +112,6 @@ Assertions based on the builtin :mod:`operator` module
 .. automethod:: AssertionManager.is_
 .. automethod:: AssertionManager.is_not
 .. automethod:: AssertionManager.le
-.. automethod:: AssertionManager.length_hint
 .. automethod:: AssertionManager.lshift
 .. automethod:: AssertionManager.lt
 .. automethod:: AssertionManager.matmul
