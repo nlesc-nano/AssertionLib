@@ -230,7 +230,7 @@ class NDRepr(reprlib.Repr):
         name, signature = self._parse_callable(obj, level)
         return f"<bound method '{name}{signature}'>"
 
-    def repr_method_descriptor(self, obj: types.MethodDescriptorType, level: int) -> str:
+    def repr_method_descriptor(self, obj: 'types.MethodDescriptorType', level: int) -> str:
         """Create a :class:`str` representation of an unbound method."""
         name, signature = self._parse_callable(obj, level)
         return f"<method '{name}{signature}'>"
