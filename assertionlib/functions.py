@@ -27,7 +27,7 @@ API
 import os
 import types
 import inspect
-from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple
+from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple, Type
 
 from .signature import generate_signature, _signature_to_str
 
@@ -68,17 +68,20 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     method, proto_signature = _generate_function(func)
 
     # Update the docstring
-    signature = proto_signature.replace(f'{func.__name__}, ', '').replace(', invert=invert', '')
+    signature = proto_signature.replace(f'{func.__name__}, ', '')
     signature = signature.replace(', *args', '').replace(', **kwargs', '')
+    signature = signature.replace(', invert=invert, exception=exception', '')
     method.__doc__ = wrap_docstring(func, signature)
 
     # Update annotations
     try:
         method.__annotations__ = func.__annotations__.copy()
+    except AttributeError:
+        method.__annotations__ = {}
+    finally:
         method.__annotations__['return'] = None
         method.__annotations__['invert'] = bool
-    except AttributeError:
-        method.__annotations__ = {'return': None, 'invert': bool}
+        method.__annotations__['exception'] = Optional[Type[Exception]]
 
     # Set the new method
     if isinstance(class_type, type):  # A class
@@ -96,7 +99,10 @@ def _generate_function(func: Callable) -> Tuple[types.FunctionType, str]:
     sgn_str = _signature_to_str(sgn, func.__name__)
 
     # Create the code object for the to-be returned function
-    code_compile = compile(f'def func{sgn}: self.assert_{sgn_str}', "<string>", "exec")
+    code_compile = compile(
+        f'def func{sgn}: self.assert_{sgn_str}',
+        "<string>", "exec"
+    )
     for code in code_compile.co_consts:
         if code.__class__.__name__ == 'code':
             break
@@ -163,12 +169,22 @@ def wrap_docstring(func: Callable, signature: Optional[str] = None) -> str:
 
     # Return a new docstring
     name = func.__qualname__ if hasattr(func, '__qualname__') else func.__name__
-    return ('Perform the following assertion: '
-            f':code:`assert {name}{signature_}`.\n\n'
-            'Setting **invert** to ``True`` will invert the assertion output.\n\n'
-            'See also\n--------\n'
-            f'{domain}:\n'
-            f'    {func_summary}\n\n')
+    return f"""Perform the following assertion: :code:`assert {name}{signature_}`.
+
+           Parameters
+           ----------
+           invert : :class:`bool`
+               Invert the output of the assertion: :code:`assert not {name}{signature_}`.
+
+           exception : :class:`type` [:exc:`Exception`], optional
+               Assert that **exception** is raised during/before the assertion operation.
+
+           See also
+           --------
+           {domain}:
+               {func_summary}
+
+           """
 
 
 #: A dictionary which translates certain __module__ values to actual valid modules
