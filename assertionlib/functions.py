@@ -29,10 +29,12 @@ API
 import os
 import types
 import inspect
+import warnings
 import textwrap
+import contextlib
 from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple, Type
 
-from .signature import generate_signature, _signature_to_str
+from .signature import generate_signature, _signature_to_str, _get_cls_annotation
 
 
 def bind_callable(class_type: Union[type, Any], func: Callable,
@@ -56,6 +58,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
 
     func : :data:`Callable<typing.Callable>`
         A callable object whose output will be asserted by the created method.
+        Bound methods are automatically unbound.
 
     name : :class:`str`, optional
         The name of the name of the new method.
@@ -66,6 +69,15 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
 
     """
     name = name if name is not None else func.__name__
+
+    # Check if func is a bound method; unbind it if it is
+    if isinstance(func, types.MethodType):
+        cls = type(func.__self__)
+        func = getattr(cls, func.__name__)
+        warnings.warn(
+            f"\nThe bound method '{func.__qualname__}' was supplied to 'bind_callable'; "
+            f"unbinding '{func.__qualname__}' and continuing", RuntimeWarning, stacklevel=2
+        )
 
     # Create the new function
     function, signature_str = _create_assertion_func(func)
@@ -85,6 +97,15 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
         function.__annotations__['return'] = None
         function.__annotations__['invert'] = bool
         function.__annotations__['exception'] = Optional[Type[Exception]]
+
+    # Create an additional annotation incase **func** is an instance- or class-method
+    with contextlib.suppress(ValueError):
+        _func_prm = inspect.signature(func).parameters
+        _self, _cls = ('self' in _func_prm, 'cls' in _func_prm)
+        if _self or _cls:
+            prm_name = _self if _self else _cls
+            key, value = _get_cls_annotation(func, prm_name)
+            function.__annotations__[key] = value
 
     # Set the new method
     if isinstance(class_type, type):  # A class
@@ -109,8 +130,8 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
         """Create a string from **prm**; ensure that callables are represented by their __name__."""
         ret = str(prm)
         default = prm.default
-        if callable(default) and default is not _empty:
-            ret = ret.replace(str(default), default.__name__)
+        if default is not _empty:
+            ret = ret.replace(str(default), 'obj')
         return ret
 
     sgn: inspect.Signature = generate_signature(func)
@@ -119,8 +140,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
 
     # Create the code object for the to-be returned function
     code_compile = compile(
-        f'def {func.__name__}{sgn_str1}: self.assert_{sgn_str2}',
-        "<string>", "exec"
+        f'def {func.__name__}{sgn_str1}: self.assert_{sgn_str2}', "<string>", "exec"
     )
     for code in code_compile.co_consts:
         if isinstance(code, types.CodeType):
@@ -142,7 +162,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
 
 
 #: A string with the (to-be formatted) docstring returned by :func:`wrap_docstring`
-BASE_DOCSTRING: str = """Perform the following assertion: :code:`assert {name}{signature}`.
+BASE_DOCSTRING: str = r"""Perform the following assertion: :code:`assert {name}{signature}`.
 
 Parameters
 ----------

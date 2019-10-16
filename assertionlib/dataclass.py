@@ -10,9 +10,11 @@ Index
 .. autosummary::
     AbstractDataClass
     AbstractDataClass._PRIVATE_ATTR
+    AbstractDataClass._HASHABLE
     AbstractDataClass.__str__
     AbstractDataClass._str_iterator
     AbstractDataClass.__eq__
+    AbstractDataClass.__hash__
     AbstractDataClass.copy
     AbstractDataClass.__copy__
     AbstractDataClass.__deepcopy__
@@ -24,9 +26,11 @@ API
 ---
 .. autoclass:: AbstractDataClass
 .. autoattribute:: AbstractDataClass._PRIVATE_ATTR
+.. autoattribute:: AbstractDataClass._HASHABLE
 .. automethod:: AbstractDataClass.__str__
 .. automethod:: AbstractDataClass._str_iterator
 .. automethod:: AbstractDataClass.__eq__
+.. automethod:: AbstractDataClass.__hash__
 .. automethod:: AbstractDataClass.copy
 .. automethod:: AbstractDataClass.__copy__
 .. automethod:: AbstractDataClass.__deepcopy__
@@ -49,12 +53,27 @@ class AbstractDataClass:
     #: printing or comparing objects.
     _PRIVATE_ATTR: FrozenSet[str] = frozenset()
 
+    #: Whether or not this class is hashable.
+    #: If ``False``, raise a :exc:`TypeError` when calling :meth:`AbstractDataClass.__hash__`.
+    _HASHABLE: bool = True
+
     def __str__(self) -> str:
-        """Return a string representation of this instance."""
+        """Return a string representation of this instance.
+
+        The string representation consists of this instances' class name in addition
+        to all (non-private) instance attributes.
+
+        See Also
+        --------
+        :attr:`AbstractDataClass._PRIVATE_ATTR`:
+            A :class:`frozenset` with the names of private instance variables.
+
+        """
         def _str(k: str, v: Any) -> str:
             return f'{k:{width}} = ' + textwrap.indent(repr(v), indent2)[len(indent2):]
 
-        width = max(len(k) for k in vars(self) if k not in self._PRIVATE_ATTR)
+        cls = type(self)
+        width = max(len(k) for k in vars(self) if k not in cls._PRIVATE_ATTR)
         indent1 = ' ' * 4
         indent2 = ' ' * (3 + width)
         iterable = self._str_iterator()
@@ -66,7 +85,7 @@ class AbstractDataClass:
 
     def _str_iterator(self) -> Iterable[Tuple[str, Any]]:
         """Return an iterable for the :meth:`AbstractDataClass.__str__` method."""
-        return ((k, v) for k, v in vars(self).items() if k not in self._PRIVATE_ATTR)
+        return ((k, v) for k, v in vars(self).items() if k not in type(self)._PRIVATE_ATTR)
 
     def __eq__(self, value: Any) -> bool:
         """Check if this instance is equivalent to **value**.
@@ -74,15 +93,21 @@ class AbstractDataClass:
         The comparison checks if the class type of this instance and **value** are identical
         and if all (non-private) instance variables are equivalent.
 
+        See Also
+        --------
+        :attr:`AbstractDataClass._PRIVATE_ATTR`:
+            A :class:`frozenset` with the names of private instance variables.
+
         """
         # Compare instance types
-        if type(self) is not type(value):
+        cls = type(self)
+        if cls is not type(value):
             return False
 
         # Compare instance attributes
         try:
             for k, v1 in vars(self).items():
-                if k in self._PRIVATE_ATTR:
+                if k in cls._PRIVATE_ATTR:
                     continue
                 v2 = getattr(value, k)
                 assert v1 == v2
@@ -96,15 +121,31 @@ class AbstractDataClass:
 
         The returned hash is constructed from two components:
         * The hash of this instances' class type.
-        * The hashes of all key/value pairs in this instances' attributes.
+        * The hashes of all key/value pairs in this instances' (non-private) attributes.
+
 
         If an unhashable instance attribute is encountered, *e.g.* a :class:`list`,
         then its :func:`id` is used for hashing.
 
+        This method will raise a :exc:`TypeError` if the class attribute
+        :attr:`AbstractDataClass._HASHABLE` is ``False``.
+
+        See Also
+        --------
+        :attr:`AbstractDataClass._PRIVATE_ATTR`:
+            A :class:`frozenset` with the names of private instance variables.
+
+        :attr:`AbstractDataClass._HASHABLE`:
+            Whether or not this class is hashable.
+
         """
-        ret = hash(type(self))
+        cls = type(self)
+        if not cls._HASHABLE:
+            raise TypeError(f"unhashable type: '{cls.__name__}'")
+
+        ret = hash(cls)
         for k, v in vars(self).items():
-            if k in self._PRIVATE_ATTR:
+            if k in cls._PRIVATE_ATTR:
                 continue
             try:
                 ret ^= hash((k, v))
@@ -142,9 +183,6 @@ class AbstractDataClass:
     def as_dict(self, return_private: bool = False) -> Dict[str, Any]:
         """Construct a dictionary from this instance with all non-private instance variables.
 
-        No attributes specified in :data:`AbstractDataClass._PRIVATE_ATTR` will be included in
-        the to-be returned dictionary.
-
         Parameters
         ----------
         return_private : :class:`bool`
@@ -162,10 +200,14 @@ class AbstractDataClass:
         :meth:`AbstractDataClass.from_dict`:
             Construct a instance of this objects' class from a dictionary with keyword arguments.
 
+        :attr:`AbstractDataClass._PRIVATE_ATTR`:
+            A :class:`frozenset` with the names of private instance variables.
+
         """
+        cls = type(self)
         ret = deepcopy(vars(self))
         if not return_private:
-            for key in self._PRIVATE_ATTR:
+            for key in cls._PRIVATE_ATTR:
                 del ret[key]
         return ret
 

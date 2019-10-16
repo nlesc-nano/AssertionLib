@@ -107,6 +107,13 @@ def test_add_to_instance() -> None:
     assertion_.hasattr(assertion_, 'bob')
     assertion_.bob(1, 2)
 
+    try:
+        assertion_.add_to_instance(func)
+    except AttributeError:
+        pass
+    else:
+        raise AssertionError
+
 
 def test_assert_() -> None:
     """Test :meth:`AssertionManager.assert_`."""
