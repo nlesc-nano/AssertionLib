@@ -37,7 +37,6 @@ API
 """
 
 import textwrap
-from types import FunctionType
 from copy import deepcopy
 from typing import (Any, Dict, FrozenSet, Iterable, Tuple)
 
@@ -70,10 +69,17 @@ class AbstractDataClass:
         return ((k, v) for k, v in vars(self).items() if k not in self._PRIVATE_ATTR)
 
     def __eq__(self, value: Any) -> bool:
-        """Check if this instance is equivalent to **value** by comparing instance variables."""
+        """Check if this instance is equivalent to **value**.
+
+        The comparison checks if the class type of this instance and **value** are identical
+        and if all (non-private) instance variables are equivalent.
+
+        """
+        # Compare instance types
         if type(self) is not type(value):
             return False
 
+        # Compare instance attributes
         try:
             for k, v1 in vars(self).items():
                 if k in self._PRIVATE_ATTR:
@@ -84,6 +90,27 @@ class AbstractDataClass:
             return False
         else:
             return True
+
+    def __hash__(self) -> int:
+        """Return the hash of this instance.
+
+        The returned hash is constructed from two components:
+        * The hash of this instances' class type.
+        * The hashes of all key/value pairs in this instances' attributes.
+
+        If an unhashable instance attribute is encountered, *e.g.* a :class:`list`,
+        then its :func:`id` is used for hashing.
+
+        """
+        ret = hash(type(self))
+        for k, v in vars(self).items():
+            if k in self._PRIVATE_ATTR:
+                continue
+            try:
+                ret ^= hash((k, v))
+            except TypeError:
+                ret ^= hash((k, id(v)))
+        return ret
 
     def copy(self, deep: bool = False) -> 'AbstractDataClass':
         """Return a deep or shallow copy of this instance.
@@ -179,32 +206,31 @@ class AbstractDataClass:
         --------
         .. code:: python
 
-            >>> class sub_class(AbstractDataClass)
+            >>> class SubClass(AbstractDataClass):
             ...
             ...     @AbstractDataClass.inherit_annotations()
-            ...     def as_dict(self, return_private=False):
-            ...         pass
+            ...     def __copy__(self): pass
 
-            >>> sub_class.as_dict.__doc__ == AbstractDataClass.as_dict.__doc__
-            True
+            >>> print(SubClass.__copy__.__doc__)
+            Return a shallow copy of this instance; see :meth:`SubClass.copy`.
 
-            >>> sub_class.as_dict.__annotations__ == AbstractDataClass.as_dict.__annotations__
-            True
+            >>> print(SubClass.__copy__.__annotations__)
+            {'return': 'SubClass'}
 
         """
-        def decorator(sub_attr: FunctionType) -> FunctionType:
-            super_attr = getattr(cls, sub_attr.__name__)
-            sub_cls_name = sub_attr.__qualname__.split('.')[0]
+        def decorator(func: type) -> type:
+            cls_func = getattr(cls, func.__name__)
+            sub_cls_name = func.__qualname__.split('.')[0]
 
             # Update annotations
-            if not sub_attr.__annotations__:
-                sub_attr.__annotations__ = dct = super_attr.__annotations__.copy()
-                if 'return' in dct and dct['return'] == cls.__name__:
-                    dct['return'] = sub_attr.__qualname__.split('.')[0]
+            if not func.__annotations__:
+                func.__annotations__ = dct = cls_func.__annotations__.copy()
+                if 'return' in dct and dct['return'] in (cls, cls.__name__):
+                    dct['return'] = sub_cls_name
 
             # Update docstring
-            if sub_attr.__doc__ is None:
-                sub_attr.__doc__ = super_attr.__doc__.replace(cls.__name__, sub_cls_name)
+            if func.__doc__ is None:
+                func.__doc__ = cls_func.__doc__.replace(cls.__name__, sub_cls_name)
 
-            return sub_attr
+            return func
         return decorator
