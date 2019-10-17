@@ -30,13 +30,14 @@ import os
 import types
 import inspect
 import textwrap
+import contextlib
 from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple, Type
 
-from .signature import generate_signature, _signature_to_str
+from .signature import generate_signature, _signature_to_str, _get_cls_annotation
 
 
 def bind_callable(class_type: Union[type, Any], func: Callable,
-                  name: Optional[str] = None) -> None:
+                  name: Optional[str] = None, warn: bool = True) -> None:
     """Take a callable and use it to create a new assertion method for **class_type**.
 
     The created callable will have the same signature as **func** except for one additional
@@ -77,14 +78,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     function.__doc__ = create_assertion_doc(func, signature_str)
 
     # Update annotations
-    try:
-        function.__annotations__ = func.__annotations__.copy()
-    except AttributeError:
-        function.__annotations__ = {}
-    finally:
-        function.__annotations__['return'] = None
-        function.__annotations__['invert'] = bool
-        function.__annotations__['exception'] = Optional[Type[Exception]]
+    _set_annotations(function, func)
 
     # Set the new method
     if isinstance(class_type, type):  # A class
@@ -92,6 +86,27 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     else:  # A class instance
         method = types.MethodType(function, class_type)
         setattr(class_type, name, method)
+
+
+def _set_annotations(func_new: Callable, func_old: Callable) -> None:
+    """Assign Annotations to the assertion function in :func:`bind_callable`."""
+    try:
+        func_new.__annotations__ = func_old.__annotations__.copy()
+    except AttributeError:
+        func_new.__annotations__ = {}
+    finally:
+        func_new.__annotations__['return'] = None
+        func_new.__annotations__['invert'] = bool
+        func_new.__annotations__['exception'] = Optional[Type[Exception]]
+
+    # Create an additional annotation incase **func_old** is an instance- or class-method
+    with contextlib.suppress(ValueError):
+        prm = inspect.signature(func_old).parameters
+        _self, _cls = ('self' in prm, 'cls' in prm)
+        if _self or _cls:
+            prm_name = _self if _self else _cls
+            key, value = _get_cls_annotation(func_old, prm_name)
+            func_new.__annotations__[key] = value
 
 
 def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
@@ -109,8 +124,8 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
         """Create a string from **prm**; ensure that callables are represented by their __name__."""
         ret = str(prm)
         default = prm.default
-        if callable(default) and default is not _empty:
-            ret = ret.replace(str(default), default.__name__)
+        if default is not _empty:
+            ret = ret.replace(str(default), 'obj')
         return ret
 
     sgn: inspect.Signature = generate_signature(func)
@@ -119,8 +134,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
 
     # Create the code object for the to-be returned function
     code_compile = compile(
-        f'def {func.__name__}{sgn_str1}: self.assert_{sgn_str2}',
-        "<string>", "exec"
+        f'def {func.__name__}{sgn_str1}: self.assert_{sgn_str2}', "<string>", "exec"
     )
     for code in code_compile.co_consts:
         if isinstance(code, types.CodeType):
@@ -142,7 +156,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
 
 
 #: A string with the (to-be formatted) docstring returned by :func:`wrap_docstring`
-BASE_DOCSTRING: str = """Perform the following assertion: :code:`assert {name}{signature}`.
+BASE_DOCSTRING: str = r"""Perform the following assertion: :code:`assert {name}{signature}`.
 
 Parameters
 ----------

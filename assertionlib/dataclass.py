@@ -10,9 +10,11 @@ Index
 .. autosummary::
     AbstractDataClass
     AbstractDataClass._PRIVATE_ATTR
+    AbstractDataClass._HASHABLE
     AbstractDataClass.__str__
     AbstractDataClass._str_iterator
     AbstractDataClass.__eq__
+    AbstractDataClass.__hash__
     AbstractDataClass.copy
     AbstractDataClass.__copy__
     AbstractDataClass.__deepcopy__
@@ -24,9 +26,11 @@ API
 ---
 .. autoclass:: AbstractDataClass
 .. autoattribute:: AbstractDataClass._PRIVATE_ATTR
+.. autoattribute:: AbstractDataClass._HASHABLE
 .. automethod:: AbstractDataClass.__str__
 .. automethod:: AbstractDataClass._str_iterator
 .. automethod:: AbstractDataClass.__eq__
+.. automethod:: AbstractDataClass.__hash__
 .. automethod:: AbstractDataClass.copy
 .. automethod:: AbstractDataClass.__copy__
 .. automethod:: AbstractDataClass.__deepcopy__
@@ -37,8 +41,7 @@ API
 """
 
 import textwrap
-from types import FunctionType
-from copy import deepcopy
+import copy
 from typing import (Any, Dict, FrozenSet, Iterable, Tuple)
 
 
@@ -50,8 +53,23 @@ class AbstractDataClass:
     #: printing or comparing objects.
     _PRIVATE_ATTR: FrozenSet[str] = frozenset()
 
+    #: Whether or not this class is hashable.
+    #: If ``False``, raise a :exc:`TypeError` when calling :meth:`AbstractDataClass.__hash__`.
+    _HASHABLE: bool = True
+
     def __str__(self) -> str:
-        """Return a string representation of this instance."""
+        """Return a string representation of this instance.
+
+        The string representation consists of this instances' class name in addition
+        to all (non-private) instance attributes.
+
+        See Also
+        --------
+        :attr:`AbstractDataClass._PRIVATE_ATTR`:
+            A :class:`frozenset` with the names of private instance variables.
+
+        """
+        # Use aNDRepr.repr() for callables as a precaution against recursive __str__ calls
         def _str(k: str, v: Any) -> str:
             return f'{k:{width}} = ' + textwrap.indent(repr(v), indent2)[len(indent2):]
 
@@ -70,10 +88,22 @@ class AbstractDataClass:
         return ((k, v) for k, v in vars(self).items() if k not in self._PRIVATE_ATTR)
 
     def __eq__(self, value: Any) -> bool:
-        """Check if this instance is equivalent to **value** by comparing instance variables."""
+        """Check if this instance is equivalent to **value**.
+
+        The comparison checks if the class type of this instance and **value** are identical
+        and if all (non-private) instance variables are equivalent.
+
+        See Also
+        --------
+        :attr:`AbstractDataClass._PRIVATE_ATTR`:
+            A :class:`frozenset` with the names of private instance variables.
+
+        """
+        # Compare instance types
         if type(self) is not type(value):
             return False
 
+        # Compare instance attributes
         try:
             for k, v1 in vars(self).items():
                 if k in self._PRIVATE_ATTR:
@@ -84,6 +114,43 @@ class AbstractDataClass:
             return False
         else:
             return True
+
+    def __hash__(self) -> int:
+        """Return the hash of this instance.
+
+        The returned hash is constructed from two components:
+        * The hash of this instances' class type.
+        * The hashes of all key/value pairs in this instances' (non-private) attributes.
+
+
+        If an unhashable instance attribute is encountered, *e.g.* a :class:`list`,
+        then its :func:`id` is used for hashing.
+
+        This method will raise a :exc:`TypeError` if the class attribute
+        :attr:`AbstractDataClass._HASHABLE` is ``False``.
+
+        See Also
+        --------
+        :attr:`AbstractDataClass._PRIVATE_ATTR`:
+            A :class:`frozenset` with the names of private instance variables.
+
+        :attr:`AbstractDataClass._HASHABLE`:
+            Whether or not this class is hashable.
+
+        """
+        cls = type(self)
+        if not cls._HASHABLE:
+            raise TypeError(f"unhashable type: '{cls.__name__}'")
+
+        ret = hash(cls)
+        for k, v in vars(self).items():
+            if k in self._PRIVATE_ATTR:
+                continue
+            try:
+                ret ^= hash((k, v))
+            except TypeError:
+                ret ^= hash((k, id(v)))
+        return ret
 
     def copy(self, deep: bool = False) -> 'AbstractDataClass':
         """Return a deep or shallow copy of this instance.
@@ -101,7 +168,7 @@ class AbstractDataClass:
         """
         cls = type(self)
         ret = cls.__new__(cls)
-        ret.__dict__ = vars(self).copy() if not deep else deepcopy(vars(self))
+        ret.__dict__ = vars(self).copy() if not deep else copy.deepcopy(vars(self))
         return ret
 
     def __copy__(self) -> 'AbstractDataClass':
@@ -114,9 +181,6 @@ class AbstractDataClass:
 
     def as_dict(self, return_private: bool = False) -> Dict[str, Any]:
         """Construct a dictionary from this instance with all non-private instance variables.
-
-        No attributes specified in :data:`AbstractDataClass._PRIVATE_ATTR` will be included in
-        the to-be returned dictionary.
 
         Parameters
         ----------
@@ -135,12 +199,12 @@ class AbstractDataClass:
         :meth:`AbstractDataClass.from_dict`:
             Construct a instance of this objects' class from a dictionary with keyword arguments.
 
+        :attr:`AbstractDataClass._PRIVATE_ATTR`:
+            A :class:`frozenset` with the names of private instance variables.
+
         """
-        ret = deepcopy(vars(self))
-        if not return_private:
-            for key in self._PRIVATE_ATTR:
-                del ret[key]
-        return ret
+        skip_attr = self._PRIVATE_ATTR if not return_private else set()
+        return {k: copy.copy(v) for k, v in vars(self).items() if k not in skip_attr}
 
     @classmethod
     def from_dict(cls, dct: Dict[str, Any]) -> 'AbstractDataClass':
@@ -179,32 +243,31 @@ class AbstractDataClass:
         --------
         .. code:: python
 
-            >>> class sub_class(AbstractDataClass)
+            >>> class SubClass(AbstractDataClass):
             ...
             ...     @AbstractDataClass.inherit_annotations()
-            ...     def as_dict(self, return_private=False):
-            ...         pass
+            ...     def __copy__(self): pass
 
-            >>> sub_class.as_dict.__doc__ == AbstractDataClass.as_dict.__doc__
-            True
+            >>> print(SubClass.__copy__.__doc__)
+            Return a shallow copy of this instance; see :meth:`SubClass.copy`.
 
-            >>> sub_class.as_dict.__annotations__ == AbstractDataClass.as_dict.__annotations__
-            True
+            >>> print(SubClass.__copy__.__annotations__)
+            {'return': 'SubClass'}
 
         """
-        def decorator(sub_attr: FunctionType) -> FunctionType:
-            super_attr = getattr(cls, sub_attr.__name__)
-            sub_cls_name = sub_attr.__qualname__.split('.')[0]
+        def decorator(func: type) -> type:
+            cls_func = getattr(cls, func.__name__)
+            sub_cls_name = func.__qualname__.split('.')[0]
 
             # Update annotations
-            if not sub_attr.__annotations__:
-                sub_attr.__annotations__ = dct = super_attr.__annotations__.copy()
-                if 'return' in dct and dct['return'] == cls.__name__:
-                    dct['return'] = sub_attr.__qualname__.split('.')[0]
+            if not func.__annotations__:
+                func.__annotations__ = dct = cls_func.__annotations__.copy()
+                if 'return' in dct and dct['return'] in (cls, cls.__name__):
+                    dct['return'] = sub_cls_name
 
             # Update docstring
-            if sub_attr.__doc__ is None:
-                sub_attr.__doc__ = super_attr.__doc__.replace(cls.__name__, sub_cls_name)
+            if func.__doc__ is None:
+                func.__doc__ = cls_func.__doc__.replace(cls.__name__, sub_cls_name)
 
-            return sub_attr
+            return func
         return decorator
