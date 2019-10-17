@@ -5,9 +5,8 @@ env:
     global:
         - COMMIT_AUTHOR_EMAIL: b.f.van.beek@vu.nl
     matrix:
-        - PYTHON_VERSION='python=3.6'
-        - PYTHON_VERSION='python=3.7'
-        - PYTHON_VERSION='-c conda-forge python=3.8'
+        - PYTHON_VERSION=3.6
+        - PYTHON_VERSION=3.7
 
 install:
     # Install python via anaconda
@@ -22,7 +21,7 @@ install:
     - conda info -a
 
     # Install virtual enviroment
-    - conda create -n assertionlib ${PYTHON_VERSION}
+    - conda create -n assertionlib python=${PYTHON_VERSION}
     - source activate assertionlib
 
     # Install the tests
