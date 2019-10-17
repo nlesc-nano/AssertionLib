@@ -25,8 +25,14 @@ API
 from typing import Callable, Optional, Type, Dict, Container, Union, Tuple
 from inspect import Parameter, Signature, signature, _empty, _ParameterKind
 from itertools import chain
-from collections import OrderedDict
+from sys import version_info
 import warnings
+
+if version_info.minor < 7:
+    from collections import OrderedDict
+else:  # Dictionaries are ordered starting from python 3.7
+    OrderedDict = dict
+
 
 from .ndrepr import aNDRepr
 
@@ -115,7 +121,7 @@ def generate_signature(func: Callable) -> Signature:
     except ValueError:  # Not all callables have a signature which can be read.
         return BACK_SIGNATURE
 
-    prm_dict = OrderedDict({
+    prm_dict: Dict[_ParameterKind, list] = OrderedDict({
         POK: [Parameter(name='self', kind=POK)], VP: [], KO: [], VK: []
     })
 

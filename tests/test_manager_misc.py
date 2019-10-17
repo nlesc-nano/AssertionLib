@@ -87,6 +87,16 @@ def test_as_dict() -> None:
     assertion.eq(vars(assertion.repr_instance), vars(new.repr_instance))
 
 
+class _TestClass:
+    def instance_meth(self): return True
+
+    @classmethod
+    def class_meth(cls): return True
+
+    @staticmethod
+    def static_meth(): return True
+
+
 def test_add_to_instance() -> None:
     """Test :meth:`AssertionManager.add_to_instance`."""
     def func(a, b): return True
@@ -114,6 +124,13 @@ def test_add_to_instance() -> None:
     else:
         raise AssertionError
 
+    assertion_.add_to_instance(_TestClass.instance_meth)
+    assertion_.add_to_instance(_TestClass.class_meth)
+    assertion_.add_to_instance(_TestClass.static_meth)
+    assertion_.hasattr(assertion_, 'instance_meth')
+    assertion_.hasattr(assertion_, 'class_meth')
+    assertion_.hasattr(assertion_, 'static_meth')
+
 
 def test_assert_() -> None:
     """Test :meth:`AssertionManager.assert_`."""
@@ -139,6 +156,16 @@ def test_assert_() -> None:
 
 
 def test_repr() -> None:
+    """Test :meth:`AssertionManager.__repr__`."""
+    assertion.is_(AssertionManager.__repr__, AssertionManager.__str__)
+
+    ref = 'AssertionManager(\n    repr_instance = <assertionlib.ndrepr.NDRepr object '
+    output = repr(assertion).split('at')[0]
+
+    assertion.eq(ref, output)
+
+
+def test_hash() -> None:
     """Test :meth:`AssertionManager.__repr__`."""
     assertion.is_(AssertionManager.__repr__, AssertionManager.__str__)
 

@@ -9,7 +9,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *****
 * `bind_callable()` can now handle all types of keyword arguments.
 * `bind_callable()` can now handle methods.
-* `bind_callable()` now converts bon-builtin bound methods into their non-bound counterpart.
+* Added Python 3.8 to the to-be tested Python versions.
 
 
 0.1.1

@@ -41,7 +41,7 @@ API
 """
 
 import textwrap
-from copy import deepcopy
+import copy
 from typing import (Any, Dict, FrozenSet, Iterable, Tuple)
 
 
@@ -69,11 +69,11 @@ class AbstractDataClass:
             A :class:`frozenset` with the names of private instance variables.
 
         """
+        # Use aNDRepr.repr() for callables as a precaution against recursive __str__ calls
         def _str(k: str, v: Any) -> str:
             return f'{k:{width}} = ' + textwrap.indent(repr(v), indent2)[len(indent2):]
 
-        cls = type(self)
-        width = max(len(k) for k in vars(self) if k not in cls._PRIVATE_ATTR)
+        width = max(len(k) for k in vars(self) if k not in self._PRIVATE_ATTR)
         indent1 = ' ' * 4
         indent2 = ' ' * (3 + width)
         iterable = self._str_iterator()
@@ -85,7 +85,7 @@ class AbstractDataClass:
 
     def _str_iterator(self) -> Iterable[Tuple[str, Any]]:
         """Return an iterable for the :meth:`AbstractDataClass.__str__` method."""
-        return ((k, v) for k, v in vars(self).items() if k not in type(self)._PRIVATE_ATTR)
+        return ((k, v) for k, v in vars(self).items() if k not in self._PRIVATE_ATTR)
 
     def __eq__(self, value: Any) -> bool:
         """Check if this instance is equivalent to **value**.
@@ -100,14 +100,13 @@ class AbstractDataClass:
 
         """
         # Compare instance types
-        cls = type(self)
-        if cls is not type(value):
+        if type(self) is not type(value):
             return False
 
         # Compare instance attributes
         try:
             for k, v1 in vars(self).items():
-                if k in cls._PRIVATE_ATTR:
+                if k in self._PRIVATE_ATTR:
                     continue
                 v2 = getattr(value, k)
                 assert v1 == v2
@@ -145,7 +144,7 @@ class AbstractDataClass:
 
         ret = hash(cls)
         for k, v in vars(self).items():
-            if k in cls._PRIVATE_ATTR:
+            if k in self._PRIVATE_ATTR:
                 continue
             try:
                 ret ^= hash((k, v))
@@ -169,7 +168,7 @@ class AbstractDataClass:
         """
         cls = type(self)
         ret = cls.__new__(cls)
-        ret.__dict__ = vars(self).copy() if not deep else deepcopy(vars(self))
+        ret.__dict__ = vars(self).copy() if not deep else copy.deepcopy(vars(self))
         return ret
 
     def __copy__(self) -> 'AbstractDataClass':
@@ -204,12 +203,8 @@ class AbstractDataClass:
             A :class:`frozenset` with the names of private instance variables.
 
         """
-        cls = type(self)
-        ret = deepcopy(vars(self))
-        if not return_private:
-            for key in cls._PRIVATE_ATTR:
-                del ret[key]
-        return ret
+        skip_attr = self._PRIVATE_ATTR if not return_private else set()
+        return {k: copy.copy(v) for k, v in vars(self).items() if k not in skip_attr}
 
     @classmethod
     def from_dict(cls, dct: Dict[str, Any]) -> 'AbstractDataClass':

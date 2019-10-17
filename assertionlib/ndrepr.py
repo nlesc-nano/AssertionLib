@@ -184,7 +184,7 @@ class NDRepr(reprlib.Repr):
         self.maxstring: int = 80
 
         # New instance attributes
-        self.maxSignature: int = self.maxstring - 15
+        self.maxSignature: int = self.maxstring - 20
         self.maxException: int = 1000
         self.maxfloat: int = 4
         self.maxndarray: int = 6

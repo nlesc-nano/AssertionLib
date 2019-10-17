@@ -73,7 +73,7 @@ def test_Signature() -> None:
     sgn2 = inspect.signature(np.testing.assert_allclose)
 
     ref1 = '(obj, /)'
-    ref2 = "(actual, desired, rtol=1e-07, atol=0, equal_nan=True, err_msg='', ...)"
+    ref2 = "(actual, desired, rtol=1e-07, atol=0, equal_nan=True, ...)"
     str1 = aNDRepr.repr(sgn1)
     str2 = aNDRepr.repr(sgn2)
 

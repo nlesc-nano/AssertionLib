@@ -219,6 +219,7 @@ class _Str:
 
 class _NoneException(Exception):
     """An empty exception used by :meth:`AssertionManager.assert_` incase the **exception** parameter is ``None``."""  # noqa
+    def __bool__(self): return False
 
 
 class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
@@ -253,7 +254,9 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     """
 
-    _PRIVATE_ATTR: FrozenSet[str] = frozenset({'_repr_fallback', '_maxstring_fallback'})
+    _PRIVATE_ATTR: FrozenSet[str] = frozenset({
+        '_repr_fallback', '_maxstring_fallback', '_PRIVATE_ATTR'
+    })
 
     def __init__(self, repr_instance: Optional[reprlib.Repr] = aNDRepr) -> None:
         """Initialize an :class:`AssertionManager` instance."""
@@ -341,22 +344,24 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             err = self._get_exc_message(ex, func, *args, output=output, **kwargs)
             raise AssertionError(err).with_traceback(ex.__traceback__)
 
-    def add_to_instance(self, func: Callable, override_attr: bool = False,
-                        name: Optional[str] = None) -> None:
+    def add_to_instance(self, func: Callable, name: Optional[str] = None,
+                        override_attr: bool = False) -> None:
         """Add a new custom assertion method to this instance.
+
+        The new method name is added to :attr:`AssertionManager._PRIVATE_ATTR`.
 
         Parameters
         ----------
         func : :data:`Callable<typing.Callable>`
             The callable whose output will be asserted in the to-be created method.
 
-        override_attr : :class:`bool`
-            If ``False``, raise an :exc:`AttributeError` if a method with the same name already
-            exists in this instance.
-
         name : :class:`str`, optional
             The name of the new method.
             If ``None``, use the name of **func**.
+
+        override_attr : :class:`bool`
+            If ``False``, raise an :exc:`AttributeError` if a method with the same name already
+            exists in this instance.
 
 
         :rtype: :data:`None`
@@ -368,11 +373,18 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             exists in this instance.
 
         """
-        meth_name = name if name is not None else func.__name__
-        if not override_attr and hasattr(self, meth_name):
+        name = name if name is not None else func.__name__
+        if not override_attr and hasattr(self, name):
             raise AttributeError(f"'{self.__class__.__name__}' instance already has an attribute "
-                                 f"by the name of '{meth_name}'")
+                                 f"by the name of '{name}'")
         bind_callable(self, func, name)
+
+        # Add the name as private attribute
+        try:
+            self._PRIVATE_ATTR.add(name)
+        except AttributeError:
+            self._PRIVATE_ATTR = set(self._PRIVATE_ATTR)
+            self._PRIVATE_ATTR.add(name)
 
     # Private methods
 
