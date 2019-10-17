@@ -22,19 +22,18 @@ API
 
 """
 
+from sys import version_info
 from typing import Callable, Optional, Type, Dict, Container, Union, Tuple
 from inspect import Parameter, Signature, signature, _empty, _ParameterKind
 from itertools import chain
-from sys import version_info
 import warnings
 
+from .ndrepr import aNDRepr
+
 if version_info.minor < 7:
-    from collections import OrderedDict
+    from collections import OrderedDict  # noqa
 else:  # Dictionaries are ordered starting from python 3.7
     OrderedDict = dict
-
-
-from .ndrepr import aNDRepr
 
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
 POK: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD
