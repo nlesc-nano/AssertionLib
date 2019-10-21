@@ -5,6 +5,13 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.1.3
+*****
+* Added precautions against recursive calls of `AbstractDataClass.__repr__()`.
+* Fixed a bug where `AbstractDataClass.__repr__()` would crash when passing empty instances.
+* Deleted `AbstractDataClass.__str__()`; rely on `AbstractDataClass.__repr__()` for printing.
+
+
 0.1.2
 *****
 * `bind_callable()` can now handle all types of keyword arguments.

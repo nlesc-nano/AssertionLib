@@ -42,7 +42,46 @@ API
 
 import textwrap
 import copy
-from typing import (Any, Dict, FrozenSet, Iterable, Tuple)
+from typing import (Any, Dict, FrozenSet, Iterable, Tuple, Callable)
+from _thread import get_ident
+
+__all__ = ['AbstractDataClass']
+
+
+def recursive_repr(func: Callable) -> Callable:
+    """A modified version of the :func:`reprlib.recursive_repr` decorator.
+
+    Utilizes the passed instances' id (produced by :meth:`object.__repr__`) as fillvalue.
+
+    See Also
+    --------
+    :func:`reprlib.recursive_repr`:
+        Decorator for :meth:`__repr__<object.__repr__>` methods to detect recursive calls
+        within the same thread.
+        If a recursive call is made, the **fillvalue** is returned, otherwise,
+        the usual :meth:`__repr__<object.__repr__>` call is made.
+
+    """
+    repr_running = set()
+
+    def wrapper(self):
+        key = id(self), get_ident()
+        if key in repr_running:  # Use the hexed ID of the passed instance as fill value
+            return object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]
+        repr_running.add(key)
+        try:
+            result = func(self)
+        finally:
+            repr_running.discard(key)
+        return result
+
+    # Can't use functools.wraps() here because of bootstrap issues
+    wrapper.__module__ = getattr(func, '__module__')
+    wrapper.__doc__ = getattr(func, '__doc__')
+    wrapper.__name__ = getattr(func, '__name__')
+    wrapper.__qualname__ = getattr(func, '__qualname__')
+    wrapper.__annotations__ = getattr(func, '__annotations__', {})
+    return wrapper
 
 
 class AbstractDataClass:
@@ -57,7 +96,8 @@ class AbstractDataClass:
     #: If ``False``, raise a :exc:`TypeError` when calling :meth:`AbstractDataClass.__hash__`.
     _HASHABLE: bool = True
 
-    def __str__(self) -> str:
+    @recursive_repr
+    def __repr__(self) -> str:
         """Return a string representation of this instance.
 
         The string representation consists of this instances' class name in addition
@@ -73,7 +113,11 @@ class AbstractDataClass:
         def _str(k: str, v: Any) -> str:
             return f'{k:{width}} = ' + textwrap.indent(repr(v), indent2)[len(indent2):]
 
-        width = max(len(k) for k in vars(self) if k not in self._PRIVATE_ATTR)
+        try:
+            width = max(len(k) for k in vars(self) if k not in self._PRIVATE_ATTR)
+        except ValueError:  # Raised if this instance has no instance attributes
+            return f'{self.__class__.__name__}()'
+
         indent1 = ' ' * 4
         indent2 = ' ' * (3 + width)
         iterable = self._str_iterator()
@@ -81,10 +125,8 @@ class AbstractDataClass:
 
         return f'{self.__class__.__name__}(\n{textwrap.indent(ret, indent1)}\n)'
 
-    __repr__ = __str__
-
     def _str_iterator(self) -> Iterable[Tuple[str, Any]]:
-        """Return an iterable for the :meth:`AbstractDataClass.__str__` method."""
+        """Return an iterable for the :meth:`AbstractDataClass.__repr__` method."""
         return ((k, v) for k, v in vars(self).items() if k not in self._PRIVATE_ATTR)
 
     def __eq__(self, value: Any) -> bool:
