@@ -160,16 +160,16 @@ import builtins
 import textwrap
 import operator
 from string import ascii_lowercase
-from typing import Callable, Any, Type, FrozenSet, Optional, Mapping, Sequence
+from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, allclose, str_eq
-from .dataclass import AbstractDataClass
+from .dataclass import AbstractDataClass, _MetaADC
 
 __all__ = ['AssertionManager', 'assertion']
 
 
-class _MetaAM(type):
+class _MetaAM(_MetaADC):
     """The meta-class of :class:`AssertionManager`.
 
     The :meth:`_MetaAM.__new__` method iterates over (almost) all functions in the :mod:`operator`
@@ -254,12 +254,11 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     """
 
-    _PRIVATE_ATTR: FrozenSet[str] = frozenset({
-        '_repr_fallback', '_maxstring_fallback', '_PRIVATE_ATTR'
-    })
+    _PRIVATE_ATTR: Set[str] = frozenset({'_repr_fallback', '_maxstring_fallback'})
 
     def __init__(self, repr_instance: Optional[reprlib.Repr] = aNDRepr) -> None:
         """Initialize an :class:`AssertionManager` instance."""
+        super().__init__()
         self.repr_instance = repr_instance
 
         # Back values for AssertionManager.repr and AssertionManager.maxstring
@@ -380,11 +379,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         bind_callable(self, func, name)
 
         # Add the name as private attribute
-        try:
-            self._PRIVATE_ATTR.add(name)
-        except AttributeError:
-            self._PRIVATE_ATTR = set(self._PRIVATE_ATTR)
-            self._PRIVATE_ATTR.add(name)
+        self._PRIVATE_ATTR.add(name)
 
     # Private methods
 

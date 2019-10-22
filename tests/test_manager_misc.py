@@ -157,19 +157,6 @@ def test_assert_() -> None:
 
 def test_repr() -> None:
     """Test :meth:`AssertionManager.__repr__`."""
-    assertion.is_(AssertionManager.__repr__, AssertionManager.__str__)
-
     ref = 'AssertionManager(\n    repr_instance = <assertionlib.ndrepr.NDRepr object '
     output = repr(assertion).split('at')[0]
-
-    assertion.eq(ref, output)
-
-
-def test_hash() -> None:
-    """Test :meth:`AssertionManager.__repr__`."""
-    assertion.is_(AssertionManager.__repr__, AssertionManager.__str__)
-
-    ref = 'AssertionManager(\n    repr_instance = <assertionlib.ndrepr.NDRepr object '
-    output = repr(assertion).split('at')[0]
-
     assertion.eq(ref, output)
