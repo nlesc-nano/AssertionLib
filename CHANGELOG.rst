@@ -5,6 +5,13 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.1.4
+*****
+* Reduced the `AssertionManager()` traceback verbosity.
+* Added the `AssertionManager.__call__()` method which simply asserts a supplied value.
+* A couple of codestyle and consistency improvements.
+
+
 0.1.3
 *****
 * Added precautions against recursive calls of `AbstractDataClass.__repr__()`, `__eq__()` and `__hash__()`.

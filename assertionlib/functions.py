@@ -72,7 +72,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     function, signature_str = _create_assertion_func(func)
 
     # Update the docstring and sanitize the signature
-    signature_str = signature_str.replace(f'(func, ', '(')
+    signature_str = signature_str.replace('(func, ', '(')
     signature_str = signature_str.replace(', *args', '').replace(', **kwargs', '')
     signature_str = signature_str.replace(', invert=invert, exception=exception', '')
     function.__doc__ = create_assertion_doc(func, signature_str)
@@ -84,29 +84,25 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     if isinstance(class_type, type):  # A class
         setattr(class_type, name, function)
     else:  # A class instance
-        method = types.MethodType(function, class_type)
+        method = types.MethodType(function, class_type)  # Create a bound method
         setattr(class_type, name, method)
 
 
 def _set_annotations(func_new: Callable, func_old: Callable) -> None:
     """Assign Annotations to the assertion function in :func:`bind_callable`."""
-    try:
-        func_new.__annotations__ = func_old.__annotations__.copy()
-    except AttributeError:
-        func_new.__annotations__ = {}
-    finally:
-        func_new.__annotations__['return'] = None
-        func_new.__annotations__['invert'] = bool
-        func_new.__annotations__['exception'] = Optional[Type[Exception]]
+    func_new.__annotations__ = annotations = getattr(func_old, '__annotations__', {}).copy()
+    annotations['return'] = None
+    annotations['invert'] = bool
+    annotations['exception'] = Optional[Type[Exception]]
 
     # Create an additional annotation incase **func_old** is an instance- or class-method
-    with contextlib.suppress(ValueError):
+    with contextlib.suppress(ValueError):  # Raised if **func_old** has no readable signature
         prm = inspect.signature(func_old).parameters
-        _self, _cls = ('self' in prm, 'cls' in prm)
-        if _self or _cls:
-            prm_name = _self if _self else _cls
-            key, value = _get_cls_annotation(func_old, prm_name)
-            func_new.__annotations__[key] = value
+        has_self, has_cls = ('self' in prm, 'cls' in prm)
+        if has_self or has_cls:
+            name = 'self' if has_cls else 'cls'
+            key, value = _get_cls_annotation(func_old, name)
+            annotations[key] = value
 
 
 def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
@@ -134,7 +130,8 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
 
     # Create the code object for the to-be returned function
     code_compile = compile(
-        f'def {func.__name__}{sgn_str1}: self.assert_{sgn_str2}', "<string>", "exec"
+        f'def {func.__name__}{sgn_str1}: __tracebackhide__ = True; self.assert_{sgn_str2}',
+        "<string>", "exec"
     )
     for code in code_compile.co_consts:
         if isinstance(code, types.CodeType):
@@ -162,9 +159,14 @@ Parameters
 ----------
 invert : :class:`bool`
     Invert the output of the assertion: :code:`assert not {name}{signature}`.
+    This value should only be supplied as keyword argument.
 
 exception : :class:`type` [:exc:`Exception`], optional
     Assert that **exception** is raised during/before the assertion operation.
+    This value should only be supplied as keyword argument.
+
+\*args/\**kwargs : :data:`Any<typing.Any>`
+    Parameters for catching excess variable positional and keyword arguments.
 
 See also
 --------
@@ -216,14 +218,16 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
         A new docstring constructed from **funcs'** docstring.
 
     """
+    # domain is :class:`...`, :func:`...` or :meth:`...`
     domain = get_sphinx_domain(func)
     sgn = signature if signature is not None else '(*args, **kwargs)'
 
-    # Extract the first line from the func docstring
-    try:
-        func_summary = textwrap.indent(func.__doc__, 4 * ' ')
-    except AttributeError:
-        func_summary = '    No description.'
+    # Create a summary for a single `See Also` section using the docstring of **func**
+    indent = 4 * ' '
+    func_doc = getattr(func, '__doc__', 'No description.')
+    if func_doc is None:
+        func_doc = 'No description.'
+    func_summary = textwrap.indent(func_doc, indent)
 
     # Return a new docstring
     try:
@@ -233,7 +237,7 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
     return BASE_DOCSTRING.format(name=name, signature=sgn, domain=domain, summary=func_summary)
 
 
-#: A dictionary which translates certain __module__ values to actual valid modules
+#: A dictionary which translates certain __module__ values to an actual valid modules
 MODULE_DICT: Dict[str, str] = {
     'builtins': '',
     'genericpath': 'os.path.',
@@ -298,16 +302,19 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
     """
     name = func.__qualname__ if hasattr(func, '__qualname__') else func.__name__
 
+    # Extract the __module__ from **func**
     try:
         _module = func.__module__
     except AttributeError:  # Unbound methods don't have the `__module__` attribute
         _module = func.__objclass__.__module__
 
+    # Convert the extracted __module__ into an actual valid module
     try:
         module = MODULE_DICT[_module]
     except KeyError:
         module = _module + '.' if _module is not None else ''
 
+    # Return the domain as either :func:`...`, :meth:`...` or :class:`...`
     if inspect.isbuiltin(func) or inspect.isfunction(func) or _is_builtin_func(func):
         return f':func:`{name}<{module}{name}>`'
     elif inspect.ismethod(func) or inspect.ismethoddescriptor(func) or inspect.isbuiltin(func):
@@ -319,7 +326,6 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
 
 #: A dictionary mapping to-be replaced substring to their replacements
 README_MAPPING: Dict[str, str] = {'``': '|', '()': ''}
-
 
 def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = README_MAPPING,
                 **kwargs: Any) -> str:
