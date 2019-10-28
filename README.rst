@@ -9,6 +9,8 @@
    :target: https://www.python.org
 .. image:: https://img.shields.io/badge/python-3.7-blue.svg
    :target: https://www.python.org
+.. image:: https://img.shields.io/badge/python-3.8-blue.svg
+   :target: https://www.python.org
 
 
 ##################
@@ -37,12 +39,18 @@ A few examples of some basic assertion:
 
     >>> from assertionlib import assertion
 
+    # Assert the output of specific callables
     >>> assertion.eq(5, 5)  # 5 == 5
     >>> assertion.lt(5, 6)  # 5 < 6
     >>> assertion.gt(6, 5)  # 5 > 6
     >>> assertion.isinstance(5, int)
     >>> assertion.hasattr(5, '__init__')
 
+    # Simply assert a value
+    >>> assertion(5 == 5)
+    >>> assertion(isinstance(5, int))
+
+    # Perform an assertion which will raise an AssertionError
     >>> assertion.eq(5, 6)  # 5 == 6
     AssertionError: output = eq(a, b); assert output
 
@@ -88,8 +96,8 @@ during/before the assertion process:
     >>> len(5)
     TypeError: object of type 'int' has no len()
 
-    >>> assertion.len(5, exception_=TypeError)  # i.e. len(5) should raise a TypeError
-    >>> assertion.len([5], exception_=TypeError)
+    >>> assertion.len(5, exception=TypeError)  # i.e. len(5) should raise a TypeError
+    >>> assertion.len([5], exception=TypeError)
     AssertionError: output = len(obj); assert output
 
     exception: AssertionError = AssertionError("Failed to raise 'TypeError'")

@@ -11,6 +11,7 @@ Index
     assertion
     AssertionManager
     AssertionManager.assert_
+    AssertionManager.__call__
     AssertionManager.add_to_instance
 
 Assertions based on the builtin :mod:`operator` module.
@@ -91,6 +92,7 @@ API
 
 .. autoclass:: AssertionManager
 .. automethod:: AssertionManager.assert_
+.. automethod:: AssertionManager.__call__
 .. automethod:: AssertionManager.add_to_instance
 
 Assertions based on the builtin :mod:`operator` module
@@ -160,13 +162,20 @@ import builtins
 import textwrap
 import operator
 from string import ascii_lowercase
-from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet
+from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet, TypeVar
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, allclose, str_eq
 from .dataclass import AbstractDataClass, _MetaADC
 
 __all__ = ['AssertionManager', 'assertion']
+
+T = TypeVar('T')
+
+
+def return_value(value: T) -> T:
+    """Return the supplied **value** in unaltered form."""
+    return value
 
 
 class _MetaAM(_MetaADC):
@@ -214,12 +223,10 @@ class _MetaAM(_MetaADC):
 class _Str:
     def __init__(self, value: str) -> None: self.value = value
     def __repr__(self) -> str: return str(self.value)
-    __str__ = __repr__
 
 
 class _NoneException(Exception):
     """An empty exception used by :meth:`AssertionManager.assert_` incase the **exception** parameter is ``None``."""  # noqa
-    def __bool__(self): return False
 
 
 class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
@@ -286,7 +293,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     def assert_(self, func: Callable, *args: Any, invert: bool = False,
                 exception: Optional[Type[Exception]] = None, **kwargs: Any) -> None:
-        r"""Assert the output of :code:`func(*args, **kwargs)`.
+        r"""Perform the following assertion: :code:`assert func(*args, **kwargs)`.
 
         Examples
         --------
@@ -302,7 +309,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             Positional arguments for **func**.
 
         invert : :class:`bool`
-            If ``True``, invert the output of the assertion: :code:`not func(a, b, **kwargs)`.
+            If ``True``, invert the output of the assertion:
+            :code:`assert not func(*args, **kwargs)`.
 
         exception : :class:`type` [:exc:`Exception`], optional
             Assert that **exception** is raised during/before the assertion operation.
@@ -313,6 +321,11 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
 
         :rtype: :data:`None`
+
+        See Also
+        --------
+        :meth:`AssertionManager.__call__`
+            Equivalent to :code:`assert value`.
 
         """
         __tracebackhide__ = True
@@ -341,7 +354,39 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         except Exception as ex:  # This is an unexpected exception
             err = self._get_exc_message(ex, func, *args, output=output, **kwargs)
-            raise AssertionError(err).with_traceback(ex.__traceback__)
+            raise AssertionError(err)
+
+    def __call__(self, value: Any, invert: bool = False) -> None:
+        """Equivalent to :code:`assert value`.
+
+        Examples
+        --------
+        .. code:: python
+
+            >>> assertion = AssertionManager()
+            >>> assertion(5 == 5)
+            >>> assertion(5 == 6)
+            AssertionError: output = return_value(value); assert output
+
+            exception: AssertionError = AssertionError()
+
+            output: bool = False
+            value: bool = False
+
+        Note: :func:`return_value` is a function which, as the name implies,
+        returns the passed value in unaltered form.
+
+        Parameters
+        ----------
+        invert : :class:`bool`
+            If ``True``, invert the output of the assertion:
+            :code:`assert not value`.
+
+
+        :rtype: :data:`None`
+
+        """
+        return self.assert_(return_value, value, invert=invert)
 
     def add_to_instance(self, func: Callable, name: Optional[str] = None,
                         override_attr: bool = False) -> None:

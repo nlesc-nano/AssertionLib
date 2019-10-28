@@ -180,14 +180,13 @@ class AbstractDataClass(metaclass=_MetaADC):
         # A precaution against recursive __repr__() calls
         with self._repr_open:
             try:
-                width = max(len(k) for k in vars(self) if k not in self._PRIVATE_ATTR)
+                width = max(len(k) for k in self._str_iterator())
             except ValueError:  # Raised if this instance has no instance attributes
                 return f'{self.__class__.__name__}()'
 
             indent1 = ' ' * 4
             indent2 = ' ' * (3 + width)
-            iterable = self._str_iterator()
-            ret = ',\n'.join(_str(k, v) for k, v in iterable)
+            ret = ',\n'.join(_str(k, v) for k, v in self._str_iterator())
 
             return f'{self.__class__.__name__}(\n{textwrap.indent(ret, indent1)}\n)'
 
