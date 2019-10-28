@@ -12,6 +12,7 @@ except ImportError as ex:
 
 from assertionlib import assertion
 from assertionlib.ndrepr import aNDRepr, NDRepr
+from assertionlib.functions import skip_if
 
 
 def test_float() -> None:
@@ -72,31 +73,31 @@ def test_callables() -> None:
     assertion.eq(mod, ref6)
 
 
+@skip_if(NUMPY_EX)
 def test_Signature() -> None:
     """Tests for :meth:`NDRepr.repr_Signature`."""
-    if NUMPY_EX is None:
-        sgn1 = inspect.signature(len)
-        sgn2 = inspect.signature(np.testing.assert_allclose)
+    sgn1 = inspect.signature(len)
+    sgn2 = inspect.signature(np.testing.assert_allclose)
 
-        ref1 = '(obj, /)'
-        ref2 = "(actual, desired, rtol=1e-07, atol=0, equal_nan=True, ...)"
-        str1 = aNDRepr.repr(sgn1)
-        str2 = aNDRepr.repr(sgn2)
+    ref1 = '(obj, /)'
+    ref2 = "(actual, desired, rtol=1e-07, atol=0, equal_nan=True, ...)"
+    str1 = aNDRepr.repr(sgn1)
+    str2 = aNDRepr.repr(sgn2)
 
-        assertion.eq(str1, ref1)
-        assertion.eq(str2, ref2)
+    assertion.eq(str1, ref1)
+    assertion.eq(str2, ref2)
 
 
+@skip_if(NUMPY_EX)
 def test_ndarray() -> None:
     """Tests for :meth:`NDRepr.repr_ndarray`."""
-    if NUMPY_EX is None:
-        ar1 = np.ones((10, 10), dtype=float)
-        ar2 = np.ones((10, 10), dtype=int)
+    ar1 = np.ones((10, 10), dtype=float)
+    ar2 = np.ones((10, 10), dtype=int)
 
-        ref1 = 'array([[1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       ...,\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000]])'  # noqa
-        ref2 = 'array([[1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       ...,\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1]])'  # noqa
-        str1 = aNDRepr.repr(ar1)
-        str2 = aNDRepr.repr(ar2)
+    ref1 = 'array([[1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       ...,\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000]])'  # noqa
+    ref2 = 'array([[1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       ...,\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1]])'  # noqa
+    str1 = aNDRepr.repr(ar1)
+    str2 = aNDRepr.repr(ar2)
 
-        assertion.eq(str1, ref1)
-        assertion.eq(str2, ref2)
+    assertion.eq(str1, ref1)
+    assertion.eq(str2, ref2)

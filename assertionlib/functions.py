@@ -14,6 +14,7 @@ Index
     allclose
     len_eq
     str_eq
+    skip_if
 
 API
 ---
@@ -23,6 +24,7 @@ API
 .. autofunction:: allclose
 .. autofunction:: len_eq
 .. autofunction:: str_eq
+.. autofunction:: skip_if
 
 """
 
@@ -30,9 +32,10 @@ import os
 import types
 import inspect
 import textwrap
+import functools
 import contextlib
 from types import MappingProxyType
-from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple, Type
+from typing import Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type
 
 from .signature import generate_signature, _signature_to_str, _get_cls_annotation
 
@@ -248,12 +251,12 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
 
 
 #: A dictionary which translates certain __module__ values to an actual valid modules
-MODULE_DICT: Dict[str, str] = {
+MODULE_DICT: Mapping[str, str] = MappingProxyType({
     'builtins': '',
     'genericpath': 'os.path.',
     'posixpath': 'os.path.',
     '_operator': 'operator.'
-}
+})
 
 
 def _is_builtin_func(func: Callable) -> bool:
@@ -369,17 +372,47 @@ def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = README_
     return ret
 
 
+def skip_if(condition: Any) -> Callable:
+    """A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
+
+    Examples
+    --------
+    .. code:: python
+
+        >>> condition: bool = True
+
+        >>> def func1() -> None:
+        ...     print(True)
+
+        >>> @skip_if(condition)
+        >>> def func2() -> None:
+        ...     print(True)
+
+        >>> func1()
+        True
+        >>> func2()
+
+    """
+    def skip() -> None: pass
+
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper():
+            return func() if not condition else skip()
+        return wrapper
+    return decorator
+
+
 def len_eq(a: Sized, b: int) -> bool:
-    """Check if the length of **a** is equivalent to **b**."""
+    """Check if the length of **a** is equivalent to **b**: :code:`len(a) == b`."""
     return len(a) == b
 
 
 def allclose(a: float, b: float, rtol: float = 1e-07) -> bool:
-    """Check if the absolute differnce between **a** and **b** is smaller than **rtol**."""
-    delta = abs(a - b)
-    return delta < rtol
+    """Check if the absolute differnce between **a** and **b** is smaller than **rtol**: :code:`abs(a - b) < rtol`."""  # noqa
+    return abs(a - b) < rtol
 
 
 def str_eq(a: Any, b: str, str_converter: Callable[[Any], str] = repr) -> bool:
-    """Check if the string-representation of **a** is equivalent to **b**."""
+    """Check if the string-representation of **a** is equivalent to **b**: :code:`repr(a) == b`."""
     return str_converter(a) == b

@@ -9,6 +9,7 @@ except ImportError as ex:
     NUMPY_EX: Optional[ImportError] = ex
 
 from assertionlib import assertion
+from assertionlib.functions import skip_if
 
 
 def test_abs() -> None:
@@ -182,14 +183,14 @@ def test_lt() -> None:
     assertion.lt([], 6, exception=TypeError)
 
 
+@skip_if(NUMPY_EX)
 def test_matmul() -> None:
     """Test :meth:`AssertionManager.matmul`."""
-    if NUMPY_EX is None:
-        assertion.matmul(np.ones(2), np.ones(2))
-        assertion.matmul(np.zeros(2), np.zeros(2), invert=True)
-        assertion.matmul(np.ones(2), np.ones(4), exception=ValueError)
-        assertion.matmul(5, 6, 7, 8, exception=TypeError)
-        assertion.matmul(2, 2, exception=TypeError)
+    assertion.matmul(np.ones(2), np.ones(2))
+    assertion.matmul(np.zeros(2), np.zeros(2), invert=True)
+    assertion.matmul(np.ones(2), np.ones(4), exception=ValueError)
+    assertion.matmul(5, 6, 7, 8, exception=TypeError)
+    assertion.matmul(2, 2, exception=TypeError)
 
 
 def test_mod() -> None:
@@ -231,8 +232,12 @@ def test_not() -> None:
     assertion.not_(0)
     assertion.not_(5, invert=True)
     assertion.not_(5, 6, 7, 8, exception=TypeError)
-    if NUMPY_EX is None:
-        assertion.not_(np.random.rand(10), exception=ValueError)
+
+
+@skip_if(NUMPY_EX)
+def test_not_np() -> None:
+    """Test :meth:`AssertionManager.not_` with a NumPy array."""
+    assertion.not_(np.random.rand(10), exception=ValueError)
 
 
 def test_or() -> None:
@@ -242,8 +247,12 @@ def test_or() -> None:
     assertion.or_(5, 0)
     assertion.or_(0, 0, invert=True)
     assertion.or_(5, 6, 7, 8, exception=TypeError)
-    if NUMPY_EX is None:
-        assertion.or_(np.random.rand(10), 6, exception=TypeError)
+
+
+@skip_if(NUMPY_EX)
+def test_or_np() -> None:
+    """Test :meth:`AssertionManager.not_` with a NumPy array."""
+    assertion.or_(np.random.rand(10), 6, exception=TypeError)
 
 
 def test_pos() -> None:
@@ -302,5 +311,9 @@ def test_truth() -> None:
     assertion.truth(5)
     assertion.truth(0, invert=True)
     assertion.truth(5, 6, 7, 8, exception=TypeError)
-    if NUMPY_EX is None:
-        assertion.truth(np.random.rand(10), exception=ValueError)
+
+
+@skip_if(NUMPY_EX)
+def test_truth_np() -> None:
+    """Test :meth:`AssertionManager.truth` with a NumPy array."""
+    assertion.truth(np.random.rand(10), exception=ValueError)
