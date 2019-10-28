@@ -10,6 +10,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 * Reduced the `AssertionManager()` traceback verbosity.
 * Added the `AssertionManager.__call__()` method which simply asserts a supplied value.
 * A couple of codestyle and consistency improvements.
+* Added tests for Python 3.8.
 
 
 0.1.3
