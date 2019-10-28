@@ -160,3 +160,14 @@ def test_repr() -> None:
     ref = 'AssertionManager(\n    repr_instance = <assertionlib.ndrepr.NDRepr object '
     output = repr(assertion).split('at')[0]
     assertion.eq(ref, output)
+
+
+def test_call() -> None:
+    """Test :meth:`AssertionManager.__call__`."""
+    assertion(5 == 5)
+    assertion(len([1]))
+    assertion(len([]), invert=True)
+
+    assertion.__call__(5 == 5)
+    assertion.__call__(len([1]))
+    assertion.__call__(len([]), invert=True)
