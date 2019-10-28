@@ -14,7 +14,7 @@
 
 
 ##################
-AssertionLib 0.1.3
+AssertionLib 0.1.4
 ##################
 
 A package for performing assertions and providing informative exception messages.
