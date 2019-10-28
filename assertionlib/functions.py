@@ -31,6 +31,7 @@ import types
 import inspect
 import textwrap
 import contextlib
+from types import MappingProxyType
 from typing import Callable, Any, Optional, Union, Sized, Dict, Mapping, Tuple, Type
 
 from .signature import generate_signature, _signature_to_str, _get_cls_annotation
@@ -177,7 +178,7 @@ See also
 
 
 def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str:
-    """Create a new NumPy style assertion docstring from the docstring of **func**.
+    r"""Create a new NumPy style assertion docstring from the docstring of **func**.
 
     The summary of **funcs'** docstring, if available, is added to the ``"See also"`` section,
     in addition with an intersphinx-compatible link to **func**.
@@ -188,20 +189,29 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
 
         >>> docstring: str = wrap_docstring(isinstance)
         >>> print(docstring)
-        Perform the following assertion: :code:`assert isinstance(obj, class_or_tuple)`.
+        Perform the following assertion: :code:`assert isinstance(*args, **kwargs)`.
 
         Parameters
         ----------
         invert : :class:`bool`
-            Invert the output of the assertion: :code:`assert not isinstance(obj, class_or_tuple)`.
+            Invert the output of the assertion: :code:`assert not isinstance(*args, **kwargs)`.
+            This value should only be supplied as keyword argument.
 
         exception : :class:`type` [:exc:`Exception`], optional
             Assert that **exception** is raised during/before the assertion operation.
+            This value should only be supplied as keyword argument.
+
+        \*args/\**kwargs : :data:`Any<typing.Any>`
+            Parameters for catching excess variable positional and keyword arguments.
 
         See also
         --------
-        :func:`isinstance`:
+        :func:`isinstance<isinstance>`:
             Return whether an object is an instance of a class or of a subclass thereof.
+
+            A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
+            check against. This is equivalent to ``isinstance(x, A) or isinstance(x, B)
+            or ...`` etc.
 
     Parameters
     ----------
@@ -324,8 +334,9 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
     raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
 
 
-#: A dictionary mapping to-be replaced substring to their replacements
-README_MAPPING: Dict[str, str] = {'``': '|', '()': ''}
+#: An immutable mapping of to-be replaced substrings and their replacements.
+README_MAPPING: Mapping[str, str] = MappingProxyType({'``': '|', '()': ''})
+
 
 def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = README_MAPPING,
                 **kwargs: Any) -> str:
