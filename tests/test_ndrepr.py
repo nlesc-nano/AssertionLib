@@ -2,8 +2,13 @@
 
 import inspect
 from sys import version_info
+from typing import Optional
 
-import numpy as np
+try:
+    import numpy as np
+    NUMPY_EX: Optional[ImportError] = None
+except ImportError as ex:
+    NUMPY_EX: Optional[ImportError] = ex
 
 from assertionlib import assertion
 from assertionlib.ndrepr import aNDRepr, NDRepr
@@ -69,27 +74,29 @@ def test_callables() -> None:
 
 def test_Signature() -> None:
     """Tests for :meth:`NDRepr.repr_Signature`."""
-    sgn1 = inspect.signature(len)
-    sgn2 = inspect.signature(np.testing.assert_allclose)
+    if NUMPY_EX is None:
+        sgn1 = inspect.signature(len)
+        sgn2 = inspect.signature(np.testing.assert_allclose)
 
-    ref1 = '(obj, /)'
-    ref2 = "(actual, desired, rtol=1e-07, atol=0, equal_nan=True, ...)"
-    str1 = aNDRepr.repr(sgn1)
-    str2 = aNDRepr.repr(sgn2)
+        ref1 = '(obj, /)'
+        ref2 = "(actual, desired, rtol=1e-07, atol=0, equal_nan=True, ...)"
+        str1 = aNDRepr.repr(sgn1)
+        str2 = aNDRepr.repr(sgn2)
 
-    assertion.eq(str1, ref1)
-    assertion.eq(str2, ref2)
+        assertion.eq(str1, ref1)
+        assertion.eq(str2, ref2)
 
 
 def test_ndarray() -> None:
     """Tests for :meth:`NDRepr.repr_ndarray`."""
-    ar1 = np.ones((10, 10), dtype=float)
-    ar2 = np.ones((10, 10), dtype=int)
+    if NUMPY_EX is None:
+        ar1 = np.ones((10, 10), dtype=float)
+        ar2 = np.ones((10, 10), dtype=int)
 
-    ref1 = 'array([[1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       ...,\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000]])'  # noqa
-    ref2 = 'array([[1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       ...,\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1]])'  # noqa
-    str1 = aNDRepr.repr(ar1)
-    str2 = aNDRepr.repr(ar2)
+        ref1 = 'array([[1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       ...,\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],\n       [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000]])'  # noqa
+        ref2 = 'array([[1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       ...,\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1]])'  # noqa
+        str1 = aNDRepr.repr(ar1)
+        str2 = aNDRepr.repr(ar2)
 
-    assertion.eq(str1, ref1)
-    assertion.eq(str2, ref2)
+        assertion.eq(str1, ref1)
+        assertion.eq(str2, ref2)
