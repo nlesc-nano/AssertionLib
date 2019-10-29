@@ -9,15 +9,12 @@ Index
 .. currentmodule:: assertionlib.dataclass
 .. autosummary::
     AbstractDataClass
-    AbstractDataClass._PRIVATE_ATTR
-    AbstractDataClass._HASHABLE
-    AbstractDataClass.__str__
-    AbstractDataClass._str_iterator
+    AbstractDataClass.__repr__
     AbstractDataClass.__eq__
     AbstractDataClass.__hash__
-    AbstractDataClass.copy
     AbstractDataClass.__copy__
     AbstractDataClass.__deepcopy__
+    AbstractDataClass.copy
     AbstractDataClass.as_dict
     AbstractDataClass.from_dict
     AbstractDataClass.inherit_annotations
@@ -25,47 +22,52 @@ Index
 API
 ---
 .. autoclass:: AbstractDataClass
-.. autoattribute:: AbstractDataClass._PRIVATE_ATTR
-.. autoattribute:: AbstractDataClass._HASHABLE
-.. automethod:: AbstractDataClass.__str__
-.. automethod:: AbstractDataClass._str_iterator
+.. automethod:: AbstractDataClass.__repr__
 .. automethod:: AbstractDataClass.__eq__
 .. automethod:: AbstractDataClass.__hash__
-.. automethod:: AbstractDataClass.copy
 .. automethod:: AbstractDataClass.__copy__
 .. automethod:: AbstractDataClass.__deepcopy__
+.. automethod:: AbstractDataClass.copy
 .. automethod:: AbstractDataClass.as_dict
 .. automethod:: AbstractDataClass.from_dict
 .. automethod:: AbstractDataClass.inherit_annotations
+.. automethod:: AbstractDataClass._str_iterator
+.. autoclass:: IsOpen
 
 """
 
 import textwrap
 import copy
 from abc import ABCMeta
-from typing import Any, Dict, Set, Iterable, Tuple
+from typing import Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet
 from contextlib import AbstractContextManager
 
 __all__ = ['AbstractDataClass']
 
 
 class IsOpen(AbstractContextManager):
-    """A context manager for keeping track of recursive calls of a callable."""
+    """A context manager for keeping track of recursive calls to a callable.
+
+    Has a single instance variable, :attr:`IsOpen._is_open`, which is ``True``
+    when the context manager has been enterd and ``False`` otherwise.
+    This same value is used for truth-testing class instances.
+
+    """
 
     def __init__(self) -> None:
-        self.is_open = False
+        self._is_open: bool = False
 
     def __enter__(self) -> None:
-        self.is_open = True
+        self._is_open: bool = True
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self.is_open = False
+        self._is_open: bool = False
 
     def __bool__(self) -> bool:
-        return self.is_open
+        return self._is_open
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self.is_open}>"
+        return f"<{self.__class__.__name__}: {self._is_open}>"
 
 
 class _MetaADC(ABCMeta):
@@ -82,8 +84,7 @@ class _MetaADC(ABCMeta):
         * The hash of this instances' class type.
         * The hashes of all key/value pairs in this instances' (non-private) attributes.
 
-
-        If an unhashable instance attribute is encountered, *e.g.* a :class:`list`,
+        If an unhashable instance variable is encountered, *e.g.* a :class:`list`,
         then its :func:`id` is used for hashing.
 
         This method will raise a :exc:`TypeError` if the class attribute
@@ -91,17 +92,16 @@ class _MetaADC(ABCMeta):
 
         See Also
         --------
+        :attr:`AbstractDataClass._PRIVATE_ATTR`
+            A set with the names of private instance variables.
 
-        :attr:`AbstractDataClass._PRIVATE_ATTR`:
-            A :class:`set` with the names of private instance variables.
-
-        :attr:`AbstractDataClass._HASHABLE`:
+        :attr:`AbstractDataClass._HASHABLE`
             Whether or not this class is hashable.
 
-        :attr:`AbstractDataClass._hash_open`:
+        :attr:`AbstractDataClass._hash_open`
             A context manager for preventing recursive calls to this method.
 
-        :attr:`AbstractDataClass._hash`:
+        :attr:`AbstractDataClass._hash`
             An instance variable for caching the :func:`hash` of this instance.
 
         """
@@ -127,47 +127,100 @@ class _MetaADC(ABCMeta):
 
 
 class AbstractDataClass(metaclass=_MetaADC):
-    """A dataclass with a number of generic pre-defined (magic) methods."""
+    """A dataclass with a number of generic pre-defined (magic) methods.
 
-    #: A :class:`set` with the names of private instance variables.
+    Provides methods for:
+
+    * String conversion: :meth:`AbstractDataClass.__repr__`.
+    * Object comparisons: :meth:`AbstractDataClass.__eq__`.
+    * Hash construction: :meth:`AbstractDataClass.__hash__`.
+    * Copying: :meth:`AbstractDataClass.copy`, :meth:`AbstractDataClass.__copy__` and
+      :meth:`AbstractDataClass.__deepcopy__`.
+    * Dictionary interconversion: :meth:`AbstractDataClass.as_dict` and
+      :meth:`AbstractDataClass.from_dict`.
+    * Inherting method docstrings and annotations: :meth:`AbstractDataClass.inherit_annotations`.
+
+    Attributes
+    ----------
+    _PRIVATE_ATTR : :class:`frozenset` [:class:`str`] or :class:`set` [:class:`str`]
+        A class variable with the names of private instance variable.
+        These attributes will be excluded whenever calling :meth:`AbstractDataClass.as_dict`,
+        printing or comparing objects.
+        The set is unfrozen (and added as instance variables)
+        the moment a class instance is initiated.
+
+    _HASHABLE : :class:`bool`
+        A class variable denoting whether or not class instances are hashable.
+        The :attr:`AbstractDataClass.__hash__` method will be unavailable if ``False``.
+
+    _hash : :class:`int`
+        An attribute for caching the :func:`hash` of this instance.
+        Only available if :attr:`AbstractDataClass._HASHABLE` is ``True``.
+
+    _repr_open : :class:`IsOpen`
+        A context manager for keeping track of recursive calls to
+        :meth:`AbstractDataClass.__repr__`.
+
+    _eq_open : :class:`IsOpen`
+        A context manager for keeping track of recursive calls to
+        :meth:`AbstractDataClass.__eq__`.
+
+    _hash_open : :class:`IsOpen`
+        A context manager for keeping track of recursive calls to
+        :meth:`AbstractDataClass.__hash__`.
+        Only available if :attr:`AbstractDataClass._HASHABLE` is ``True``.
+
+    """
+
+    #: A :class:`frozenset` with the names of private instance variables.
     #: These attributes will be excluded whenever calling :meth:`AbstractDataClass.as_dict`,
     #: printing or comparing objects.
-    _PRIVATE_ATTR: Set[str] = frozenset()
+    _PRIVATE_ATTR: ClassVar[FrozenSet[str]] = frozenset()
 
     #: Whether or not this class is hashable.
     #: If ``False``, raise a :exc:`TypeError` when calling :meth:`AbstractDataClass.__hash__`.
-    _HASHABLE: bool = True
+    _HASHABLE: ClassVar[bool] = True
 
     def __init__(self) -> None:
         """Initialize a :class:`AbstractDataClass` instance."""
         # Assign cls._PRIVATE_ATTR as a (unfrozen) set to this instance as attribute
         cls = type(self)
-        self._PRIVATE_ATTR = {'_PRIVATE_ATTR', '_repr_open', '_eq_open'}.union(cls._PRIVATE_ATTR)
+        self._PRIVATE_ATTR: Set[str] = {
+            '_PRIVATE_ATTR', '_repr_open', '_eq_open'
+        }.union(cls._PRIVATE_ATTR)
 
         # Context managers for saveguarding against recursive method calls
-        self._repr_open: AbstractContextManager = IsOpen()
-        self._eq_open: AbstractContextManager = IsOpen()
+        self._repr_open: IsOpen = IsOpen()
+        self._eq_open: IsOpen = IsOpen()
 
         # Extra attributes in case the class is hashable
         if cls._HASHABLE:
-            self._hash_open: AbstractContextManager = IsOpen()
+            self._hash_open: IsOpen = IsOpen()
             self._hash: int = 0
             self._PRIVATE_ATTR.add('_hash_open')
             self._PRIVATE_ATTR.add('_hash')
 
     def __repr__(self) -> str:
-        """Return a string representation of this instance.
+        """Return a (machine readable) string representation of this instance.
 
         The string representation consists of this instances' class name in addition
-        to all (non-private) instance attributes.
+        to all (non-private) instance variables.
+
+        Returns
+        -------
+        :class:`str`
+            A string representation of this instance.
 
         See Also
         --------
-        :attr:`AbstractDataClass._PRIVATE_ATTR`:
-            A :class:`set` with the names of private instance variables.
+        :attr:`AbstractDataClass._PRIVATE_ATTR`
+            A set with the names of private instance variables.
 
-        :attr:`AbstractDataClass._repr_open`:
+        :attr:`AbstractDataClass._repr_open`
             A context manager for preventing recursive calls to this method.
+
+        :meth:`AbstractDataClass._str_iterator`
+            Return an iterable for the iterating over this instances' attributes.
 
         """
         def _str(k: str, v: Any) -> str:
@@ -181,7 +234,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         with self._repr_open:
             try:
                 width = max(len(k) for k in self._str_iterator())
-            except ValueError:  # Raised if this instance has no instance attributes
+            except ValueError:  # Raised if this instance has no instance variables
                 return f'{self.__class__.__name__}()'
 
             indent1 = ' ' * 4
@@ -200,12 +253,17 @@ class AbstractDataClass(metaclass=_MetaADC):
         The comparison checks if the class type of this instance and **value** are identical
         and if all (non-private) instance variables are equivalent.
 
+        Returns
+        -------
+        :class:`bool`
+            Whether or not this instance and **value** are equivalent.
+
         See Also
         --------
-        :attr:`AbstractDataClass._PRIVATE_ATTR`:
-            A :class:`set` with the names of private instance variables.
+        :attr:`AbstractDataClass._PRIVATE_ATTR`
+            A set with the names of private instance variables.
 
-        :attr:`AbstractDataClass._eq_open`:
+        :attr:`AbstractDataClass._eq_open`
             A context manager for preventing recursive calls to this method.
 
         """
@@ -219,7 +277,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
         # A precaution against recursive __eq__ calls
         with self._eq_open:
-            # Compare instance attributes
+            # Compare instance variables
             try:
                 for k, v1 in vars(self).items():
                     if k in self._PRIVATE_ATTR:
@@ -232,7 +290,7 @@ class AbstractDataClass(metaclass=_MetaADC):
                 return True
 
     def copy(self, deep: bool = False) -> 'AbstractDataClass':
-        """Return a deep or shallow copy of this instance.
+        """Return a shallow or deep copy of this instance.
 
         Parameters
         ----------
@@ -261,6 +319,8 @@ class AbstractDataClass(metaclass=_MetaADC):
     def as_dict(self, return_private: bool = False) -> Dict[str, Any]:
         """Construct a dictionary from this instance with all non-private instance variables.
 
+        The returned dictionary values are shallow copies.
+
         Parameters
         ----------
         return_private : :class:`bool`
@@ -270,7 +330,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         Returns
         -------
         :class:`dict` [:class:`str`, :data:`Any<typing.Any>`]
-            A dictionary of arrays with keyword arguments for initializing a new
+            A dictionary with keyword arguments for initializing a new
             instance of this class.
 
         See Also
@@ -279,7 +339,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             Construct a instance of this objects' class from a dictionary with keyword arguments.
 
         :attr:`AbstractDataClass._PRIVATE_ATTR`:
-            A :class:`set` with the names of private instance variables.
+            A set with the names of private instance variables.
 
         """
         skip_attr = self._PRIVATE_ATTR if not return_private else set()
@@ -302,7 +362,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
         See Also
         --------
-        :meth:`AbstractDataClass.as_dict`:
+        :meth:`AbstractDataClass.as_dict`
             Construct a dictionary from this instance with all non-private instance variables.
 
         """
@@ -317,6 +377,11 @@ class AbstractDataClass(metaclass=_MetaADC):
 
         References to :class:`AbstractDataClass` are replaced with ones pointing to the
         respective subclass.
+
+        Returns
+        -------
+        :class:`type`
+            A decorator for updating the annotations and docstring of a callable.
 
         Examples
         --------
