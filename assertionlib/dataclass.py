@@ -233,7 +233,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         # A precaution against recursive __repr__() calls
         with self._repr_open:
             try:
-                width = max(len(k) for k in self._str_iterator())
+                width = max(len(k) for k, _ in self._str_iterator())
             except ValueError:  # Raised if this instance has no instance variables
                 return f'{self.__class__.__name__}()'
 
@@ -245,7 +245,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
     def _str_iterator(self) -> Iterable[Tuple[str, Any]]:
         """Return an iterable for the :meth:`AbstractDataClass.__repr__` method."""
-        return ((k, v) for k, v in vars(self).items() if k not in self._PRIVATE_ATTR)
+        return ((k, v) for k, v in sorted(vars(self).items()) if k not in self._PRIVATE_ATTR)
 
     def __eq__(self, value: Any) -> bool:
         """Check if this instance is equivalent to **value**.
