@@ -1,5 +1,7 @@
 """Tests for the :class:`AssertionManager<assertionlib.manager.AssertionManager>` class."""
 
+from typing import Optional
+
 from assertionlib import assertion, AssertionManager
 from assertionlib.functions import skip_if
 
