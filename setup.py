@@ -53,10 +53,11 @@ setup(
     tests_require=[
         'pytest',
         'pytest-cov',
-        'pycodestyle'
+        'pycodestyle',
+        'numpy'
     ],
     extras_require={
-        'test': ['pytest', 'pytest-cov', 'pycodestyle'],
+        'test': ['pytest', 'pytest-cov', 'pycodestyle', 'numpy'],
         'doc': ['sphinx>=2.0', 'sphinx_rtd_theme', 'sphinx-autodoc-typehints']
     }
 )
