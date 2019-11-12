@@ -422,9 +422,13 @@ class NDRepr(reprlib.Repr):
         if obj.dtype not in (np.dtype(float), np.dtype(int)):
             return {}
 
-        max_len = len(str(int(obj.max())))
-        min_len = len(str(int(obj.min())))
-        width = max(max_len, min_len)
+        try:
+            max_len = len(str(int(obj.max())))
+            min_len = len(str(int(obj.min())))
+        except ValueError:  # Raised when encountering zero-sized arrays
+            width = 0
+        else:
+            width = max(max_len, min_len)
 
         if obj.dtype == np.dtype(float):
             width += 5
