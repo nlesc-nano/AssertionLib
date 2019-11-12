@@ -84,6 +84,7 @@ Miscellaneous assertions.
     AssertionManager.allclose
     AssertionManager.len_eq
     AssertionManager.str_eq
+    AssertionManager.shape_eq
 
 API
 ---
@@ -152,6 +153,7 @@ Miscellaneous assertions
 .. automethod:: AssertionManager.allclose
 .. automethod:: AssertionManager.len_eq
 .. automethod:: AssertionManager.str_eq
+.. automethod:: AssertionManager.shape_eq
 
 """
 
@@ -165,7 +167,7 @@ from string import ascii_lowercase
 from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet, TypeVar
 
 from .ndrepr import aNDRepr
-from .functions import bind_callable, len_eq, allclose, str_eq
+from .functions import bind_callable, len_eq, allclose, str_eq, shape_eq
 from .dataclass import AbstractDataClass, _MetaADC
 
 __all__ = ['AssertionManager', 'assertion']
@@ -194,15 +196,16 @@ class _MetaAM(_MetaADC):
     #: A :class:`frozenset` of callables which need an assertion function.
     INCLUDE: FrozenSet[Callable] = frozenset({
         os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
-        isinstance, issubclass, callable, hasattr, len_eq, allclose, str_eq, len, bool
+        isinstance, issubclass, callable, hasattr, len_eq, allclose, str_eq, len, bool,
+        shape_eq
     })
 
-    def __new__(cls, name, bases, namespace, **kwargs) -> type:
-        sub_cls = super().__new__(cls, name, bases, namespace, **kwargs)
+    def __new__(mcls, name, bases, namespace, **kwargs) -> type:
+        cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
         func_list = operator.__all__
-        exclude = cls.EXCLUDE
-        include = cls.INCLUDE
+        exclude = mcls.EXCLUDE
+        include = mcls.INCLUDE
 
         # Iterature over the __all__ attribute of the operator builtin module
         for name in func_list:
@@ -210,14 +213,14 @@ class _MetaAM(_MetaADC):
                 continue  # Exclude inplace operations
 
             func = getattr(operator, name)
-            bind_callable(sub_cls, func, name)
+            bind_callable(cls, func, name)
 
         # Iterate over all remaining callables
         for func in include:
             name = func.__name__
-            bind_callable(sub_cls, func, name)
+            bind_callable(cls, func, name)
 
-        return sub_cls
+        return cls
 
 
 class _Str:

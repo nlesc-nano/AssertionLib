@@ -37,6 +37,12 @@ import contextlib
 from types import MappingProxyType
 from typing import Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type
 
+try:
+    import numpy as np
+    ndarray = np.ndarray
+except ImportError:
+    ndarray = 'numpy.ndarray'
+
 from .signature import generate_signature, _signature_to_str, _get_cls_annotation
 
 
@@ -416,3 +422,13 @@ def allclose(a: float, b: float, rtol: float = 1e-07) -> bool:
 def str_eq(a: Any, b: str, str_converter: Callable[[Any], str] = repr) -> bool:
     """Check if the string-representation of **a** is equivalent to **b**: :code:`repr(a) == b`."""
     return str_converter(a) == b
+
+
+def shape_eq(a: ndarray, b: Union[ndarray, Tuple[float, ...]]) -> bool:
+    """Check if the shapes of **a** and **b** are equivalent: :code:`a.shape == getattr(b, 'shape', b)`.
+
+    **b** should be either an object with the ``shape`` attribute (*e.g.* a NumPy array)
+    or a :class:`tuple` representing a valid array shape.
+
+    """  # noqa
+    return a.shape == getattr(b, 'shape', b)

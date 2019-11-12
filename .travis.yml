@@ -22,7 +22,7 @@ install:
     - conda info -a
 
     # Install virtual enviroment
-    - conda create -n assertionlib python=${PYTHON_VERSION}
+    - conda create -n assertionlib python=${PYTHON_VERSION} numpy
     - source activate assertionlib
 
     # Install the tests
