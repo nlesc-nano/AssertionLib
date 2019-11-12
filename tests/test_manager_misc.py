@@ -1,6 +1,13 @@
 """Tests for the :class:`AssertionManager<assertionlib.manager.AssertionManager>` class."""
 
 from assertionlib import assertion, AssertionManager
+from assertionlib.functions import skip_if
+
+try:
+    import numpy as np
+    NUMPY_EX: Optional[ImportError] = None
+except ImportError as ex:
+    NUMPY_EX: Optional[ImportError] = ex
 
 
 def test_callable() -> None:
@@ -171,3 +178,18 @@ def test_call() -> None:
     assertion.__call__(5 == 5)
     assertion.__call__(len([1]))
     assertion.__call__(len([]), invert=True)
+
+
+@skip_if(NUMPY_EX)
+def test_shape_eq() -> None:
+    """Test :meth:`AssertionManager.shape_eq`."""
+    ar1 = np.random.rand(10, 10)
+    ar2 = np.random.rand(10, 10)
+    shape = ar1.shape
+
+    assertion.shape_eq(ar1, ar2)
+    assertion.shape_eq(ar1, shape)
+    assertion.shape_eq(ar1, 5, invert=True)
+
+    assertion.shape_eq(ar1, ar1, ar1, ar1, exception=TypeError)
+    assertion.shape_eq(shape, ar1, exception=AttributeError)

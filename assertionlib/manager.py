@@ -84,6 +84,7 @@ Miscellaneous assertions.
     AssertionManager.allclose
     AssertionManager.len_eq
     AssertionManager.str_eq
+    AssertionManager.shape_eq
 
 API
 ---
@@ -152,25 +153,21 @@ Miscellaneous assertions
 .. automethod:: AssertionManager.allclose
 .. automethod:: AssertionManager.len_eq
 .. automethod:: AssertionManager.str_eq
+.. automethod:: AssertionManager.shape_eq
 
 """
 
 import os
-import types
 import inspect
 import reprlib
 import builtins
 import textwrap
 import operator
-import warnings
-import functools
-from collections import abc
 from string import ascii_lowercase
 from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet, TypeVar
-from contextlib import AbstractContextManager
 
 from .ndrepr import aNDRepr
-from .functions import bind_callable, len_eq, allclose, str_eq
+from .functions import bind_callable, len_eq, allclose, str_eq, shape_eq
 from .dataclass import AbstractDataClass, _MetaADC
 
 __all__ = ['AssertionManager', 'assertion']
@@ -181,53 +178,6 @@ T = TypeVar('T')
 def return_value(value: T) -> T:
     """Return the supplied **value** in unaltered form."""
     return value
-
-
-class AppendException(AbstractContextManager):
-    def __init__(self, manager: 'AssertionManager', func: Callable,
-                 *args: Any, **kwargs: Any) -> None:
-        """A context manager for temporary appending exception message produces by :class:`AssertionManager`.
-
-        See :meth:`AssertionManager.append_exception` for a more extensive description.
-
-        """  # noqa
-        self.manager: AssertionManager = manager
-        self.func: Callable = functools.partial(func, *args, **kwargs)
-
-    def __enter__(self) -> None:
-        """Enter the context manager; temporary replace the :meth:`AssertionManager._get_exc_message`."""  # noqa
-        __tracebackhide__ = True
-
-        func = functools.partial(self._exc_template, func_append=self.func)
-        func_wrapped = functools.wraps(self.manager._get_exc_message)(func)
-        method = types.MethodType(func_wrapped, self.manager)
-        setattr(self.manager, '_get_exc_message', method)
-
-    def __exit__(self, exc_type, exc_value, tracebac) -> None:
-        """Exit the context manager; restore :meth:`AssertionManager._get_exc_message`."""
-        try:
-            delattr(self.manager, '_get_exc_message')
-        except AttributeError:  # _get_exc_message has been manually deleted by the user
-            pass
-
-    @staticmethod
-    def _exc_template(self, ex, func, *args, invert=False, output=None,
-                      func_append=None, **kwargs) -> str:
-        """A template for :meth:`AssertionManager._get_exc_message`; do *not* call directly."""
-        __tracebackhide__ = True
-
-        args_new = (ex, func) + args
-        kwargs_new = {'invert': invert, 'output': output}
-        kwargs_new.update(kwargs)
-
-        cls = type(self)
-        ret: str = cls._get_exc_message(self, *args_new, **kwargs_new)
-        try:
-            ret += func_append(self, *args_new, **kwargs_new)
-        except Exception as ex:
-            err = f'Failed to append exception message: {repr(ex)}'
-            warnings.warn(err)
-        return ret
 
 
 class _MetaAM(_MetaADC):
@@ -246,7 +196,8 @@ class _MetaAM(_MetaADC):
     #: A :class:`frozenset` of callables which need an assertion function.
     INCLUDE: FrozenSet[Callable] = frozenset({
         os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
-        isinstance, issubclass, callable, hasattr, len_eq, allclose, str_eq, len, bool
+        isinstance, issubclass, callable, hasattr, len_eq, allclose, str_eq, len, bool,
+        shape_eq
     })
 
     def __new__(mcls, name, bases, namespace, **kwargs) -> type:
@@ -477,62 +428,6 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         # Add the name as private attribute
         self._PRIVATE_ATTR.add(name)
-
-    def append_exception(self, func: Callable, *args, **kwargs) -> AbstractContextManager:
-        r"""A context manager for appending all to-be returned exception messages.
-
-        Examples
-        --------
-        An example where a function is passed for printing the difference between two values.
-        Useful when, for example, an equivalency comparsion has failed.
-        Note that the example function assumes that the to-be compared values (``a`` and ``b``)
-        consist exclusively of unique elements.
-
-        .. code:: python
-
-            >>> from assertionlib import assertion
-
-            >>> def get_difference(manager, ex, func, *args, **kwargs):
-            ...     try:
-            ...         a, b = args[0:2]
-            ...         a_set, b_set = set(a), set(b)
-            ...     except (TypeError, ValueError):  # Plan b in case the set conversion fails
-            ...         return '\n\n' + 'ab_difference: set = {...}'
-            ...
-            ...     difference = a_set.symmetric_difference(b_set)
-            ...     return '\n\n' + f'ab_difference: set = {manager.repr(difference)}'
-
-            >>> a: list = [1, 2, 3, 4]
-            >>> b: list = [3, 4, 5, 6]
-            >>> with assertion.append_exception(get_difference):
-            ...     assertion.eq(a, b)
-            AssertionError: output = eq(a, b); assert output
-
-            exception: AssertionError = AssertionError()
-
-            output: bool = False
-            a: list = [1, 2, 3, 4]
-            b: list = [3, 4, 5, 6]
-
-            ab_difference: set = {1, 2, 5, 6}
-
-        Parameters
-        ----------
-        func : :data:`Callable<typing.Callable>`
-            A callable for creating the to-be appended message.
-            The callable should be able to handle the same input as
-            :meth:`AssertionManager._get_exc_message` (see the example).
-
-        \*args/\**kwargs
-            Positional and or keyword arguments which are to-be supplied to **func**.
-
-        Returns
-        -------
-        :class:`AppendException`
-            A context manager which enables the appending operation.
-
-        """
-        return AppendException(self, func, *args, **kwargs)
 
     # Private methods
 

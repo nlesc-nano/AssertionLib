@@ -5,6 +5,13 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+0.1.5
+*****
+* Added the `AssertionManager.shape_eq()` method for comparing array shapes.
+* Fixed indentation and attribute ordering in `AbstractDataClass.__repr__()`: https://github.com/nlesc-nano/AssertionLib/commit/4d6c16d0d2bc85c92c52507605f026ee1ef1d06f.
+* `NDRepr._get_ndformatter()` no longer raises a `TypeError` when handling zero-sized arrays: https://github.com/nlesc-nano/AssertionLib/commit/e1601b5b41b53884436c51fd2ee98ff615447dac.
+
+
 0.1.4
 *****
 * Reduced the `AssertionManager()` traceback verbosity.
