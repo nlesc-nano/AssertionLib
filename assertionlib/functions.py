@@ -38,7 +38,7 @@ from types import MappingProxyType
 from typing import Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type
 
 try:
-    import numpy as np:
+    import numpy as np
     ndarray = np.ndarray
 except ImportError:
     ndarray = 'numpy.ndarray'
