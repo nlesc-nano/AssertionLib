@@ -220,6 +220,6 @@ output: NoneType = None
 obj: int = 1"""
 
     # if version_info.minor >= 7:  # Python 3.7 and later
-    assert str1 == str2, repr((str1, str2))
+    assert str1 == ref1, repr((str1, ref1))
     assertion.eq(str1, ref1)
     assertion.eq(str2, ref2)
