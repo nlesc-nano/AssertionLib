@@ -14,7 +14,7 @@
 
 
 ##################
-AssertionLib 0.1.5
+AssertionLib 1.0.0
 ##################
 
 A package for performing assertions and providing informative exception messages.
@@ -25,7 +25,8 @@ Installation
 
 AssertionLib has no external dependencies and can be installed as following:
 
-*  ``pip install git+https://github.com/nlesc-nano/AssertionLib``
+* PyPi: ``pip install AssertionLib``
+* GitHub: ``pip install git+https://github.com/nlesc-nano/AssertionLib``
 
 
 Usage

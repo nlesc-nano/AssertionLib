@@ -5,6 +5,13 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+1.0.0
+*****
+* Changed the license from lgpl-3.0 to apache-2.0.
+* Added tests for `AbstractDataClass`.
+* Release of version 1.0.0.
+
+
 0.1.5
 *****
 * Added the `AssertionManager.shape_eq()` method for comparing array shapes.
