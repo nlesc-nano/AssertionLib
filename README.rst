@@ -107,8 +107,8 @@ during/before the assertion process:
     obj: list = [5]
 
 Lastly, the output of custom callables can be asserted in one of the following two ways,
-supplying the callable to :meth:`.AssertionManager.assert_` or creating a custom assertion
-method and adding it to an instance with :meth:`.AssertionManager.add_to_instance`:
+supplying the callable to `AssertionManager.assert_()` or creating a custom assertion
+method and adding it to an instance with `AssertionManager.add_to_instance()`:
 
 .. code:: python
 
