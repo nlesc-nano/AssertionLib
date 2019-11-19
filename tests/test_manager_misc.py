@@ -1,5 +1,6 @@
 """Tests for the :class:`AssertionManager<assertionlib.manager.AssertionManager>` class."""
 
+from sys import version_info
 from typing import Optional
 
 from assertionlib import assertion, AssertionManager
@@ -203,6 +204,7 @@ def test_get_exc_message() -> None:
     func = len
     args = (1,)
 
+    assertion.ndr
     str1 = assertion._get_exc_message(ex, func, *args, invert=False, output=None)
     str2 = assertion._get_exc_message(ex, func, *args, invert=True, output=None)
     ref1 = """output = len(obj); assert output
@@ -218,5 +220,7 @@ exception: TypeError = TypeError("object of type 'int' has no len()")
 output: NoneType = None
 obj: int = 1"""
 
+    # if version_info.minor >= 7:  # Python 3.7 and later
+    assert str1 == str2, (str1, str2)
     assertion.eq(str1, ref1)
     assertion.eq(str2, ref2)
