@@ -195,3 +195,28 @@ def test_shape_eq() -> None:
 
     assertion.shape_eq(ar1, ar1, ar1, ar1, exception=TypeError)
     assertion.shape_eq(shape, ar1, exception=AttributeError)
+
+
+def test_get_exc_message() -> None:
+    """Test :meth:`AssertionManager._get_exc_message`."""
+    ex = TypeError("object of type 'int' has no len()")
+    func = len
+    args = (1,)
+
+    str1 = assertion._get_exc_message(ex, func, *args, invert=False, output=None)
+    str2 = assertion._get_exc_message(ex, func, *args, invert=True, output=None)
+    ref1 = """output = len(obj); assert output
+
+exception: TypeError = TypeError("object of type 'int' has no len()")
+
+output: NoneType = None
+obj: int = 1"""
+    ref2 = """output = not len(obj); assert output
+
+exception: TypeError = TypeError("object of type 'int' has no len()")
+
+output: NoneType = None
+obj: int = 1"""
+
+    assertion.eq(str1, ref1)
+    assertion.eq(str2, ref2)

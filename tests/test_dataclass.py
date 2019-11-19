@@ -8,14 +8,16 @@ from assertionlib.dataclass import AbstractDataClass, IsOpen
 
 def test_HASHABLE() -> None:
     """Tests for :meth:`AbstractDataClass._HASHABLE`."""
-    class TestClass1(AbstractDataClass):
+    class _TestClass1(AbstractDataClass):
         _HASHABLE = True
 
-    class TestClass2(AbstractDataClass):
+    class _TestClass2(AbstractDataClass):
         _HASHABLE = False
 
-    assertion.hasattr(TestClass1, '__hash__')
-    assertion.hasattr(TestClass2, '__hash__', invert=True)
+    obj1 = _TestClass1()
+    obj2 = _TestClass2()
+    assertion.assert_(hash, obj1)
+    assertion.assert_(hash, obj2, exception=TypeError)
 
 
 def test_init() -> None:
@@ -34,10 +36,13 @@ def test_init() -> None:
 
 def test_PRIVATE_ATTR() -> None:
     """Tests for :meth:`AbstractDataClass._PRIVATE_ATTR`."""
-    self = AbstractDataClass()
+    cls = AbstractDataClass
+    self = cls()
 
-    assertion.isinstance(self._PRIVATE_ATTR, frozenset)
-    assertion.eq(self._PRIVATE_ATTR, frozenset())
+    assertion.isinstance(cls._PRIVATE_ATTR, frozenset)
+    assertion.isinstance(self._PRIVATE_ATTR, set)
+    assertion.eq(cls._PRIVATE_ATTR, frozenset())
+    assertion.eq(self._PRIVATE_ATTR, {'_PRIVATE_ATTR', '_eq_open', '_hash', '_hash_open', '_repr_open'})  # noqa
 
 
 def test_repr() -> None:
@@ -51,19 +56,19 @@ def test_repr() -> None:
 
     self = TestClass(1, 'bob', [1, 2, 3, 4, 5])
     ref1 = """TestClass(
-        a = 1,
-        b = 'bob',
-        c = [1, 2, 3, 4, 5]
-    )"""
+    a = 1,
+    b = 'bob',
+    c = [1, 2, 3, 4, 5]
+)"""
     assertion.str_eq(self, ref1)
 
     self.d = self
     ref2 = f"""TestClass(
-        a = 1,
-        b = 'bob',
-        c = [1, 2, 3, 4, 5],
-        d = {object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]}
-    )"""
+    a = 1,
+    b = 'bob',
+    c = [1, 2, 3, 4, 5],
+    d = {object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]}
+)"""
     assertion.str_eq(self, ref2)
 
 
