@@ -204,7 +204,6 @@ def test_get_exc_message() -> None:
     func = len
     args = (1,)
 
-    assertion.ndr
     str1 = assertion._get_exc_message(ex, func, *args, invert=False, output=None)
     str2 = assertion._get_exc_message(ex, func, *args, invert=True, output=None)
     ref1 = """output = len(obj); assert output
@@ -221,6 +220,6 @@ output: NoneType = None
 obj: int = 1"""
 
     # if version_info.minor >= 7:  # Python 3.7 and later
-    assert str1 == str2, (str1, str2)
+    assert str1 == str2, repr((str1, str2))
     assertion.eq(str1, ref1)
     assertion.eq(str2, ref2)
