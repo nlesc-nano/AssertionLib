@@ -39,7 +39,7 @@ API
 import textwrap
 import copy
 from abc import ABCMeta
-from typing import Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet
+from typing import Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet, NoReturn
 from contextlib import AbstractContextManager
 
 __all__ = ['AbstractDataClass']
@@ -73,11 +73,16 @@ class IsOpen(AbstractContextManager):
 class _MetaADC(ABCMeta):
     def __new__(mcls, name, bases, namespace, **kwargs) -> type:
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
-        if cls._HASHABLE:  # Add the mcls.__hash__ method to cls if True
-            setattr(cls, '__hash__', mcls._hash_template)
+        if not cls._HASHABLE:
+            setattr(cls, '__hash__', mcls._hash_template1)
+        else:
+            setattr(cls, '__hash__', mcls._hash_template2)
         return cls
 
-    def _hash_template(self) -> int:
+    def _hash_template1(self) -> NoReturn:
+        raise TypeError(f"unhashable type: '{self.__class__.__name__}'")
+
+    def _hash_template2(self) -> int:
         """Return the hash of this instance.
 
         The returned hash is constructed from two components:

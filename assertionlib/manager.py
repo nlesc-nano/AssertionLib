@@ -356,7 +356,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             pass  # Not relevant if the exception parameter is None
 
         except Exception as ex:  # This is an unexpected exception
-            err = self._get_exc_message(ex, func, *args, output=output, **kwargs)
+            err = self._get_exc_message(ex, func, *args, output=output, invert=invert, **kwargs)
             raise AssertionError(err)
 
     def __call__(self, value: Any, invert: bool = False) -> None:

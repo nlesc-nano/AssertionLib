@@ -27,7 +27,7 @@ setup(
     package_dir={'assertionlib': 'assertionlib'},
     package_data={'assertionlib': ['*.rst']},
     include_package_data=True,
-    license='GNU Lesser General Public License v3 or later',
+    license='Apache Software License',
     zip_safe=False,
     keywords=[
         'assertion',
@@ -39,17 +39,17 @@ setup(
         'python-3-8'
     ],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries',
-        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8'
     ],
-    test_suite='tests',
     python_requires='>=3.6',
+    test_suite='tests',
     tests_require=[
         'pytest',
         'pytest-cov',
@@ -58,6 +58,6 @@ setup(
     ],
     extras_require={
         'test': ['pytest', 'pytest-cov', 'pycodestyle', 'numpy'],
-        'doc': ['sphinx>=2.0', 'sphinx_rtd_theme', 'sphinx-autodoc-typehints']
+        'doc': ['sphinx>=2.0', 'sphinx_rtd_theme']
     }
 )

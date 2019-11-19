@@ -1,5 +1,6 @@
 """Tests for the :class:`AssertionManager<assertionlib.manager.AssertionManager>` class."""
 
+from sys import version_info
 from typing import Optional
 
 from assertionlib import assertion, AssertionManager
@@ -195,3 +196,29 @@ def test_shape_eq() -> None:
 
     assertion.shape_eq(ar1, ar1, ar1, ar1, exception=TypeError)
     assertion.shape_eq(shape, ar1, exception=AttributeError)
+
+
+def test_get_exc_message() -> None:
+    """Test :meth:`AssertionManager._get_exc_message`."""
+    ex = TypeError("object of type 'int' has no len()")
+    func = len
+    args = (1,)
+
+    str1 = assertion._get_exc_message(ex, func, *args, invert=False, output=None)
+    str2 = assertion._get_exc_message(ex, func, *args, invert=True, output=None)
+    comma = ',' if version_info.minor < 7 else ''   # For Python 3.6 and later
+    ref1 = f"""output = len(obj); assert output
+
+exception: TypeError = TypeError("object of type 'int' has no len()"{comma})
+
+output: NoneType = None
+obj: int = 1"""
+    ref2 = f"""output = not len(obj); assert output
+
+exception: TypeError = TypeError("object of type 'int' has no len()"{comma})
+
+output: NoneType = None
+obj: int = 1"""
+
+    assertion.eq(str1, ref1)
+    assertion.eq(str2, ref2)
