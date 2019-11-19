@@ -206,20 +206,19 @@ def test_get_exc_message() -> None:
 
     str1 = assertion._get_exc_message(ex, func, *args, invert=False, output=None)
     str2 = assertion._get_exc_message(ex, func, *args, invert=True, output=None)
-    ref1 = """output = len(obj); assert output
+    comma = ',' if version_info.minor < 7 else ''   # For Python 3.6 and later
+    ref1 = f"""output = len(obj); assert output
 
-exception: TypeError = TypeError("object of type 'int' has no len()")
-
-output: NoneType = None
-obj: int = 1"""
-    ref2 = """output = not len(obj); assert output
-
-exception: TypeError = TypeError("object of type 'int' has no len()")
+exception: TypeError = TypeError("object of type 'int' has no len()"{comma})
 
 output: NoneType = None
 obj: int = 1"""
+    ref2 = f"""output = not len(obj); assert output
 
-    # if version_info.minor >= 7:  # Python 3.7 and later
-    assert str1 == ref1, repr((str1, ref1))
+exception: TypeError = TypeError("object of type 'int' has no len()"{comma})
+
+output: NoneType = None
+obj: int = 1"""
+
     assertion.eq(str1, ref1)
     assertion.eq(str2, ref2)
