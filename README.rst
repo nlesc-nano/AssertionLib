@@ -2,15 +2,17 @@
    :target: https://travis-ci.org/nlesc-nano/AssertionLib
 .. image:: https://readthedocs.org/projects/cat/badge/?version=latest
    :target: https://assertionlib.readthedocs.io/en/latest
+.. image:: https://badge.fury.io/py/AssertionLib.svg
+   :target: https://badge.fury.io/py/AssertionLib
 
 |
 
 .. image:: https://img.shields.io/badge/python-3.6-blue.svg
-   :target: https://www.python.org
+   :target: https://docs.python.org/3.6/
 .. image:: https://img.shields.io/badge/python-3.7-blue.svg
-   :target: https://www.python.org
+   :target: https://docs.python.org/3.7/
 .. image:: https://img.shields.io/badge/python-3.8-blue.svg
-   :target: https://www.python.org
+   :target: https://docs.python.org/3.8/
 
 
 ##################
@@ -107,8 +109,8 @@ during/before the assertion process:
     obj: list = [5]
 
 Lastly, the output of custom callables can be asserted in one of the following two ways,
-supplying the callable to `AssertionManager.assert_()` or creating a custom assertion
-method and adding it to an instance with `AssertionManager.add_to_instance()`:
+supplying the callable to ``AssertionManager.assert()`` or creating a custom assertion
+method and adding it to an instance with ``AssertionManager.add_to_instance()``:
 
 .. code:: python
 
