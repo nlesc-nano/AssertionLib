@@ -1,7 +1,7 @@
 .. image:: https://travis-ci.org/nlesc-nano/AssertionLib.svg?branch=master
    :target: https://travis-ci.org/nlesc-nano/AssertionLib
 .. image:: https://readthedocs.org/projects/cat/badge/?version=latest
-   :target: https://assertionlib.readthedocs.io/en/latest
+   :target: https://assertionlib.readthedocs.io/en/latest/
 .. image:: https://badge.fury.io/py/AssertionLib.svg
    :target: https://badge.fury.io/py/AssertionLib
 
