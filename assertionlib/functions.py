@@ -476,6 +476,8 @@ def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
     return all([i == j for i, j in iterator])
 
 
-def _sanitize_instruction(instruction: dis.Instruction) -> dis.Instruction:
+def _sanitize_instruction(instruction: Optional[dis.Instruction]) -> Optional[dis.Instruction]:
     """Sanitize the supplied instruction by setting :attr:`Instruction.starts_line<dis.Instruction.starts_line>` to ``None``."""  # noqa
+    if instruction is None:
+        return None
     return instruction._replace(starts_line=None)
