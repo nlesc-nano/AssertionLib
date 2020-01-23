@@ -21,6 +21,7 @@ def test_pep8_conformance() -> None:
 
     # Increase the maximum amount of characters per line from 79 to 100
     style = pycodestyle.StyleGuide(max_line_length=100)
+    style.options.ignore += ('E731',)  # Ignore E731: Do not assign a lambda expression, use a def
     style.options.exclude.extend(exclude)
 
     success = style.check_files(include).total_errors == 0

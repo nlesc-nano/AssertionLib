@@ -200,9 +200,9 @@ def test_shape_eq() -> None:
 
 def test_function_eq() -> None:
     """Test :meth:`AssertionManager.function_eq`."""
-    func1 = lambda x: x + 5  # noqa
-    func2 = lambda x: x + 5  # noqa
-    func3 = lambda x: 5 + x  # noqa
+    func1 = lambda x: x + 5
+    func2 = lambda x: x + 5
+    func3 = lambda x: 5 + x
 
     assertion.function_eq(func1, func2)
     assertion.function_eq(func1, func3, invert=True)
