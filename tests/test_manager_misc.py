@@ -203,9 +203,11 @@ def test_function_eq() -> None:
     func1 = lambda x: x + 5
     func2 = lambda x: x + 5
     func3 = lambda x: 5 + x
+    func4 = lambda x: x / 5 + 9.0**2
 
     assertion.function_eq(func1, func2)
     assertion.function_eq(func1, func3, invert=True)
+    assertion.function_eq(func1, func4, invert=True)
     assertion.function_eq(func1, None, exception=TypeError)
 
 

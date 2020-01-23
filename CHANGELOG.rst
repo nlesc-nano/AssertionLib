@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+1.1.1
+*****
+* Fixed an issue wjere ``AssertionManager.function_eq()`` would raise an ``AttributeError`` if
+  the functions ``__code__`` attributes were not equal in length.
+
+
 1.1.0
 *****
 * Added the new ``AssertionManager.function_eq()`` method for testing the equivalency of functions.
