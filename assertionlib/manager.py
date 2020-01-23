@@ -85,6 +85,7 @@ Miscellaneous assertions.
     AssertionManager.len_eq
     AssertionManager.str_eq
     AssertionManager.shape_eq
+    AssertionManager.function_eq
 
 API
 ---
@@ -154,6 +155,7 @@ Miscellaneous assertions
 .. automethod:: AssertionManager.len_eq
 .. automethod:: AssertionManager.str_eq
 .. automethod:: AssertionManager.shape_eq
+.. automethod:: AssertionManager.function_eq
 
 """
 
@@ -167,7 +169,7 @@ from string import ascii_lowercase
 from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet, TypeVar
 
 from .ndrepr import aNDRepr
-from .functions import bind_callable, len_eq, allclose, str_eq, shape_eq
+from .functions import bind_callable, len_eq, allclose, str_eq, shape_eq, function_eq
 from .dataclass import AbstractDataClass, _MetaADC
 
 __all__ = ['AssertionManager', 'assertion']
@@ -197,7 +199,7 @@ class _MetaAM(_MetaADC):
     INCLUDE: FrozenSet[Callable] = frozenset({
         os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
         isinstance, issubclass, callable, hasattr, len_eq, allclose, str_eq, len, bool,
-        shape_eq
+        shape_eq, function_eq
     })
 
     def __new__(mcls, name, bases, namespace, **kwargs) -> type:
