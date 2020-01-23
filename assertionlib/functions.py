@@ -14,6 +14,7 @@ Index
     allclose
     len_eq
     str_eq
+    function_eq
     skip_if
 
 API
@@ -24,18 +25,21 @@ API
 .. autofunction:: allclose
 .. autofunction:: len_eq
 .. autofunction:: str_eq
+.. autofunction:: function_eq
 .. autofunction:: skip_if
 
 """
 
 import os
+import dis
 import types
 import inspect
 import textwrap
 import functools
 import contextlib
-from types import MappingProxyType
+from types import MappingProxyType, FunctionType
 from typing import Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type
+from itertools import zip_longest
 
 try:
     import numpy as np
@@ -432,3 +436,46 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[float, ...]]) -> bool:
 
     """  # noqa
     return a.shape == getattr(b, 'shape', b)
+
+
+def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
+    """Check if two functions are equivalent by checking if their :attr:`__code__` is identical.
+
+    **func1** and **func2** should be instances of :class:`FunctionType<types.FunctionType>`
+    or any other object with access to the :attr:`__code__` attribute.
+
+    Examples
+    --------
+    .. code:: python
+
+        >>> from assertionlib.functions import function_eq
+
+        >>> func1 = lambda x: x + 5
+        >>> func2 = lambda x: x + 5
+        >>> func3 = lambda x: 5 + x
+
+        >>> print(function_eq(func1, func2))
+        True
+
+        >>> print(function_eq(func1, func3))
+        False
+
+    """
+    code1 = None
+    try:
+        code1 = func1.__code__
+        code2 = func2.__code__
+    except AttributeError as ex:
+        tb = ex.__traceback__
+        name, obj = ('func1', func1) if code1 is None else ('func2', func2)
+        raise TypeError(f"'{name}' expected a function or object with the '__code__' attribute; "
+                        f"observed type: '{obj.__class__.__name__}'").with_traceback(tb)
+
+    _iterator = zip_longest(dis.get_instructions(code1), dis.get_instructions(code2))
+    iterator = ((_sanitize_instruction(i), _sanitize_instruction(j)) for i, j in _iterator)
+    return all([i == j for i, j in iterator])
+
+
+def _sanitize_instruction(instruction: dis.Instruction) -> dis.Instruction:
+    """Sanitize the supplied instruction by setting :attr:`Instruction.starts_line<dis.Instruction.starts_line>` to ``None``."""  # noqa
+    return instruction._replace(starts_line=None)
