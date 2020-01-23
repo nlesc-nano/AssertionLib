@@ -8,8 +8,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 1.1.1
 *****
-* Fixed an issue wjere ``AssertionManager.function_eq()`` would raise an ``AttributeError`` if
-  the functions ``__code__`` attributes were not equal in length.
+* Fixed an issue where ``AssertionManager.function_eq()`` would raise an ``AttributeError`` if
+  the two functions ``__code__`` attributes were not equal in length.
 
 
 1.1.0
