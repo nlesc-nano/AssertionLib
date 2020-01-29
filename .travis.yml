@@ -4,30 +4,27 @@ language: generic
 env:
     global:
         - COMMIT_AUTHOR_EMAIL: b.f.van.beek@vu.nl
-        - CONDA_LINUX: https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-        - CONDA_OSX: https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-        - CONDA_WIN: https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe
 
 matrix:
     include:
         - os: linux
-          env: PYTHON_VERSION=3.6 MINICONDA=$CONDA_LINUX
+          env: PYTHON_VERSION=3.6 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
         - os: linux
-          env: PYTHON_VERSION=3.7 MINICONDA=$CONDA_LINUX
+          env: PYTHON_VERSION=3.7 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
         - os: linux
-          env: PYTHON_VERSION=3.8 MINICONDA=$CONDA_LINUX
+          env: PYTHON_VERSION=3.8 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
         - os: osx
-          env: PYTHON_VERSION=3.6 MINICONDA=$CONDA_OSX
+          env: PYTHON_VERSION=3.6 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
         - os: osx
-          env: PYTHON_VERSION=3.7 MINICONDA=$CONDA_OSX
+          env: PYTHON_VERSION=3.7 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
         - os: osx
-          env: PYTHON_VERSION=3.8 MINICONDA=$CONDA_OSX
+          env: PYTHON_VERSION=3.8 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
         - os: windows
-          env: PYTHON_VERSION=3.6 MINICONDA=$CONDA_WIN
+          env: PYTHON_VERSION=3.6 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe
         - os: windows
-          env: PYTHON_VERSION=3.7 MINICONDA=$CONDA_WIN
+          env: PYTHON_VERSION=3.7 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe
         - os: windows
-          env: PYTHON_VERSION=3.8 MINICONDA=$CONDA_WIN
+          env: PYTHON_VERSION=3.8 MINICONDA=https://repo.continuum.io/miniconda/Miniconda3-latest-Windows-x86_64.exe
 
 install:
     # Install python via anaconda
