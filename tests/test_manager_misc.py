@@ -62,17 +62,6 @@ def test_len() -> None:
     assertion.len(5, exception=TypeError)
 
 
-def test_allclose() -> None:
-    """Test :meth:`AssertionManager.allclose`."""
-    assertion.allclose(1, 1)
-    assertion.allclose(1, 1, rtol=10**-5)
-    assertion.allclose(1.0, (1.0 - 10**-10))
-    assertion.allclose(1, 0, invert=True)
-    assertion.allclose(5, 6, 7, 8, exception=TypeError)
-    assertion.allclose([], [], exception=TypeError)
-    assertion.allclose(1, 1, rtol='bob', exception=TypeError)
-
-
 def test_len_eq() -> None:
     """Test :meth:`AssertionManager.len_eq`."""
     assertion.len_eq([1], 1)

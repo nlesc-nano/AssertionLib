@@ -64,6 +64,17 @@ Assertions based on the builtin :mod:`os.path` module.
     AssertionManager.islink
     AssertionManager.ismount
 
+Assertions based on the builtin :mod:`math` module.
+
+.. autosummary::
+    :nosignatures:
+
+    AssertionManager.allclose
+    AssertionManager.isclose
+    AssertionManager.isfinite
+    AssertionManager.isinf
+    AssertionManager.isnan
+
 Assertions based on builtin functions.
 
 .. autosummary::
@@ -141,6 +152,14 @@ Assertions based on the builtin :mod:`os.path` module
 .. automethod:: AssertionManager.islink
 .. automethod:: AssertionManager.ismount
 
+Assertions based on the builtin :mod:`math` module
+--------------------------------------------------
+.. automethod:: AssertionManager.allclose
+.. automethod:: AssertionManager.isclose
+.. automethod:: AssertionManager.isfinite
+.. automethod:: AssertionManager.isinf
+.. automethod:: AssertionManager.isnan
+
 Assertions based on builtin functions
 -------------------------------------
 .. automethod:: AssertionManager.callable
@@ -160,6 +179,7 @@ Miscellaneous assertions
 """
 
 import os
+import math
 import inspect
 import reprlib
 import builtins
@@ -169,7 +189,7 @@ from string import ascii_lowercase
 from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet, TypeVar
 
 from .ndrepr import aNDRepr
-from .functions import bind_callable, len_eq, allclose, str_eq, shape_eq, function_eq
+from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq
 from .dataclass import AbstractDataClass, _MetaADC
 
 __all__ = ['AssertionManager', 'assertion']
@@ -198,7 +218,8 @@ class _MetaAM(_MetaADC):
     #: A :class:`frozenset` of callables which need an assertion function.
     INCLUDE: FrozenSet[Callable] = frozenset({
         os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
-        isinstance, issubclass, callable, hasattr, len_eq, allclose, str_eq, len, bool,
+        math.isclose, math.isfinite, math.isinf, math.isnan,
+        isinstance, issubclass, callable, hasattr, len_eq, str_eq, len, bool,
         shape_eq, function_eq
     })
 
@@ -222,6 +243,7 @@ class _MetaAM(_MetaADC):
             name = func.__name__
             bind_callable(cls, func, name)
 
+        cls.allclose = cls.isclose
         return cls
 
 

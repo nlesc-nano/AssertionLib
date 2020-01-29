@@ -1,6 +1,11 @@
 sudo: false
 language: python
 
+os:
+    - linux
+    - osx
+    - windows
+
 env:
     global:
         - COMMIT_AUTHOR_EMAIL: b.f.van.beek@vu.nl

@@ -39,7 +39,7 @@ API
 import textwrap
 import copy
 from abc import ABCMeta
-from typing import Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet, NoReturn
+from typing import Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet, NoReturn, Callable
 from contextlib import AbstractContextManager
 
 __all__ = ['AbstractDataClass']
@@ -58,10 +58,10 @@ class IsOpen(AbstractContextManager):
         self._is_open: bool = False
 
     def __enter__(self) -> None:
-        self._is_open: bool = True
+        self._is_open = True
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._is_open: bool = False
+        self._is_open = False
 
     def __bool__(self) -> bool:
         return self._is_open
@@ -71,7 +71,7 @@ class IsOpen(AbstractContextManager):
 
 
 class _MetaADC(ABCMeta):
-    def __new__(mcls, name, bases, namespace, **kwargs) -> type:
+    def __new__(mcls, name, bases, namespace, **kwargs) -> '_MetaADC':
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
         if not cls._HASHABLE:
             setattr(cls, '__hash__', mcls._hash_template1)
@@ -80,7 +80,7 @@ class _MetaADC(ABCMeta):
         return cls
 
     def _hash_template1(self) -> NoReturn:
-        raise TypeError(f"unhashable type: '{self.__class__.__name__}'")
+        raise TypeError(f"Unhashable type: '{self.__class__.__name__}'")
 
     def _hash_template2(self) -> int:
         """Return the hash of this instance.
@@ -374,7 +374,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         return cls(**dct)
 
     @classmethod
-    def inherit_annotations(cls) -> type:
+    def inherit_annotations(cls) -> Callable[[type], Callable[[type], type]]:
         """A decorator for inheriting annotations and docstrings.
 
         Can be applied to methods of :class:`AbstractDataClass` subclasses to automatically
@@ -404,7 +404,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             {'return': 'SubClass'}
 
         """
-        def decorator(func: type) -> type:
+        def decorator(func: type) -> Callable[[type], type]:
             cls_func = getattr(cls, func.__name__)
             sub_cls_name = func.__qualname__.split('.')[0]
 
