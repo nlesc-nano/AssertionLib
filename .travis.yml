@@ -11,23 +11,23 @@ env:
 matrix:
     include:
         - os: linux
-          env: PYTHON_VERSION=3.6 MINICONDA=${CONDA_LINUX}
+          env: PYTHON_VERSION=3.6 MINICONDA=$CONDA_LINUX
         - os: linux
-          env: PYTHON_VERSION=3.7 MINICONDA=${CONDA_LINUX}
+          env: PYTHON_VERSION=3.7 MINICONDA=$CONDA_LINUX
         - os: linux
-          env: PYTHON_VERSION=3.8 MINICONDA=${CONDA_LINUX}
+          env: PYTHON_VERSION=3.8 MINICONDA=$CONDA_LINUX
         - os: osx
-          env: PYTHON_VERSION=3.6 MINICONDA=${CONDA_OSX}
+          env: PYTHON_VERSION=3.6 MINICONDA=$CONDA_OSX
         - os: osx
-          env: PYTHON_VERSION=3.7 MINICONDA=${CONDA_OSX}
+          env: PYTHON_VERSION=3.7 MINICONDA=$CONDA_OSX
         - os: osx
-          env: PYTHON_VERSION=3.8 MINICONDA=${CONDA_OSX}
+          env: PYTHON_VERSION=3.8 MINICONDA=$CONDA_OSX
         - os: windows
-          env: PYTHON_VERSION=3.6 MINICONDA=${CONDA_WIN}
+          env: PYTHON_VERSION=3.6 MINICONDA=$CONDA_WIN
         - os: windows
-          env: PYTHON_VERSION=3.7 MINICONDA=${CONDA_WIN}
+          env: PYTHON_VERSION=3.7 MINICONDA=$CONDA_WIN
         - os: windows
-          env: PYTHON_VERSION=3.8 MINICONDA=${CONDA_WIN}
+          env: PYTHON_VERSION=3.8 MINICONDA=$CONDA_WIN
 
 install:
     # Install python via anaconda
