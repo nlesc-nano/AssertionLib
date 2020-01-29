@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+2.0.0
+*****
+* Added new ``AssertionManager()`` methods based on the builtin ``math`` module.
+* Swapped the ``allclose()`` function with ``math.isclose()``.
+  Note that one of its keyword arguments has now changed names from ``rtol`` to ``rel_tol``.
+* Added tests for OSX.
+
+
 1.1.1
 *****
 * Fixed an issue where ``AssertionManager.function_eq()`` would raise an ``AttributeError`` if

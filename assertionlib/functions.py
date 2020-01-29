@@ -38,7 +38,7 @@ import textwrap
 import functools
 import contextlib
 from types import MappingProxyType, FunctionType
-from typing import Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type
+from typing import Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar
 from itertools import zip_longest
 
 try:
@@ -48,6 +48,8 @@ except ImportError:
     ndarray = 'numpy.ndarray'
 
 from .signature import generate_signature, _signature_to_str, _get_cls_annotation
+
+T = TypeVar('T')
 
 
 def bind_callable(class_type: Union[type, Any], func: Callable,
@@ -418,17 +420,12 @@ def len_eq(a: Sized, b: int) -> bool:
     return len(a) == b
 
 
-def allclose(a: float, b: float, rtol: float = 1e-07) -> bool:
-    """Check if the absolute differnce between **a** and **b** is smaller than **rtol**: :code:`abs(a - b) < rtol`."""  # noqa
-    return abs(a - b) < rtol
-
-
-def str_eq(a: Any, b: str, str_converter: Callable[[Any], str] = repr) -> bool:
+def str_eq(a: T, b: str, str_converter: Callable[[T], str] = repr) -> bool:
     """Check if the string-representation of **a** is equivalent to **b**: :code:`repr(a) == b`."""
     return str_converter(a) == b
 
 
-def shape_eq(a: ndarray, b: Union[ndarray, Tuple[float, ...]]) -> bool:
+def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
     """Check if the shapes of **a** and **b** are equivalent: :code:`a.shape == getattr(b, 'shape', b)`.
 
     **b** should be either an object with the ``shape`` attribute (*e.g.* a NumPy array)
@@ -471,9 +468,9 @@ def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
         raise TypeError(f"'{name}' expected a function or object with the '__code__' attribute; "
                         f"observed type: '{obj.__class__.__name__}'").with_traceback(tb)
 
-    _iterator = zip_longest(dis.get_instructions(code1), dis.get_instructions(code2))
-    iterator = ((_sanitize_instruction(i), _sanitize_instruction(j)) for i, j in _iterator)
-    return all([i == j for i, j in iterator])
+    iterator = zip_longest(dis.get_instructions(code1), dis.get_instructions(code2))
+    tup_list = [(_sanitize_instruction(i), _sanitize_instruction(j)) for i, j in iterator]
+    return all([i == j for i, j in tup_list])
 
 
 def _sanitize_instruction(instruction: Optional[dis.Instruction]) -> Optional[dis.Instruction]:
