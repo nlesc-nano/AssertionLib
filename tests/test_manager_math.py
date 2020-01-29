@@ -41,11 +41,11 @@ def test_isinf() -> None:
     """Test :meth:`AssertionManager.isinf`."""
     assertion.isinf(inf)
     assertion.isinf(-inf)
-    assertion.isfinite(0.0, invert=True)
-    assertion.isfinite(98, invert=True)
-    assertion.isfinite(nan, invert=True)
-    assertion.isfinite(1, 1, 1, exception=TypeError)
-    assertion.isfinite('bob', exception=TypeError)
+    assertion.isinf(0.0, invert=True)
+    assertion.isinf(98, invert=True)
+    assertion.isinf(nan, invert=True)
+    assertion.isinf(1, 1, 1, exception=TypeError)
+    assertion.isinf('bob', exception=TypeError)
 
 
 def test_isnan() -> None:
@@ -53,7 +53,6 @@ def test_isnan() -> None:
     assertion.isnan(nan)
     assertion.isnan(0.0, invert=True)
     assertion.isnan(98, invert=True)
-    assertion.isnan(nan, invert=True)
     assertion.isnan(inf, invert=True)
     assertion.isnan(-inf, invert=True)
     assertion.isnan(1, 1, 1, exception=TypeError)
