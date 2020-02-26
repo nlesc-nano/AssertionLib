@@ -192,9 +192,8 @@ class AbstractDataClass(metaclass=_MetaADC):
         """Initialize a :class:`AbstractDataClass` instance."""
         # Assign cls._PRIVATE_ATTR as a (unfrozen) set to this instance as attribute
         cls = type(self)
-        self._PRIVATE_ATTR: Set[str] = {
-            '_PRIVATE_ATTR', '_repr_open', '_eq_open'
-        }.union(cls._PRIVATE_ATTR)
+        self._PRIVATE_ATTR: Set[str] = {'_PRIVATE_ATTR', '_repr_open', '_eq_open'}
+        self._PRIVATE_ATTR.update(cls._PRIVATE_ATTR)
 
         # Context managers for saveguarding against recursive method calls
         self._repr_open: IsOpen = IsOpen()
@@ -263,7 +262,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             value_str = textwrap.indent(repr(value), ' ' * indent)[indent:]
         else:
             value_str = repr(value)
-        return key_str + value_str  # e.g.: "key   =     'value'"
+        return f'{key_str}{value_str}'  # e.g.: "key   =     'value'"
 
     def __eq__(self, value: Any) -> bool:
         """Check if this instance is equivalent to **value**.
@@ -432,11 +431,11 @@ class AbstractDataClass(metaclass=_MetaADC):
             # Update annotations
             if not func.__annotations__:
                 func.__annotations__ = dct = getattr(cls_func, '__annotations__', {}).copy()
-                if 'return' in dct and dct['return'] in (cls, cls.__name__):
+                if dct.get('return') in {cls, cls.__name__}:
                     dct['return'] = sub_cls_name
 
             # Update docstring
-            if func.__doc__ is None:
+            if not func.__doc__:
                 func.__doc__ = cls_func.__doc__.replace(cls.__name__, sub_cls_name)
 
             return func
