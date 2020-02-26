@@ -228,10 +228,11 @@ class _MetaAM(_MetaADC):
 
         exclude = mcls.EXCLUDE
         include = mcls.INCLUDE
+        operator_set = set(operator.__all_)
 
         # Iterature over the __all__ attribute of the operator builtin module
         for name in operator.__all__:
-            if name[1:] in func_list or name[1:] + '_' in func_list or name in exclude:
+            if name[1:] in operator_set or name[1:] + '_' in operator_set or name in exclude:
                 continue  # Exclude inplace operations
 
             func = getattr(operator, name)
