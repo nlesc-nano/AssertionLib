@@ -228,7 +228,7 @@ class _MetaAM(_MetaADC):
 
         exclude = mcls.EXCLUDE
         include = mcls.INCLUDE
-        operator_set = set(operator.__all_)
+        operator_set = set(operator.__all__)
 
         # Iterature over the __all__ attribute of the operator builtin module
         for name in operator.__all__:
