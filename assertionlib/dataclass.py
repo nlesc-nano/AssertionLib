@@ -39,7 +39,8 @@ API
 import textwrap
 import copy
 from abc import ABCMeta
-from typing import Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet, NoReturn, Callable
+from typing import (Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet, NoReturn,
+                    Callable, Optional, Mapping)
 from contextlib import AbstractContextManager
 
 __all__ = ['AbstractDataClass']
@@ -80,7 +81,8 @@ class _MetaADC(ABCMeta):
         return cls
 
     def _hash_template1(self) -> NoReturn:
-        raise TypeError(f"Unhashable type: '{self.__class__.__name__}'")
+        """Unhashable type; raise a :exc:`TypeError`."""
+        raise TypeError(f"Unhashable type: {self.__class__.__name__!r}")
 
     def _hash_template2(self) -> int:
         """Return the hash of this instance.
@@ -227,10 +229,10 @@ class AbstractDataClass(metaclass=_MetaADC):
         :meth:`AbstractDataClass._str_iterator`
             Return an iterable for the iterating over this instances' attributes.
 
-        """
-        def _str(k: str, v: Any) -> str:
-            return f'{k:{width}} = ' + textwrap.indent(repr(v), indent2)[len(indent2):]
+        :meth:`AbstractDataClass._str`
+            Returns a string representation of a single **key**/**value** pair.
 
+        """
         # Return the hexed ID of this instance
         if self._repr_open:
             return object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]
@@ -242,15 +244,26 @@ class AbstractDataClass(metaclass=_MetaADC):
             except ValueError:  # Raised if this instance has no instance variables
                 return f'{self.__class__.__name__}()'
 
-            indent1 = ' ' * 4
-            indent2 = ' ' * (3 + width)
-            ret = ',\n'.join(_str(k, v) for k, v in self._str_iterator())
+            ret = ',\n'.join(self._str(k, v, width, 3+width) for k, v in self._str_iterator())
 
-            return f'{self.__class__.__name__}(\n{textwrap.indent(ret, indent1)}\n)'
+            indent = ' ' * 4
+            return f'{self.__class__.__name__}(\n{textwrap.indent(ret, indent)}\n)'
 
     def _str_iterator(self) -> Iterable[Tuple[str, Any]]:
         """Return an iterable for the :meth:`AbstractDataClass.__repr__` method."""
         return ((k, v) for k, v in sorted(vars(self).items()) if k not in self._PRIVATE_ATTR)
+
+    @staticmethod
+    def _str(key: str, value: Any,
+             width: Optional[int] = None,
+             indent: Optional[int] = None) -> str:
+        """Returns a string representation of a single **key**/**value** pair."""
+        key_str = f'{key} = ' if width is None else f'{key:{width}} = '
+        if indent is not None:
+            value_str = textwrap.indent(repr(value), ' ' * indent)[indent:]
+        else:
+            value_str = repr(value)
+        return key_str + value_str  # e.g.: "key   =     'value'"
 
     def __eq__(self, value: Any) -> bool:
         """Check if this instance is equivalent to **value**.
@@ -271,6 +284,9 @@ class AbstractDataClass(metaclass=_MetaADC):
         :attr:`AbstractDataClass._eq_open`
             A context manager for preventing recursive calls to this method.
 
+        :attr:`AbstractDataClass._eq`
+            Return if **v1** and **v2** are equivalent.
+
         """
         # Compare the IDs' of this instance and value
         if self._eq_open:
@@ -288,11 +304,16 @@ class AbstractDataClass(metaclass=_MetaADC):
                     if k in self._PRIVATE_ATTR:
                         continue
                     v2 = getattr(value, k)
-                    assert v1 == v2
+                    assert self._eq(v1, v2)
             except (AttributeError, AssertionError):
                 return False
             else:
                 return True
+
+    @staticmethod
+    def _eq(v1: Any, v2: Any) -> bool:
+        """Return if **v1** and **v2** are equivalent."""
+        return v1 == v2
 
     def copy(self, deep: bool = False) -> 'AbstractDataClass':
         """Return a shallow or deep copy of this instance.
@@ -351,12 +372,12 @@ class AbstractDataClass(metaclass=_MetaADC):
         return {k: copy.copy(v) for k, v in vars(self).items() if k not in skip_attr}
 
     @classmethod
-    def from_dict(cls, dct: Dict[str, Any]) -> 'AbstractDataClass':
+    def from_dict(cls, dct: Mapping[str, Any]) -> 'AbstractDataClass':
         """Construct a instance of this objects' class from a dictionary with keyword arguments.
 
         Parameters
         ----------
-        dct : :class:`dict` [:class:`str`, :data:`Any<typing.Any>`]
+        dct : :class:`Mapping<collections.abc.Mapping>` [:class:`str`, :data:`Any<typing.Any>`]
             A dictionary with keyword arguments for constructing a new
             :class:`AbstractDataClass` instance.
 
