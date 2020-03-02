@@ -365,7 +365,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
                             f"observed {self.repr(exception)} "
                             f"of type {exception.__class__.__name__!r}")
         elif exception is AssertionError:
-            raise ValueError("'AssertionError' is not allowed as value for the 'exception' parameter")
+            raise ValueError("'AssertionError' is not allowed as value "
+                             "for the 'exception' parameter")
 
         output = None
         try:

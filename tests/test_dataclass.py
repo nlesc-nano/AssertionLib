@@ -3,7 +3,7 @@
 import typing
 
 from assertionlib import assertion
-from assertionlib.dataclass import AbstractDataClass, IsOpen
+from assertionlib.dataclass import AbstractDataClass
 
 
 def test_HASHABLE() -> None:
@@ -24,14 +24,8 @@ def test_init() -> None:
     """Tests for :meth:`AbstractDataClass.__init__`."""
     self = AbstractDataClass()
 
-    assertion.eq(self._PRIVATE_ATTR, {'_PRIVATE_ATTR', '_eq_open', '_hash', '_hash_open', '_repr_open'})  # noqa
+    assertion.eq(self._PRIVATE_ATTR, {'_PRIVATE_ATTR', '_hash'})
     assertion.eq(self._hash, 0)
-    assertion.isinstance(self._repr_open, IsOpen)
-    assertion.isinstance(self._eq_open, IsOpen)
-    assertion.isinstance(self._hash_open, IsOpen)
-    assertion.is_(self._repr_open._is_open, False)
-    assertion.is_(self._eq_open._is_open, False)
-    assertion.is_(self._hash_open._is_open, False)
 
 
 def test_PRIVATE_ATTR() -> None:
@@ -42,7 +36,7 @@ def test_PRIVATE_ATTR() -> None:
     assertion.isinstance(cls._PRIVATE_ATTR, frozenset)
     assertion.isinstance(self._PRIVATE_ATTR, set)
     assertion.eq(cls._PRIVATE_ATTR, frozenset())
-    assertion.eq(self._PRIVATE_ATTR, {'_PRIVATE_ATTR', '_eq_open', '_hash', '_hash_open', '_repr_open'})  # noqa
+    assertion.eq(self._PRIVATE_ATTR, {'_PRIVATE_ATTR', '_hash'})  # noqa
 
 
 def test_repr() -> None:
