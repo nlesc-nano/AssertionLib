@@ -54,17 +54,19 @@ def recursion_safeguard(fallback: Callable[..., T]):
     """
     def decorating_function(user_function):
         running = set()
+        running_add = running.add
+        running_discard = running.discard
 
         def wrapper(self, *args, **kwargs):
             key = id(self), get_ident()
             if key in running:
                 return fallback(self, *args, **kwargs)
 
-            running.add(key)
+            running_add(key)
             try:
                 result = user_function(self, *args, **kwargs)
             finally:
-                running.discard(key)
+                running_discard(key)
             return result
 
         # Can't use functools.wraps() here because of bootstrap issues
