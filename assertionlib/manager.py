@@ -186,7 +186,8 @@ import builtins
 import textwrap
 import operator
 from string import ascii_lowercase
-from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet, TypeVar
+from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence,
+                    FrozenSet, TypeVar, ClassVar)
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq
@@ -288,7 +289,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     """
 
-    _PRIVATE_ATTR: Set[str] = frozenset({'_repr_fallback', '_maxstring_fallback'})
+    _PRIVATE_ATTR: ClassVar[FrozenSet[str]] = frozenset({'_repr_fallback', '_maxstring_fallback'})
 
     def __init__(self, repr_instance: Optional[reprlib.Repr] = aNDRepr) -> None:
         """Initialize an :class:`AssertionManager` instance."""
