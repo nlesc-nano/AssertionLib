@@ -31,43 +31,51 @@ API
 .. automethod:: AbstractDataClass.as_dict
 .. automethod:: AbstractDataClass.from_dict
 .. automethod:: AbstractDataClass.inherit_annotations
-.. automethod:: AbstractDataClass._str_iterator
-.. autoclass:: IsOpen
 
 """
 
 import textwrap
 import copy
 from abc import ABCMeta
-from typing import Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet, NoReturn, Callable
-from contextlib import AbstractContextManager
+from typing import (Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet, NoReturn,
+                    Callable, Optional, Mapping, TypeVar)
+from _thread import get_ident
 
 __all__ = ['AbstractDataClass']
 
+T = TypeVar('T')
 
-class IsOpen(AbstractContextManager):
-    """A context manager for keeping track of recursive calls to a callable.
 
-    Has a single instance variable, :attr:`IsOpen._is_open`, which is ``True``
-    when the context manager has been enterd and ``False`` otherwise.
-    This same value is used for truth-testing class instances.
+def recursion_safeguard(fallback: Callable[..., T]):
+    """Decorate a function such that it calls **fallback** in case of recursive calls.
+
+    Implementation based on :func:`reprlib.recursive_repr`.
 
     """
+    def decorating_function(user_function):
+        running = set()
 
-    def __init__(self) -> None:
-        self._is_open: bool = False
+        def wrapper(self, *args, **kwargs):
+            key = id(self), get_ident()
+            if key in running:
+                return fallback(self, *args, **kwargs)
 
-    def __enter__(self) -> None:
-        self._is_open = True
+            running.add(key)
+            try:
+                result = user_function(self, *args, **kwargs)
+            finally:
+                running.discard(key)
+            return result
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self._is_open = False
+        # Can't use functools.wraps() here because of bootstrap issues
+        wrapper.__module__ = getattr(user_function, '__module__')
+        wrapper.__doc__ = getattr(user_function, '__doc__')
+        wrapper.__name__ = getattr(user_function, '__name__')
+        wrapper.__qualname__ = getattr(user_function, '__qualname__')
+        wrapper.__annotations__ = getattr(user_function, '__annotations__', {})
+        return wrapper
 
-    def __bool__(self) -> bool:
-        return self._is_open
-
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}: {self._is_open}>"
+    return decorating_function
 
 
 class _MetaADC(ABCMeta):
@@ -76,11 +84,13 @@ class _MetaADC(ABCMeta):
         if not cls._HASHABLE:
             setattr(cls, '__hash__', mcls._hash_template1)
         else:
-            setattr(cls, '__hash__', mcls._hash_template2)
+            func = recursion_safeguard(cls._repr_fallback)(mcls._hash_template2)
+            setattr(cls, '__hash__', func)
         return cls
 
     def _hash_template1(self) -> NoReturn:
-        raise TypeError(f"Unhashable type: '{self.__class__.__name__}'")
+        """Unhashable type; raise a :exc:`TypeError`."""
+        raise TypeError(f"Unhashable type: {self.__class__.__name__!r}")
 
     def _hash_template2(self) -> int:
         """Return the hash of this instance.
@@ -103,8 +113,8 @@ class _MetaADC(ABCMeta):
         :attr:`AbstractDataClass._HASHABLE`
             Whether or not this class is hashable.
 
-        :attr:`AbstractDataClass._hash_open`
-            A context manager for preventing recursive calls to this method.
+        :attr:`AbstractDataClass._hash_fallback`
+            Fallback function for :meth:`AbstractDataClass.__hash__` incase of recursive calls.
 
         :attr:`AbstractDataClass._hash`
             An instance variable for caching the :func:`hash` of this instance.
@@ -112,23 +122,19 @@ class _MetaADC(ABCMeta):
         """
         if self._hash:  # Return a cached hash
             return self._hash
-        elif self._hash_open:  # Return the ID of this instance
-            return id(self)
 
-        # A precaution against recursive __hash__ calls
-        with self._hash_open:
-            ret = hash(type(self))
-            for k, v in vars(self).items():
-                if k in self._PRIVATE_ATTR:
-                    continue
-                try:
-                    ret ^= hash((k, v))
-                except TypeError:
-                    ret ^= hash((k, id(v)))
+        ret = hash(type(self))
+        for k, v in vars(self).items():
+            if k in self._PRIVATE_ATTR:
+                continue
+            try:
+                ret ^= hash((k, v))
+            except TypeError:
+                ret ^= hash((k, id(v)))
 
-            # Cache the hash and return
-            self._hash = ret
-            return ret
+        # Cache the hash and return
+        self._hash = ret
+        return ret
 
 
 class AbstractDataClass(metaclass=_MetaADC):
@@ -162,19 +168,6 @@ class AbstractDataClass(metaclass=_MetaADC):
         An attribute for caching the :func:`hash` of this instance.
         Only available if :attr:`AbstractDataClass._HASHABLE` is ``True``.
 
-    _repr_open : :class:`IsOpen`
-        A context manager for keeping track of recursive calls to
-        :meth:`AbstractDataClass.__repr__`.
-
-    _eq_open : :class:`IsOpen`
-        A context manager for keeping track of recursive calls to
-        :meth:`AbstractDataClass.__eq__`.
-
-    _hash_open : :class:`IsOpen`
-        A context manager for keeping track of recursive calls to
-        :meth:`AbstractDataClass.__hash__`.
-        Only available if :attr:`AbstractDataClass._HASHABLE` is ``True``.
-
     """
 
     #: A :class:`frozenset` with the names of private instance variables.
@@ -190,21 +183,22 @@ class AbstractDataClass(metaclass=_MetaADC):
         """Initialize a :class:`AbstractDataClass` instance."""
         # Assign cls._PRIVATE_ATTR as a (unfrozen) set to this instance as attribute
         cls = type(self)
-        self._PRIVATE_ATTR: Set[str] = {
-            '_PRIVATE_ATTR', '_repr_open', '_eq_open'
-        }.union(cls._PRIVATE_ATTR)
-
-        # Context managers for saveguarding against recursive method calls
-        self._repr_open: IsOpen = IsOpen()
-        self._eq_open: IsOpen = IsOpen()
+        self._PRIVATE_ATTR: Set[str] = {'_PRIVATE_ATTR'}.union(cls._PRIVATE_ATTR)
 
         # Extra attributes in case the class is hashable
         if cls._HASHABLE:
-            self._hash_open: IsOpen = IsOpen()
-            self._hash: int = 0
-            self._PRIVATE_ATTR.add('_hash_open')
             self._PRIVATE_ATTR.add('_hash')
+            self._hash: int = 0
 
+    def _hash_fallback(self):
+        """Fallback function for :meth:`AbstractDataClass.__hash__` incase of recursive calls."""
+        return id(self)
+
+    def _repr_fallback(self):
+        """Fallback function for :meth:`AbstractDataClass.__repr__` incase of recursive calls."""
+        return object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]
+
+    @recursion_safeguard(fallback=_repr_fallback)
     def __repr__(self) -> str:
         """Return a (machine readable) string representation of this instance.
 
@@ -221,37 +215,47 @@ class AbstractDataClass(metaclass=_MetaADC):
         :attr:`AbstractDataClass._PRIVATE_ATTR`
             A set with the names of private instance variables.
 
-        :attr:`AbstractDataClass._repr_open`
-            A context manager for preventing recursive calls to this method.
+        :attr:`AbstractDataClass._repr_fallback`
+            Fallback function for :meth:`AbstractDataClass.__repr__` incase of recursive calls.
 
         :meth:`AbstractDataClass._str_iterator`
             Return an iterable for the iterating over this instances' attributes.
 
+        :meth:`AbstractDataClass._str`
+            Returns a string representation of a single **key**/**value** pair.
+
         """
-        def _str(k: str, v: Any) -> str:
-            return f'{k:{width}} = ' + textwrap.indent(repr(v), indent2)[len(indent2):]
+        try:
+            width = max(len(k) for k, _ in self._str_iterator())
+        except ValueError:  # Raised if this instance has no instance variables
+            return f'{self.__class__.__name__}()'
 
-        # Return the hexed ID of this instance
-        if self._repr_open:
-            return object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]
+        ret = ',\n'.join(self._str(k, v, width, 3+width) for k, v in self._str_iterator())
 
-        # A precaution against recursive __repr__() calls
-        with self._repr_open:
-            try:
-                width = max(len(k) for k, _ in self._str_iterator())
-            except ValueError:  # Raised if this instance has no instance variables
-                return f'{self.__class__.__name__}()'
-
-            indent1 = ' ' * 4
-            indent2 = ' ' * (3 + width)
-            ret = ',\n'.join(_str(k, v) for k, v in self._str_iterator())
-
-            return f'{self.__class__.__name__}(\n{textwrap.indent(ret, indent1)}\n)'
+        indent = ' ' * 4
+        return f'{self.__class__.__name__}(\n{textwrap.indent(ret, indent)}\n)'
 
     def _str_iterator(self) -> Iterable[Tuple[str, Any]]:
         """Return an iterable for the :meth:`AbstractDataClass.__repr__` method."""
         return ((k, v) for k, v in sorted(vars(self).items()) if k not in self._PRIVATE_ATTR)
 
+    @staticmethod
+    def _str(key: str, value: Any,
+             width: Optional[int] = None,
+             indent: Optional[int] = None) -> str:
+        """Return a string representation of a single **key**/**value** pair."""
+        key_str = f'{key} = ' if width is None else f'{key:{width}} = '
+        if indent is not None:
+            value_str = textwrap.indent(repr(value), ' ' * indent)[indent:]
+        else:
+            value_str = repr(value)
+        return f'{key_str}{value_str}'  # e.g.: "key   =     'value'"
+
+    def _eq_fallback(self, value: Any) -> bool:
+        """Fallback function for :meth:`AbstractDataClass.__eq__` incase of recursive calls."""
+        return id(self) == id(value)
+
+    @recursion_safeguard(fallback=_eq_fallback)
     def __eq__(self, value: Any) -> bool:
         """Check if this instance is equivalent to **value**.
 
@@ -268,31 +272,33 @@ class AbstractDataClass(metaclass=_MetaADC):
         :attr:`AbstractDataClass._PRIVATE_ATTR`
             A set with the names of private instance variables.
 
-        :attr:`AbstractDataClass._eq_open`
-            A context manager for preventing recursive calls to this method.
+        :attr:`AbstractDataClass._eq`
+            Return if **v1** and **v2** are equivalent.
+
+        :attr:`AbstractDataClass._eq_fallback`
+            Fallback function for :meth:`AbstractDataClass.__eq__` incase of recursive calls.
 
         """
-        # Compare the IDs' of this instance and value
-        if self._eq_open:
-            return id(self) == id(value)
-
         # Compare instance types
         if type(self) is not type(value):
             return False
 
-        # A precaution against recursive __eq__ calls
-        with self._eq_open:
-            # Compare instance variables
-            try:
-                for k, v1 in vars(self).items():
-                    if k in self._PRIVATE_ATTR:
-                        continue
-                    v2 = getattr(value, k)
-                    assert v1 == v2
-            except (AttributeError, AssertionError):
-                return False
-            else:
-                return True
+        # Compare instance variables
+        try:
+            for k, v1 in vars(self).items():
+                if k in self._PRIVATE_ATTR:
+                    continue
+                v2 = getattr(value, k)
+                assert self._eq(v1, v2)
+        except (AttributeError, AssertionError):
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def _eq(v1: Any, v2: Any) -> bool:
+        """Return if **v1** and **v2** are equivalent."""
+        return v1 == v2
 
     def copy(self, deep: bool = False) -> 'AbstractDataClass':
         """Return a shallow or deep copy of this instance.
@@ -351,12 +357,12 @@ class AbstractDataClass(metaclass=_MetaADC):
         return {k: copy.copy(v) for k, v in vars(self).items() if k not in skip_attr}
 
     @classmethod
-    def from_dict(cls, dct: Dict[str, Any]) -> 'AbstractDataClass':
+    def from_dict(cls, dct: Mapping[str, Any]) -> 'AbstractDataClass':
         """Construct a instance of this objects' class from a dictionary with keyword arguments.
 
         Parameters
         ----------
-        dct : :class:`dict` [:class:`str`, :data:`Any<typing.Any>`]
+        dct : :class:`Mapping<collections.abc.Mapping>` [:class:`str`, :data:`Any<typing.Any>`]
             A dictionary with keyword arguments for constructing a new
             :class:`AbstractDataClass` instance.
 
@@ -409,13 +415,13 @@ class AbstractDataClass(metaclass=_MetaADC):
             sub_cls_name = func.__qualname__.split('.')[0]
 
             # Update annotations
-            if not func.__annotations__:
+            if not getattr(func, '__annotations__', None):
                 func.__annotations__ = dct = getattr(cls_func, '__annotations__', {}).copy()
-                if 'return' in dct and dct['return'] in (cls, cls.__name__):
+                if dct.get('return') in {cls, cls.__name__}:
                     dct['return'] = sub_cls_name
 
             # Update docstring
-            if func.__doc__ is None:
+            if not getattr(func, '__doc__', None):
                 func.__doc__ = cls_func.__doc__.replace(cls.__name__, sub_cls_name)
 
             return func

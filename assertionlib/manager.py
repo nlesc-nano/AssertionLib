@@ -186,7 +186,8 @@ import builtins
 import textwrap
 import operator
 from string import ascii_lowercase
-from typing import Callable, Any, Type, Set, Optional, Mapping, Sequence, FrozenSet, TypeVar
+from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence,
+                    FrozenSet, TypeVar, ClassVar)
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq
@@ -226,13 +227,13 @@ class _MetaAM(_MetaADC):
     def __new__(mcls, name, bases, namespace, **kwargs) -> type:
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
-        func_list = operator.__all__
         exclude = mcls.EXCLUDE
         include = mcls.INCLUDE
+        operator_set = set(operator.__all__)
 
         # Iterature over the __all__ attribute of the operator builtin module
-        for name in func_list:
-            if name[1:] in func_list or name[1:] + '_' in func_list or name in exclude:
+        for name in operator.__all__:
+            if name[1:] in operator_set or name[1:] + '_' in operator_set or name in exclude:
                 continue  # Exclude inplace operations
 
             func = getattr(operator, name)
@@ -288,7 +289,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     """
 
-    _PRIVATE_ATTR: Set[str] = frozenset({'_repr_fallback', '_maxstring_fallback'})
+    _PRIVATE_ATTR: ClassVar[FrozenSet[str]] = frozenset({'_repr_fallback', '_maxstring_fallback'})
 
     def __init__(self, repr_instance: Optional[reprlib.Repr] = aNDRepr) -> None:
         """Initialize an :class:`AssertionManager` instance."""
@@ -359,11 +360,13 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         # Set exception to _NoneException
         exception = _NoneException if exception is None else exception
-        if not issubclass(exception, Exception):
-            raise TypeError("The 'exception' parameter should be either 'None' or an exception type"
-                            f"; observed type: '{exception.__class__.__name__}'")
+        if not (isinstance(exception, type) and issubclass(exception, Exception)):
+            raise TypeError("'exception' expected 'None' or an Exception type; "
+                            f"observed {self.repr(exception)} "
+                            f"of type {exception.__class__.__name__!r}")
         elif exception is AssertionError:
-            raise ValueError("'AssertionError' is a disallowed value for the 'exception' parameter")
+            raise ValueError("'AssertionError' is not allowed as value "
+                             "for the 'exception' parameter")
 
         output = None
         try:
@@ -374,14 +377,14 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
             assert output
             if exception is not _NoneException:  # i.e. the exception parameter is not None
-                raise AssertionError(f"Failed to raise '{exception.__name__}'")
+                raise AssertionError(f"Failed to raise {exception.__name__!r}")
 
         except exception:  # This is the expected exception
             pass  # Not relevant if the exception parameter is None
 
         except Exception as ex:  # This is an unexpected exception
             err = self._get_exc_message(ex, func, *args, output=output, invert=invert, **kwargs)
-            raise AssertionError(err)
+            raise AssertionError(err) from ex
 
     def __call__(self, value: Any, invert: bool = False) -> None:
         """Equivalent to :code:`assert value`.
@@ -446,8 +449,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         """
         name = name if name is not None else func.__name__
         if not override_attr and hasattr(self, name):
-            raise AttributeError(f"'{self.__class__.__name__}' instance already has an attribute "
-                                 f"by the name of '{name}'")
+            raise AttributeError(f"{self.__class__.__name__!r} instance already has an attribute "
+                                 f"by the name of {name!r}")
         bind_callable(self, func, name)
 
         # Add the name as private attribute
@@ -590,9 +593,9 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             indent = 4 * ' '
             value_str = f'\n{textwrap.indent(_value_str, indent)}'
         else:
-            value_str = ' ' + _value_str
+            value_str = f' {_value_str}'
 
-        return key_str + value_str
+        return f'{key_str}{value_str}'
 
 
 #: An instance of :class:`AssertionManager`.
