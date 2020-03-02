@@ -8,7 +8,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 2.1.0
 *****
-* Placeholder.
+* Made the recursion safeguard in ``AbstractDataClass`` thread-safe.
+* Added the ``AbstractDataClass._str()`` function for creating string-representations of key/value pairs.
+* Added the ``AbstractDataClass._eq()`` function for comparing two attribute values.
+* Minor Improvements to ``Exception`` handling.
 
 
 2.0.0
