@@ -181,6 +181,9 @@ class AbstractDataClass(metaclass=_MetaADC):
     #: If ``False``, raise a :exc:`TypeError` when calling :meth:`AbstractDataClass.__hash__`.
     _HASHABLE: ClassVar[bool] = True
 
+    #: Empty slots which can be filled by subclasses.
+    __slots__: ClassVar[Tuple[str, ...]] = ()
+
     def __init__(self) -> None:
         """Initialize a :class:`AbstractDataClass` instance."""
         # Assign cls._PRIVATE_ATTR as a (unfrozen) set to this instance as attribute
@@ -192,11 +195,30 @@ class AbstractDataClass(metaclass=_MetaADC):
             self._PRIVATE_ATTR.add('_hash')
             self._hash: int = 0
 
-    def _hash_fallback(self):
+    def _iter_attrs(self) -> Iterable[Tuple[str, Any]]:
+        """Return an iterable which iterates over this instance's attributes as key/value pairs.
+
+        If all attributes are stored in the instance :attr:`__dict__<object.__dict__>` then
+        further alterations to this method are not necessary.
+
+        If :attr:`__slots__<object.__slots__>` are utilized for defining attributes then alterations
+        will have to be made to this method, *e.g.*:
+
+        .. code:: python
+
+            >>> def _iter_attrs(self):
+            ...     yield 'a', self.a
+            ...     yield 'b', self.b
+            ...     yield 'c', self.c
+
+        """
+        return vars(self).items()
+
+    def _hash_fallback(self) -> int:
         """Fallback function for :meth:`AbstractDataClass.__hash__` incase of recursive calls."""
         return id(self)
 
-    def _repr_fallback(self):
+    def _repr_fallback(self) -> str:
         """Fallback function for :meth:`AbstractDataClass.__repr__` incase of recursive calls."""
         return object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]
 
@@ -239,7 +261,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
     def _str_iterator(self) -> Iterable[Tuple[str, Any]]:
         """Return an iterable for the :meth:`AbstractDataClass.__repr__` method."""
-        return ((k, v) for k, v in sorted(vars(self).items()) if k not in self._PRIVATE_ATTR)
+        return ((k, v) for k, v in sorted(self._iter_attrs()) if k not in self._PRIVATE_ATTR)
 
     @staticmethod
     def _str(key: str, value: Any,
@@ -287,7 +309,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
         # Compare instance variables
         try:
-            for k, v1 in vars(self).items():
+            for k, v1 in self._iter_attrs():
                 if k in self._PRIVATE_ATTR:
                     continue
                 v2 = getattr(value, k)
@@ -316,9 +338,12 @@ class AbstractDataClass(metaclass=_MetaADC):
             A new instance constructed from this instance.
 
         """
+        copy_func = copy.copy if not deep else copy.deepcopy
+
         cls = type(self)
         ret = cls.__new__(cls)
-        ret.__dict__ = vars(self).copy() if not deep else copy.deepcopy(vars(self))
+        for k, v in self._iter_attrs():
+            setattr(ret, k, copy_func(v))
         return ret
 
     def __copy__(self) -> 'AbstractDataClass':
@@ -355,8 +380,10 @@ class AbstractDataClass(metaclass=_MetaADC):
             A set with the names of private instance variables.
 
         """
-        skip_attr = self._PRIVATE_ATTR if not return_private else set()
-        return {k: copy.copy(v) for k, v in vars(self).items() if k not in skip_attr}
+        if return_private:
+            return {k: copy.copy(v) for k, v in self._iter_attrs()}
+        else:
+            return {k: copy.copy(v) for k, v in self._iter_attrs() if k not in self._PRIVATE_ATTR}
 
     @classmethod
     def from_dict(cls, dct: Mapping[str, Any]) -> 'AbstractDataClass':
