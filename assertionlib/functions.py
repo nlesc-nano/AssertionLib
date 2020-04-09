@@ -11,22 +11,20 @@ Index
     get_sphinx_domain
     create_assertion_doc
     bind_callable
-    allclose
+    skip_if
     len_eq
     str_eq
     function_eq
-    skip_if
 
 API
 ---
 .. autofunction:: get_sphinx_domain
 .. autofunction:: create_assertion_doc
 .. autofunction:: bind_callable
-.. autofunction:: allclose
+.. autofunction:: skip_if
 .. autofunction:: len_eq
 .. autofunction:: str_eq
 .. autofunction:: function_eq
-.. autofunction:: skip_if
 
 """
 
@@ -38,16 +36,20 @@ import textwrap
 import functools
 import contextlib
 from types import MappingProxyType, FunctionType
-from typing import Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar
 from itertools import zip_longest
-
-try:
-    import numpy as np
-    ndarray = np.ndarray
-except ImportError:
-    ndarray = 'numpy.ndarray'
+from typing import (
+    Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar, TYPE_CHECKING
+)
 
 from .signature import generate_signature, _signature_to_str, _get_cls_annotation
+
+if TYPE_CHECKING:
+    from numpy import ndarray
+else:
+    ndarray = 'numpy.ndarray'
+
+__all__ = ['get_sphinx_domain', 'create_assertion_doc', 'bind_callable', 'skip_if',
+           'len_eq', 'str_eq', 'function_eq']
 
 T = TypeVar('T')
 
@@ -68,10 +70,10 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
 
     Parameters
     ----------
-    class_type : :class:`type` or :data:`Any<typing.Any>`
+    class_type : :class:`type` or :data:`~typing.Any`
         A class (*i.e.* a :class:`type` instance) or class instance.
 
-    func : :data:`Callable<typing.Callable>`
+    func : :class:`~collections.abc.Callable`
         A callable object whose output will be asserted by the created method.
 
     name : :class:`str`, optional
@@ -90,7 +92,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     # Update the docstring and sanitize the signature
     signature_str = signature_str.replace('(func, ', '(')
     signature_str = signature_str.replace(', *args', '').replace(', **kwargs', '')
-    signature_str = signature_str.replace(', invert=invert, exception=exception', '')
+    signature_str = signature_str.replace(', invert=invert, exception=exception, post_process=post_process, message=message', '')  # noqa
     function.__doc__ = create_assertion_doc(func, signature_str)
 
     # Update annotations
@@ -110,14 +112,14 @@ def _set_annotations(func_new: Callable, func_old: Callable) -> None:
     annotations['return'] = None
     annotations['invert'] = bool
     annotations['exception'] = Optional[Type[Exception]]
+    annotations['post_process'] = Optional[Callable[[Any], Any]]
+    annotations['message'] = Optional[str]
 
     # Create an additional annotation incase **func_old** is an instance- or class-method
     with contextlib.suppress(ValueError):  # Raised if **func_old** has no readable signature
         prm = inspect.signature(func_old).parameters
-        has_self, has_cls = ('self' in prm, 'cls' in prm)
-        if has_self or has_cls:
-            name = 'self' if has_cls else 'cls'
-            key, value = _get_cls_annotation(func_old, name)
+        if 'self' in prm:
+            key, value = _get_cls_annotation(func_old)
             annotations[key] = value
 
 
@@ -126,7 +128,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
 
     Parameters
     ----------
-    func : :data:`Callable<typing.Callable>`
+    func : :class:`~collections.abc.Callable`
         A callable object forming the basis of the to-be created assertion function.
 
     """
@@ -154,7 +156,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
             break
 
     # Extract the default arguments for positional or keyword parameters
-    defaults = code_compile.co_consts[-1]
+    defaults: Optional[Tuple[object, ...]] = code_compile.co_consts[-1]
     if isinstance(defaults, str):  # no default arguments
         defaults = None
     func_new = types.FunctionType(code, {'func': func}, func.__name__, defaults)
@@ -181,8 +183,18 @@ exception : :class:`type` [:exc:`Exception`], optional
     Assert that **exception** is raised during/before the assertion operation.
     This value should only be supplied as keyword argument.
 
-\*args/\**kwargs : :data:`Any<typing.Any>`
+post_process : :class:`~collections.abc.Callable`, optional
+    Apply post-processing to the to-be asserted data before asserting aforementioned data.
+    Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+
+message : :data:`~typing.Any`, optional
+    A custom error message to-be passed to the ``assert`` statement.
+
+\*args/\**kwargs : :data:`~typing.Any`
     Parameters for catching excess variable positional and keyword arguments.
+
+
+:rtype: :data:`None`
 
 See also
 --------
@@ -216,12 +228,16 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
             Assert that **exception** is raised during/before the assertion operation.
             This value should only be supplied as keyword argument.
 
-        \*args/\**kwargs : :data:`Any<typing.Any>`
+        post_process : :class:`~collections.abc.Callable`, optional
+            Apply post-processing to the to-be asserted data before asserting aforementioned data.
+            Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+
+        \*args/\**kwargs : :data:`~typing.Any`
             Parameters for catching excess variable positional and keyword arguments.
 
         See also
         --------
-        :func:`isinstance<isinstance>`:
+        :func:`~builtins.isinstance`:
             Return whether an object is an instance of a class or of a subclass thereof.
 
             A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
@@ -230,7 +246,7 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
 
     Parameters
     ----------
-    func : :data:`Callable<typing.Callable>`
+    func : :class:`~collections.abc.Callable`
         A callable whose output is to-be asserted.
 
     signature : :class:`str`, optional
@@ -242,7 +258,7 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
     :class:`str`
         A new docstring constructed from **funcs'** docstring.
 
-    """
+    """  # noqa
     # domain is :class:`...`, :func:`...` or :meth:`...`
     domain = get_sphinx_domain(func)
     sgn = signature if signature is not None else '(*args, **kwargs)'
@@ -264,10 +280,9 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
 
 #: A dictionary which translates certain __module__ values to an actual valid modules
 MODULE_DICT: Mapping[str, str] = MappingProxyType({
-    'builtins': '',
-    'genericpath': 'os.path.',
-    'posixpath': 'os.path.',
-    '_operator': 'operator.'
+    'genericpath': 'os.path',
+    'posixpath': 'os.path',
+    '_operator': 'operator'
 })
 
 
@@ -290,23 +305,23 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
 
         >>> value1: str = get_sphinx_domain(int)
         >>> print(value1)
-        :class:`int<int>`
+        :class:`~builtins.int`
 
         >>> value2: str = get_sphinx_domain(list.count)
         >>> print(value2)
-        :meth:`list.count<list.count>`
+        :meth:`~list.count`
 
         >>> value3: str = get_sphinx_domain(OrderedDict)
         >>> print(value3)
-        :class:`OrderedDict<collections.OrderedDict>`
+        :class:`~collections.OrderedDict`
 
         >>> value4: str = get_sphinx_domain(OrderedDict.keys)
         >>> print(value4)
-        :meth:`OrderedDict.keys<collections.OrderedDict.keys>`
+        :meth:`~collections.OrderedDict.keys`
 
     Parameters
     ----------
-    func : :data:`Callable<typing.Callable>`
+    func : :class:`~collections.abc.Callable`
         A class or (builtin) method or function.
 
     module_mapping : :class:`dict` [:class:`str`, :class:`str`]
@@ -325,7 +340,7 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
         Raised if **func** is neither a class or a (builtin) function or method.
 
     """
-    name = func.__qualname__ if hasattr(func, '__qualname__') else func.__name__
+    name = getattr(func, '__qualname__', func.__name__)
 
     # Extract the __module__ from **func**
     try:
@@ -334,18 +349,15 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
         _module = func.__objclass__.__module__
 
     # Convert the extracted __module__ into an actual valid module
-    try:
-        module = MODULE_DICT[_module]
-    except KeyError:
-        module = _module + '.' if _module is not None else ''
+    module = MODULE_DICT.get(_module, _module)
 
     # Return the domain as either :func:`...`, :meth:`...` or :class:`...`
-    if inspect.isbuiltin(func) or inspect.isfunction(func) or _is_builtin_func(func):
-        return f':func:`{name}<{module}{name}>`'
+    if inspect.isfunction(func) or _is_builtin_func(func):
+        return f':func:`~{module}.{name}`'
     elif inspect.ismethod(func) or inspect.ismethoddescriptor(func) or inspect.isbuiltin(func):
-        return f':meth:`{name}<{module}{name}>`'
+        return f':meth:`~{module}.{name}`'
     elif inspect.isclass(func):
-        return f':class:`{name}<{module}{name}>`'
+        return f':class:`~{module}.{name}`'
     raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
 
 
@@ -367,8 +379,8 @@ def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = README_
     replace : :class:`dict` [:class:`str`, :class:`str`]
         A mapping of to-be replaced substrings contained within the readme file.
 
-    \**kwargs : :data:`Any<typing.Any>`
-        Optional keyword arguments for the :meth:`read<io.TextIOBase.read>` method.
+    \**kwargs : :data:`~typing.Any`
+        Optional keyword arguments for the :meth:`~io.TextIOBase.read` method.
 
     Returns
     -------
@@ -384,7 +396,10 @@ def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = README_
     return ret
 
 
-def skip_if(condition: Any) -> Callable:
+UserFunc = Callable[..., T]
+
+
+def skip_if(condition: Any) -> Callable[[UserFunc], UserFunc]:
     """A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
 
     Examples
@@ -407,7 +422,7 @@ def skip_if(condition: Any) -> Callable:
     """
     def skip() -> None: pass
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: UserFunc) -> UserFunc:
         @functools.wraps(func)
         def wrapper():
             return func() if not condition else skip()
@@ -438,7 +453,7 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
 def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
     """Check if two functions are equivalent by checking if their :attr:`__code__` is identical.
 
-    **func1** and **func2** should be instances of :class:`FunctionType<types.FunctionType>`
+    **func1** and **func2** should be instances of :class:`~types.FunctionType`
     or any other object with access to the :attr:`__code__` attribute.
 
     Examples

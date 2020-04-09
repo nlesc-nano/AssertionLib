@@ -25,7 +25,7 @@ setup(
     url='https://github.com/nlesc-nano/AssertionLib',
     packages=['assertionlib'],
     package_dir={'assertionlib': 'assertionlib'},
-    package_data={'assertionlib': ['*.rst']},
+    package_data={'assertionlib': ['*.rst', '*.pyi', 'py.typed']},
     include_package_data=True,
     license='Apache Software License',
     zip_safe=False,
@@ -58,6 +58,6 @@ setup(
     ],
     extras_require={
         'test': ['pytest', 'pytest-cov', 'pycodestyle', 'numpy'],
-        'doc': ['sphinx>=2.0', 'sphinx_rtd_theme']
+        'doc': ['sphinx>=2.1', 'sphinx_rtd_theme']
     }
 )

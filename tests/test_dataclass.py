@@ -56,7 +56,7 @@ def test_repr() -> None:
 )"""
     assertion.str_eq(self, ref1)
 
-    self.d = self
+    self.d = self  # type: ignore
     ref2 = f"""TestClass(
     a = 1,
     b = 'bob',

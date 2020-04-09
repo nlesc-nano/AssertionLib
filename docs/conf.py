@@ -28,7 +28,14 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '2.0'  # 2.0 or higher
+needs_sphinx = '2.1'  # 2.0 or higher
+
+
+# This value controls how to represents typehints. The setting takes the following values:
+#     'signature' – Show typehints as its signature (default)
+#     'none' – Do not show typehints
+# New in version 2.1.
+autodoc_typehints = 'none'
 
 
 # Output is processed with HTML4 writer.

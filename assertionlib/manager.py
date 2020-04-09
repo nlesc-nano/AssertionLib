@@ -75,7 +75,7 @@ Assertions based on the builtin :mod:`math` module.
     AssertionManager.isinf
     AssertionManager.isnan
 
-Assertions based on builtin functions.
+Assertions based on :mod:`builtin<builtins>` functions.
 
 .. autosummary::
     :nosignatures:
@@ -85,6 +85,8 @@ Assertions based on builtin functions.
     AssertionManager.isinstance
     AssertionManager.issubclass
     AssertionManager.len
+    AssertionManager.any
+    AssertionManager.all
 
 
 Miscellaneous assertions.
@@ -101,7 +103,7 @@ Miscellaneous assertions.
 API
 ---
 .. autodata:: assertion
-    :annotation:  = <AssertionManager object>
+    :annotation: : AssertionManager
 
 .. autoclass:: AssertionManager
 .. automethod:: AssertionManager.assert_
@@ -160,13 +162,15 @@ Assertions based on the builtin :mod:`math` module
 .. automethod:: AssertionManager.isinf
 .. automethod:: AssertionManager.isnan
 
-Assertions based on builtin functions
--------------------------------------
+Assertions based on :class:`builtin<builtins>` functions
+--------------------------------------------------------
 .. automethod:: AssertionManager.callable
 .. automethod:: AssertionManager.hasattr
 .. automethod:: AssertionManager.isinstance
 .. automethod:: AssertionManager.issubclass
 .. automethod:: AssertionManager.len
+.. automethod:: AssertionManager.any
+.. automethod:: AssertionManager.all
 
 Miscellaneous assertions
 ------------------------
@@ -185,9 +189,10 @@ import reprlib
 import builtins
 import textwrap
 import operator
+from types import MappingProxyType
 from string import ascii_lowercase
-from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence,
-                    FrozenSet, TypeVar, ClassVar)
+from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence, cast, Iterable,
+                    FrozenSet, TypeVar)
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq
@@ -220,19 +225,19 @@ class _MetaAM(_MetaADC):
     INCLUDE: FrozenSet[Callable] = frozenset({
         os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
         math.isclose, math.isfinite, math.isinf, math.isnan,
-        isinstance, issubclass, callable, hasattr, len_eq, str_eq, len, bool,
-        shape_eq, function_eq
+        isinstance, issubclass, callable, hasattr, len, bool, any, all,
+        len_eq, str_eq, shape_eq, function_eq
     })
 
-    def __new__(mcls, name, bases, namespace, **kwargs) -> type:
-        cls = super().__new__(mcls, name, bases, namespace, **kwargs)
+    def __new__(mcls, name, bases, namespace) -> '_MetaAM':
+        cls = cast('_MetaAM', super().__new__(mcls, name, bases, namespace))
 
         exclude = mcls.EXCLUDE
         include = mcls.INCLUDE
-        operator_set = set(operator.__all__)
+        operator_set = set(operator.__all__)  # type: ignore
 
         # Iterature over the __all__ attribute of the operator builtin module
-        for name in operator.__all__:
+        for name in operator_set:
             if name[1:] in operator_set or name[1:] + '_' in operator_set or name in exclude:
                 continue  # Exclude inplace operations
 
@@ -244,13 +249,24 @@ class _MetaAM(_MetaADC):
             name = func.__name__
             bind_callable(cls, func, name)
 
-        cls.allclose = cls.isclose
+        cls.allclose = cls.isclose  # type: ignore
+
+        # On windows os.path.isdir is an alias for the ._isdir function
+        if os.name == 'nt':
+            cls.isdir = cls._isdir
+            cls.isdir.__name__ = 'isdir'
+            cls.isdir.__qualname__ = 'isdir'
+            cls.isdir.__doc__ = cls.isdir.__doc__.replace('_isdir', 'isdir')
+            del cls._isdir
         return cls
 
 
 class _Str:
-    def __init__(self, value: str) -> None: self.value = value
-    def __repr__(self) -> str: return str(self.value)
+    def __init__(self, value: str) -> None:
+        self.value = value
+
+    def __repr__(self) -> str:
+        return str(self.value)
 
 
 class _NoneException(Exception):
@@ -281,7 +297,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         which in turn should produce a string representation of passed objects.
         If ``None``, default the builtin :func:`repr` function.
 
-    _repr_fallback : :data:`Callable<typing.Callable>` [[:data:`Any<typing.Any>`], :class:`str`]
+    _repr_fallback : :class:`~collections.abc.Callable` [[:data:`~typing.Any`], :class:`str`]
         A fallback value in case :attr:`AssertionManager.repr_instance` is ``None``.
 
     _maxstring_fallback : :class:`int`
@@ -289,7 +305,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     """
 
-    _PRIVATE_ATTR: ClassVar[FrozenSet[str]] = frozenset({'_repr_fallback', '_maxstring_fallback'})
+    _PRIVATE_ATTR: Set[str] = frozenset({'_repr_fallback', '_maxstring_fallback'})  # type: ignore
 
     def __init__(self, repr_instance: Optional[reprlib.Repr] = aNDRepr) -> None:
         """Initialize an :class:`AssertionManager` instance."""
@@ -298,29 +314,32 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         # Back values for AssertionManager.repr and AssertionManager.maxstring
         # Used when repr_instance is None
-        self._repr_fallback = builtins.repr
+        self._repr_fallback: Callable[[Any], str] = builtins.repr
         self._maxstring_fallback = 80
 
     @property
     def repr(self) -> Callable[[Any], str]:
-        """Return the :meth:`repr<reprlib.Repr.repr>` method of :attr:`AssertionManager.repr_instance`."""  # noqa
+        """Return the :meth:`~reprlib.Repr.repr` method of :attr:`AssertionManager.repr_instance`."""  # noqa
         try:
-            return self.repr_instance.repr
+            return self.repr_instance.repr  # type: ignore
         except AttributeError:  # If self.repr_instance is None
             return self._repr_fallback
 
     @property
     def maxstring(self) -> int:
-        """Return the :attr:`maxstring<reprlib.Repr.maxstring>` attribute of :attr:`AssertionManager.repr_instance`."""  # noqa
+        """Return the :attr:`~reprlib.Repr.maxstring` attribute of :attr:`AssertionManager.repr_instance`."""  # noqa
         try:
-            return self.repr_instance.maxstring
+            return self.repr_instance.maxstring  # type: ignore
         except AttributeError:  # If self.repr_instance is None
             return self._maxstring_fallback
 
     # Public methods
 
-    def assert_(self, func: Callable, *args: Any, invert: bool = False,
-                exception: Optional[Type[Exception]] = None, **kwargs: Any) -> None:
+    def assert_(self, func: Callable[..., T], *args: Any, invert: bool = False,
+                exception: Optional[Type[Exception]] = None,
+                post_process: Optional[Callable[[T], Any]] = None,
+                message: Optional[str] = None,
+                **kwargs: Any) -> None:
         r"""Perform the following assertion: :code:`assert func(*args, **kwargs)`.
 
         Examples
@@ -330,10 +349,10 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         Parameters
         ----------
-        func : :data:`Callable<typing.Callable>`
+        func : :data:`coollections.abc.Callable`
             The callable whose output will be evaluated.
 
-        \*args : :data:`Any<typing.Any>`
+        \*args : :data:`~typing.Any`
             Positional arguments for **func**.
 
         invert : :class:`bool`
@@ -344,7 +363,14 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             Assert that **exception** is raised during/before the assertion operation.
             The only dissalowed value is :exc:`AssertionError`.
 
-        \**kwargs : :data:`Any<typing.Any>`, optional
+        post_process : :class:`~collections.abc.Callable`, optional
+            Apply post-processing to the to-be asserted data before asserting aforementioned data.
+            Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+
+        message : :data:`~typing.Any`, optional
+            A custom error message to-be passed to the ``assert`` statement.
+
+        \**kwargs : :class:`str`, optional
             Keyword arguments for **func**.
 
 
@@ -359,34 +385,48 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         __tracebackhide__ = True
 
         # Set exception to _NoneException
-        exception = _NoneException if exception is None else exception
-        if not (isinstance(exception, type) and issubclass(exception, Exception)):
+        exception_ = cast(Type[Exception], _NoneException if exception is None else exception)
+
+        if not (isinstance(exception_, type) and issubclass(exception_, Exception)):
             raise TypeError("'exception' expected 'None' or an Exception type; "
                             f"observed {self.repr(exception)} "
                             f"of type {exception.__class__.__name__!r}")
-        elif exception is AssertionError:
+        elif exception_ is AssertionError:
             raise ValueError("'AssertionError' is not allowed as value "
                              "for the 'exception' parameter")
 
-        output = None
+        output: Any = None
         try:
             if invert:
                 output = not func(*args, **kwargs)
             else:
                 output = func(*args, **kwargs)
 
-            assert output
-            if exception is not _NoneException:  # i.e. the exception parameter is not None
-                raise AssertionError(f"Failed to raise {exception.__name__!r}")
+            if post_process is None:
+                assert output, message
+            else:
+                assert post_process(output), message
+            if exception_ is not _NoneException:  # i.e. the exception parameter is not None
+                raise AssertionError(f"Failed to raise {exception_.__name__!r}")
 
-        except exception:  # This is the expected exception
+        except exception_:  # This is the expected exception
             pass  # Not relevant if the exception parameter is None
 
         except Exception as ex:  # This is an unexpected exception
-            err = self._get_exc_message(ex, func, *args, output=output, invert=invert, **kwargs)
-            raise AssertionError(err) from ex
+            exc = AssertionError(self._get_exc_message(
+                ex, func, *args, output=output, invert=invert,
+                post_process=post_process, **kwargs
+            ))
 
-    def __call__(self, value: Any, invert: bool = False) -> None:
+            if type(ex) is AssertionError:
+                exc.__cause__ = None
+                raise exc
+            else:
+                raise exc from ex
+
+    def __call__(self, value: T, invert: bool = False,
+                 post_process: Optional[Callable[[T], Any]] = None,
+                 message: Optional[str] = None) -> None:
         """Equivalent to :code:`assert value`.
 
         Examples
@@ -416,7 +456,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         :rtype: :data:`None`
 
         """
-        return self.assert_(return_value, value, invert=invert)
+        return self.assert_(return_value, value, invert=invert,
+                            post_process=post_process, message=message)
 
     def add_to_instance(self, func: Callable, name: Optional[str] = None,
                         override_attr: bool = False) -> None:
@@ -426,7 +467,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         Parameters
         ----------
-        func : :data:`Callable<typing.Callable>`
+        func : :class:`~collections.abc.Callable`
             The callable whose output will be asserted in the to-be created method.
 
         name : :class:`str`, optional
@@ -458,8 +499,10 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     # Private methods
 
-    def _get_exc_message(self, ex: Exception, func: Callable, *args: Any,
-                         invert: bool = False, output: Any = None, **kwargs: Any) -> str:
+    def _get_exc_message(self, ex: Exception, func: Callable[..., T], *args: Any,
+                         invert: bool = False, output: Any = None,
+                         post_process: Optional[Callable[[T], Any]] = None,
+                         **kwargs: Any) -> str:
         r"""Return a formatted exception message for failed assertions.
 
         Examples
@@ -488,19 +531,23 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         ex : :class:`Exception`
             The exception raised by :meth:`AssertionManager.assert_`.
 
-        func : :data:`Callable<typing.Callable>`
+        func : :class:`~collections.abc.Callable`
             The callable whose output has been evaluated.
 
-        \*args : :data:`Any<typing.Any>`
+        \*args : :data:`~typing.Any`
             Positional arguments supplied to **func**.
 
         invert : :class:`bool`
             If ``True``, invert the output of the assertion: :code:`not func(a, b, **kwargs)`.
 
-        output : :data:`Any<typing.Any>`, optional
+        output : :data:`~typing.Any`, optional
             The output value of :code:`func(*args, **kwargs)` or :code:`not func(*args, **kwargs)`.
 
-        \**kwargs : :data:`Any<typing.Any>`, optional
+        post_process : :class:`~collections.abc.Callable`, optional
+            Apply post-processing to the to-be asserted data before asserting aforementioned data.
+            Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+
+        \**kwargs : :data:`~typing.Any`, optional
             Further optional keyword arguments supplied to **func**.
 
         Returns
@@ -520,20 +567,23 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         # Construct a signature of the to-be asserted function
         try:
             _signature = inspect.signature(func)
-            signature = self._get_exc_signature(_signature, args, kwargs)
-            parameters = signature.parameters
+            signature: Any = self._get_exc_signature(_signature, args, kwargs)
+            parameters: Iterable = signature.parameters
         except ValueError:  # Not all callables have a signature
             signature = '(...)'
             parameters = (f'_{i}' for i in ascii_lowercase)
 
         not_ = '' if not invert else ' not'
-        ret = f'output ={not_} {name}{signature}; assert output'
+        out = 'post_process(output)' if post_process is not None else 'output'
+        ret = f'output ={not_} {name}{signature}; assert {out}'
 
         # Create a description of the exception
         ret += '\n\n' + self._get_prm_description('exception', ex)
 
         # Create a description of the to-be returned value
         ret += '\n\n' + self._get_prm_description('output', output)
+        if post_process is not None:
+            ret += '\n' + self._get_prm_description('post_process', post_process)
 
         # Create a description of positional arguments
         for key, value in zip(parameters, args):
@@ -546,8 +596,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         return ret
 
     @staticmethod
-    def _get_exc_signature(signature: inspect.Signature, args: Sequence,
-                           kwargs: Mapping = {}) -> inspect.Signature:
+    def _get_exc_signature(signature: inspect.Signature, args: Sequence[str],
+                           kwargs: Mapping[str, Any] = MappingProxyType({})) -> inspect.Signature:
         """Create a new signature for the callable supplied to :meth:`AssertionManager._get_exc_message`.
 
         The return signature consists of two components:
@@ -599,4 +649,4 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
 
 #: An instance of :class:`AssertionManager`.
-assertion: AssertionManager = AssertionManager()
+assertion = AssertionManager()  # Type: Final[AssertionManager]

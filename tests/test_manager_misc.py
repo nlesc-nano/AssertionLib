@@ -1,7 +1,8 @@
 """Tests for the :class:`AssertionManager<assertionlib.manager.AssertionManager>` class."""
 
+import operator
 from sys import version_info
-from typing import Optional
+from typing import Optional, cast
 
 from assertionlib import assertion, AssertionManager
 from assertionlib.functions import skip_if
@@ -10,7 +11,7 @@ try:
     import numpy as np
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
-    NUMPY_EX: Optional[ImportError] = ex
+    NUMPY_EX = ex
 
 
 def test_callable() -> None:
@@ -82,7 +83,7 @@ def test_as_dict() -> None:
     """Test :meth:`AssertionManager.as_dict` and :meth:`AssertionManager.from_dict`."""
     cls = type(assertion)
     dct = assertion.as_dict()
-    new = cls.from_dict(dct)
+    new = cast(AssertionManager, cls.from_dict(dct))
     assertion.eq(vars(assertion.repr_instance), vars(new.repr_instance))
 
 
@@ -103,7 +104,7 @@ def test_add_to_instance() -> None:
     assertion_ = AssertionManager()
     assertion_.add_to_instance(func)
     assertion_.hasattr(assertion_, 'func')
-    assertion_.func(1, 2)
+    assertion_.func(1, 2)  # type: ignore
 
     try:
         assertion_.add_to_instance(func)
@@ -114,7 +115,7 @@ def test_add_to_instance() -> None:
 
     assertion_.add_to_instance(func, name='bob')
     assertion_.hasattr(assertion_, 'bob')
-    assertion_.bob(1, 2)
+    assertion_.bob(1, 2)  # type: ignore
 
     try:
         assertion_.add_to_instance(func)
@@ -140,18 +141,29 @@ def test_assert_() -> None:
     assertion.assert_(len, [1], bob=1, exception=TypeError)
 
     try:
-        assertion.assert_(len, [1], exception=bool)
+        assertion.assert_(len, [1], exception=bool)  # type: ignore
     except TypeError:
         pass
     else:
-        raise AssertionError
+        raise AssertionError('Failed to raise a TypeError')
 
     try:
         assertion.assert_(len, [1], exception=AssertionError)
     except ValueError:
         pass
     else:
-        raise AssertionError
+        raise AssertionError('Failed to raise a ValueError')
+
+    func = operator.__invert__
+    assertion(False, post_process=func)
+    assertion(True, invert=True, post_process=func)
+
+    try:
+        assertion.truth(False, message='Funcy custom message')
+    except AssertionError as ex:
+        assertion.contains(str(ex), 'Funcy custom message')
+    else:
+        raise AssertionError('Failed to raise am AssertionError')
 
 
 def test_repr() -> None:
@@ -198,6 +210,32 @@ def test_function_eq() -> None:
     assertion.function_eq(func1, func3, invert=True)
     assertion.function_eq(func1, func4, invert=True)
     assertion.function_eq(func1, None, exception=TypeError)
+
+
+def test_any() -> None:
+    """Test :meth:`AssertionManager.any`."""
+    assertion.any([True, True, False])
+    assertion.any({True, True, False})
+    assertion.any({True: None, False: None})
+
+    assertion.any({False: None, False: None}, invert=True)
+    assertion.any((False, False), invert=True)
+
+    assertion.any(True, exception=TypeError)
+    assertion.any(5, exception=TypeError)
+
+
+def test_all() -> None:
+    """Test :meth:`AssertionManager.all`."""
+    assertion.all([True, True, True])
+    assertion.all({True, True, True})
+    assertion.all({True: None, True: None})
+
+    assertion.all({True: None, False: None}, invert=True)
+    assertion.all((False, False), invert=True)
+
+    assertion.all(True, exception=TypeError)
+    assertion.all(5, exception=TypeError)
 
 
 def test_get_exc_message() -> None:

@@ -1,4 +1,4 @@
-"""Tests for the :mod:`NDRepr<assertionlib.ndrepr.NDRepr>` class."""
+"""Tests for the :class:`~assertionlib.ndrepr.NDRepr` class."""
 
 import inspect
 from sys import version_info
@@ -8,7 +8,7 @@ try:
     import numpy as np
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
-    NUMPY_EX: Optional[ImportError] = ex
+    NUMPY_EX = ex
 
 from assertionlib import assertion
 from assertionlib.ndrepr import aNDRepr, NDRepr
@@ -32,7 +32,7 @@ def test_exception() -> None:
     exc1 = repr_instance.repr(TypeError('bob'))
     exc2 = repr_instance.repr(TypeError('bob' * 100))
     ref1 = 'TypeError(bob)'
-    ref2 = 'TypeError(bobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbo...)'  # noqa
+    ref2 = 'TypeError(bobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbobbo...)'  # noqa: E501
     assertion.eq(exc1, ref1)
     assertion.eq(exc2, ref2)
 
@@ -59,7 +59,7 @@ def test_callables() -> None:
     ref5 = "<function '_test_func(a, b, *args, c=1)'>"
     ref6 = "<module 'inspect'>"
 
-    if version_info.minor >= 7:  # Python 3.7 and later
+    if version_info >= (3, 7):  # Python 3.7 and later
         assertion.eq(builtin_bound_meth, ref1)
         assertion.eq(builtin_meth, ref2)
         assertion.eq(class_, ref4)

@@ -37,46 +37,41 @@ API
 import textwrap
 import copy
 from abc import ABCMeta
-from typing import (Any, Dict, Set, Iterable, Tuple, ClassVar, FrozenSet, NoReturn,
-                    Callable, Optional, Mapping, TypeVar)
-from _thread import get_ident
+from functools import wraps
+from threading import get_ident
+from typing import (
+    Any, Dict, Set, Iterable, Tuple, ClassVar, NoReturn, cast, Iterator, Union,
+    Callable, Optional, Mapping, TypeVar
+)
 
 __all__ = ['AbstractDataClass']
 
 T = TypeVar('T')
+UserFunc = Callable[..., T]
 
 
-def recursion_safeguard(fallback: Callable[..., T]):
+def recursion_safeguard(fallback: UserFunc) -> Callable[[UserFunc], UserFunc]:
     """Decorate a function such that it calls **fallback** in case of recursive calls.
 
     Implementation based on :func:`reprlib.recursive_repr`.
 
     """
-    def decorating_function(user_function):
-        running = set()
-        running_add = running.add
-        running_discard = running.discard
+    def decorating_function(user_function: UserFunc) -> UserFunc:
+        running: Set[Tuple[int, int]] = set()
 
+        @wraps(user_function)
         def wrapper(self, *args, **kwargs):
             key = id(self), get_ident()
             if key in running:
                 return fallback(self, *args, **kwargs)
 
-            running_add(key)
+            running.add(key)
             try:
                 result = user_function(self, *args, **kwargs)
             finally:
-                running_discard(key)
+                running.discard(key)
             return result
-
-        # Can't use functools.wraps() here because of bootstrap issues
-        wrapper.__module__ = getattr(user_function, '__module__')
-        wrapper.__doc__ = getattr(user_function, '__doc__')
-        wrapper.__name__ = getattr(user_function, '__name__')
-        wrapper.__qualname__ = getattr(user_function, '__qualname__')
-        wrapper.__annotations__ = getattr(user_function, '__annotations__', {})
         return wrapper
-
     return decorating_function
 
 
@@ -90,10 +85,12 @@ class _MetaADC(ABCMeta):
             setattr(cls, '__hash__', func)
         return cls
 
+    @staticmethod
     def _hash_template1(self) -> NoReturn:
         """Unhashable type; raise a :exc:`TypeError`."""
         raise TypeError(f"Unhashable type: {self.__class__.__name__!r}")
 
+    @staticmethod
     def _hash_template2(self) -> int:
         """Return the hash of this instance.
 
@@ -122,11 +119,12 @@ class _MetaADC(ABCMeta):
             An instance variable for caching the :func:`hash` of this instance.
 
         """
-        if self._hash:  # Return a cached hash
+        # Return a cached hash
+        if self._hash:
             return self._hash
 
         ret = hash(type(self))
-        for k, v in vars(self).items():
+        for k, v in self._iter_attrs():
             if k in self._PRIVATE_ATTR:
                 continue
             try:
@@ -175,28 +173,52 @@ class AbstractDataClass(metaclass=_MetaADC):
     #: A :class:`frozenset` with the names of private instance variables.
     #: These attributes will be excluded whenever calling :meth:`AbstractDataClass.as_dict`,
     #: printing or comparing objects.
-    _PRIVATE_ATTR: ClassVar[FrozenSet[str]] = frozenset()
+    _PRIVATE_ATTR: Set[str] = frozenset()  # type: ignore
 
     #: Whether or not this class is hashable.
     #: If ``False``, raise a :exc:`TypeError` when calling :meth:`AbstractDataClass.__hash__`.
     _HASHABLE: ClassVar[bool] = True
 
+    #: Empty slots which can be filled by subclasses.
+    __slots__: Union[str, Iterable[str]] = ('__dict__',)
+
+    __hash__: Callable[[type], Union[int, NoReturn]]
+
     def __init__(self) -> None:
         """Initialize a :class:`AbstractDataClass` instance."""
         # Assign cls._PRIVATE_ATTR as a (unfrozen) set to this instance as attribute
         cls = type(self)
-        self._PRIVATE_ATTR: Set[str] = {'_PRIVATE_ATTR'}.union(cls._PRIVATE_ATTR)
+        self._PRIVATE_ATTR = {'_PRIVATE_ATTR'}.union(cls._PRIVATE_ATTR)
 
         # Extra attributes in case the class is hashable
         if cls._HASHABLE:
             self._PRIVATE_ATTR.add('_hash')
             self._hash: int = 0
 
-    def _hash_fallback(self):
+    def _iter_attrs(self) -> Iterator[Tuple[str, Any]]:
+        """Return an iterator which iterates over this instance's attributes as key/value pairs.
+
+        If all attributes are stored in the instance :attr:`~object.__dict__` then
+        further alterations to this method are not necessary.
+
+        If :attr:`~object.__slots__` are utilized for defining attributes then alterations
+        will have to be made to this method, *e.g.*:
+
+        .. code:: python
+
+            >>> def _iter_attrs(self):
+            ...     yield 'a', self.a
+            ...     yield 'b', self.b
+            ...     yield 'c', self.c
+
+        """
+        return iter(vars(self).items())
+
+    def _hash_fallback(self) -> int:
         """Fallback function for :meth:`AbstractDataClass.__hash__` incase of recursive calls."""
         return id(self)
 
-    def _repr_fallback(self):
+    def _repr_fallback(self) -> str:
         """Fallback function for :meth:`AbstractDataClass.__repr__` incase of recursive calls."""
         return object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]
 
@@ -239,7 +261,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
     def _str_iterator(self) -> Iterable[Tuple[str, Any]]:
         """Return an iterable for the :meth:`AbstractDataClass.__repr__` method."""
-        return ((k, v) for k, v in sorted(vars(self).items()) if k not in self._PRIVATE_ATTR)
+        return ((k, v) for k, v in sorted(self._iter_attrs()) if k not in self._PRIVATE_ATTR)
 
     @staticmethod
     def _str(key: str, value: Any,
@@ -255,7 +277,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
     def _eq_fallback(self, value: Any) -> bool:
         """Fallback function for :meth:`AbstractDataClass.__eq__` incase of recursive calls."""
-        return id(self) == id(value)
+        return self is value
 
     @recursion_safeguard(fallback=_eq_fallback)
     def __eq__(self, value: Any) -> bool:
@@ -287,7 +309,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
         # Compare instance variables
         try:
-            for k, v1 in vars(self).items():
+            for k, v1 in self._iter_attrs():
                 if k in self._PRIVATE_ATTR:
                     continue
                 v2 = getattr(value, k)
@@ -316,16 +338,19 @@ class AbstractDataClass(metaclass=_MetaADC):
             A new instance constructed from this instance.
 
         """
+        copy_func = cast(Callable[[T], T], copy.deepcopy if deep else lambda n: n)
+
         cls = type(self)
         ret = cls.__new__(cls)
-        ret.__dict__ = vars(self).copy() if not deep else copy.deepcopy(vars(self))
+        for k, v in self._iter_attrs():
+            setattr(ret, k, copy_func(v))
         return ret
 
     def __copy__(self) -> 'AbstractDataClass':
         """Return a shallow copy of this instance; see :meth:`AbstractDataClass.copy`."""
         return self.copy(deep=False)
 
-    def __deepcopy__(self, memo=None) -> 'AbstractDataClass':
+    def __deepcopy__(self, memo: Optional[Dict[int, Any]] = None) -> 'AbstractDataClass':
         """Return a deep copy of this instance; see :meth:`AbstractDataClass.copy`."."""
         return self.copy(deep=True)
 
@@ -342,7 +367,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
         Returns
         -------
-        :class:`dict` [:class:`str`, :data:`Any<typing.Any>`]
+        :class:`dict` [:class:`str`, :data:`~typing.Any`]
             A dictionary with keyword arguments for initializing a new
             instance of this class.
 
@@ -355,8 +380,10 @@ class AbstractDataClass(metaclass=_MetaADC):
             A set with the names of private instance variables.
 
         """
-        skip_attr = self._PRIVATE_ATTR if not return_private else set()
-        return {k: copy.copy(v) for k, v in vars(self).items() if k not in skip_attr}
+        if return_private:
+            return {k: copy.copy(v) for k, v in self._iter_attrs()}
+        else:
+            return {k: copy.copy(v) for k, v in self._iter_attrs() if k not in self._PRIVATE_ATTR}
 
     @classmethod
     def from_dict(cls, dct: Mapping[str, Any]) -> 'AbstractDataClass':
@@ -364,7 +391,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
         Parameters
         ----------
-        dct : :class:`Mapping<collections.abc.Mapping>` [:class:`str`, :data:`Any<typing.Any>`]
+        dct : :class:`~collections.abc.Mapping` [:class:`str`, :data:`~typing.Any`]
             A dictionary with keyword arguments for constructing a new
             :class:`AbstractDataClass` instance.
 
@@ -382,7 +409,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         return cls(**dct)
 
     @classmethod
-    def inherit_annotations(cls) -> Callable[[type], Callable[[type], type]]:
+    def inherit_annotations(cls) -> Callable[[UserFunc], UserFunc]:
         """A decorator for inheriting annotations and docstrings.
 
         Can be applied to methods of :class:`AbstractDataClass` subclasses to automatically
@@ -412,9 +439,9 @@ class AbstractDataClass(metaclass=_MetaADC):
             {'return': 'SubClass'}
 
         """
-        def decorator(func: type) -> Callable[[type], type]:
-            cls_func = getattr(cls, func.__name__)
-            sub_cls_name = func.__qualname__.split('.')[0]
+        def decorator(func: UserFunc) -> UserFunc:
+            cls_func: str = getattr(cls, func.__name__)
+            sub_cls_name: str = func.__qualname__.split('.')[0]
 
             # Update annotations
             if not getattr(func, '__annotations__', None):
@@ -423,8 +450,9 @@ class AbstractDataClass(metaclass=_MetaADC):
                     dct['return'] = sub_cls_name
 
             # Update docstring
-            if not getattr(func, '__doc__', None):
-                func.__doc__ = cls_func.__doc__.replace(cls.__name__, sub_cls_name)
+            if func.__doc__ is None and cls_func.__doc__ is not None:
+                doc_new = cls_func.__doc__.replace(cls.__name__, sub_cls_name)  # type: ignore
+                func.__doc__ = doc_new
 
             return func
         return decorator
