@@ -1,7 +1,7 @@
 """Tests for the :class:`AssertionManager<assertionlib.manager.AssertionManager>` class."""
 
 from sys import version_info
-from typing import Optional
+from typing import Optional, cast
 
 from assertionlib import assertion, AssertionManager
 from assertionlib.functions import skip_if
@@ -10,7 +10,7 @@ try:
     import numpy as np
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
-    NUMPY_EX: Optional[ImportError] = ex
+    NUMPY_EX = ex
 
 
 def test_callable() -> None:
@@ -82,7 +82,7 @@ def test_as_dict() -> None:
     """Test :meth:`AssertionManager.as_dict` and :meth:`AssertionManager.from_dict`."""
     cls = type(assertion)
     dct = assertion.as_dict()
-    new = cls.from_dict(dct)
+    new = cast(AssertionManager, cls.from_dict(dct))
     assertion.eq(vars(assertion.repr_instance), vars(new.repr_instance))
 
 
@@ -103,7 +103,7 @@ def test_add_to_instance() -> None:
     assertion_ = AssertionManager()
     assertion_.add_to_instance(func)
     assertion_.hasattr(assertion_, 'func')
-    assertion_.func(1, 2)
+    assertion_.func(1, 2)  # type: ignore
 
     try:
         assertion_.add_to_instance(func)
@@ -114,7 +114,7 @@ def test_add_to_instance() -> None:
 
     assertion_.add_to_instance(func, name='bob')
     assertion_.hasattr(assertion_, 'bob')
-    assertion_.bob(1, 2)
+    assertion_.bob(1, 2)  # type: ignore
 
     try:
         assertion_.add_to_instance(func)
@@ -140,7 +140,7 @@ def test_assert_() -> None:
     assertion.assert_(len, [1], bob=1, exception=TypeError)
 
     try:
-        assertion.assert_(len, [1], exception=bool)
+        assertion.assert_(len, [1], exception=bool)  # type: ignore
     except TypeError:
         pass
     else:

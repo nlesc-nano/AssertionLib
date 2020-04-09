@@ -59,28 +59,33 @@ import inspect
 import reprlib
 import builtins
 import textwrap
-from typing import Any, Dict, Callable, Union, Tuple
+from typing import Any, Dict, Callable, Union, Tuple, Optional, TYPE_CHECKING
 from itertools import chain, islice
 
-try:
+if TYPE_CHECKING:
     from scm.plams import Molecule, Atom, Bond, Settings
-except ImportError:
+    from numpy import ndarray
+    from pandas import DataFrame, Series
+else:
     Molecule = 'scm.plams.mol.molecule.Molecule'
     Atom = 'scm.plams.mol.molecule.Atom'
     Bond = 'scm.plams.mol.molecule.Bond'
     Settings = 'scm.plams.core.settings.Settings'
+    ndarray = 'numpy.ndarray'
+    Series = 'pandas.core.series.Series'
+    DataFrame = 'pandas.core.frame.DataFrame'
 
 try:
     import numpy as np
-    ndarray = np.ndarray
-except ImportError:
-    ndarray = 'numpy.ndarray'
+    NUMPY_EX: Optional[ImportError] = None
+except ImportError as ex:
+    NUMPY_EX = ex
 
 try:
     import pandas as pd
-    DataFrame, Series = pd.DataFrame, pd.Series
-except ImportError:
-    DataFrame, Series = 'pandas.DataFrame', 'pandas.Series'
+    PANDAS_EX: Optional[ImportError] = None
+except ImportError as ex:
+    PANDAS_EX = ex
 
 __all__ = ['NDRepr', 'aNDRepr']
 
@@ -198,11 +203,11 @@ class NDRepr(reprlib.Repr):
         # Update attributes based on **kwargs; raise an error if a key is unrecognized
         for k, v in kwargs.items():
             if not hasattr(self, k):
-                raise AttributeError(f'{repr(self.__class__.__name__)} instance '
-                                     f'has no attribute {repr(k)}')
+                raise AttributeError(f'{self.__class__.__name__!r} instance '
+                                     f'has no attribute {self.repr(k)}')
             setattr(self, k, v)
 
-    def repr1(self, obj: Any, level: int):
+    def repr1(self, obj: Any, level: int) -> str:
         if isinstance(obj, Exception):  # Refer all exceptions NDRepr.repr_Exception()
             return self.repr_Exception(obj, level)
         return super().repr1(obj, level)
@@ -257,7 +262,7 @@ class NDRepr(reprlib.Repr):
         return f"<module '{obj.__name__}'>"
 
     def repr_Signature(self, obj: inspect.Signature, level: int) -> str:
-        """Create a :class:`str` representation of a :class:`inspect.Signature` instance."""
+        """Create a :class:`str` representation of a :class:`~inspect.Signature` instance."""
         i = self.maxSignature
         signature = str(obj)
 
@@ -381,6 +386,9 @@ class NDRepr(reprlib.Repr):
 
     def repr_ndarray(self, obj: ndarray, level: int) -> str:
         """Create a :class:`str` representation of a :class:`numpy.ndarray` instance."""
+        if NUMPY_EX is not None:
+            raise NUMPY_EX
+
         if level <= 0:
             return f'{obj.__class__.__name__}(...)'
 
@@ -394,6 +402,9 @@ class NDRepr(reprlib.Repr):
 
     def repr_DataFrame(self, obj: DataFrame, level: int) -> str:
         """Create a :class:`str` representation of a :class:`pandas.DataFrame` instance."""
+        if PANDAS_EX is not None:
+            raise PANDAS_EX
+
         if level <= 0:
             return f'{obj.__class__.__name__}(...)'
 
@@ -407,6 +418,9 @@ class NDRepr(reprlib.Repr):
 
     def repr_Series(self, obj: Series, level: int) -> str:
         """Create a :class:`str` representation of a :class:`pandas.Series` instance."""
+        if PANDAS_EX is not None:
+            raise PANDAS_EX
+
         if level <= 0:
             return f'{obj.__class__.__name__}(...)'
 
@@ -417,9 +431,9 @@ class NDRepr(reprlib.Repr):
         with pd.option_context(*args):
             return builtins.repr(obj)
 
-    def _get_ndformatter(self, obj: ndarray) -> dict:
+    def _get_ndformatter(self, obj: ndarray) -> Dict[str, Callable[..., str]]:
         """Return a value for the **formatter** argument in :func:`numpy.printoptions`."""
-        if obj.dtype not in (np.dtype(float), np.dtype(int)):
+        if obj.dtype != float and obj.dtype != int:
             return {}
 
         try:
@@ -430,7 +444,7 @@ class NDRepr(reprlib.Repr):
         else:
             width = max(max_len, min_len)
 
-        if obj.dtype == np.dtype(float):
+        if obj.dtype == float:
             width += 5
             value = '{' + f':{width}.{self.maxfloat}f' + '}'
             return {'float': value.format}

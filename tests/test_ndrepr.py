@@ -8,7 +8,7 @@ try:
     import numpy as np
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
-    NUMPY_EX: Optional[ImportError] = ex
+    NUMPY_EX = ex
 
 from assertionlib import assertion
 from assertionlib.ndrepr import aNDRepr, NDRepr

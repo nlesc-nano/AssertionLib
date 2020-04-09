@@ -22,18 +22,18 @@ API
 
 """
 
-from sys import version_info
-from typing import Callable, Optional, Type, Dict, Container, Union, Tuple
+import sys
+from typing import Callable, Optional, Type, Dict, Container, Tuple, Any
 from inspect import Parameter, Signature, signature, _empty, _ParameterKind
 from itertools import chain
 import warnings
 
 from .ndrepr import aNDRepr
 
-if version_info.minor < 7:
-    from collections import OrderedDict  # noqa
+if sys.version_info < (3, 7):
+    from collections import OrderedDict
 else:  # Dictionaries are ordered starting from python 3.7
-    OrderedDict = dict
+    from builtins import dict as OrderedDict  # type: ignore
 
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
 POK: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD
@@ -46,13 +46,13 @@ ExType = Optional[Type[Exception]]
 
 
 def _get_backup_signature() -> Signature:
-    """Create a generic backup :class:`Signature<inspect.Signature>` instance.
+    """Create a generic backup :class:`~inspect.Signature` instance.
 
     Used in :func:`generate_signature` incase a callables' signature cannot be read.
 
     Returns
     -------
-    :class:`Signature<inspect.Signature>`
+    :class:`~inspect.Signature`
         ``<Signature (self, *args, invert_: bool = False, exception_: Union[Type[Exception], NoneType] = None, **kwargs) -> None>``
 
     See Also
@@ -68,13 +68,14 @@ def _get_backup_signature() -> Signature:
         Parameter(name='self', kind=POK),  # Avoid using positional-only
         Parameter(name='args', kind=VP),
         Parameter(name='invert', kind=KO, default=False, annotation=bool),
-        Parameter(name='exception', kind=KO, default=None, annotation=ExType),
+        Parameter(name='exception', kind=KO, default=None, annotation=ExType),  # type: ignore
+        Parameter(name='post_process', kind=KO, default=None, annotation=Callable[[Any], Any]),
         Parameter(name='kwargs', kind=VK)
     ]
     return Signature(parameters=parameters, return_annotation=None)
 
 
-#: A generic backup :class:`Signature<inspect.Signature>` generated
+#: A generic backup :class:`~inspect.Signature` generated
 #: by :func:`._get_backup_signature`.
 BACK_SIGNATURE: Signature = _get_backup_signature()
 
@@ -105,12 +106,12 @@ def generate_signature(func: Callable) -> Signature:
 
     Parameters
     ----------
-    func : :data:`Callable<typing.Callable>`
+    func : :class:`~collections.abc.Callable`
         A callable object.
 
     Returns
     -------
-    :class:`Signature<inspect.Signature>`
+    :class:`~inspect.Signature`
         The signature of **func** with the ``self`` and ``invert`` parameters.
         Return :data:`BACK_SIGNATURE` if funcs' signature cannot be read.
 
@@ -126,8 +127,8 @@ def generate_signature(func: Callable) -> Signature:
 
     # Fill the parameter dict
     for prm in sgn.parameters.values():
-        if prm.name in ('self', 'cls'):
-            name, _ = _get_cls_annotation(func, prm.name)
+        if prm.name == 'self':
+            name, _ = _get_cls_annotation(func)
             prm = Parameter(name=name, kind=POK)
         elif prm.kind is PO:  # Positional-only to positional or keyword
             prm = prm.replace(kind=POK)
@@ -138,10 +139,14 @@ def generate_signature(func: Callable) -> Signature:
     # Double check if the invert and exception parameters are already defined by **func**
     invert_name = _sanitize_name('invert', func, prm_dict[KO])
     exception_name = _sanitize_name('exception', func, prm_dict[KO])
+    post_process_name = _sanitize_name('post_process', func, prm_dict[KO])
 
     # Ensure the parameter dict contains the following 4 parameters
     prm_dict[KO].append(Parameter(name=invert_name, kind=KO, default=False, annotation=bool))
-    prm_dict[KO].append(Parameter(name=exception_name, kind=KO, default=None, annotation=ExType))
+    prm_dict[KO].append(Parameter(name=exception_name, kind=KO, default=None, annotation=ExType))  # type: ignore  # noqa
+    prm_dict[KO].append(Parameter(name=post_process_name, kind=KO,
+                                  default=None, annotation=Callable[[Any], Any]))
+
     if not prm_dict[VP]:
         prm_dict[VP].append(Parameter(name='args', kind=VP))
     if not prm_dict[VK]:
@@ -152,7 +157,7 @@ def generate_signature(func: Callable) -> Signature:
     return Signature(parameters=parameters, return_annotation=None)
 
 
-def _get_cls_annotation(func: Callable, name: str) -> Tuple[str, str]:
+def _get_cls_annotation(func: Callable) -> Tuple[str, str]:
     """Return an annotation for ``self`` or ``cls``."""
     if hasattr(func, '__self__'):
         cls = func.__self__.__class__
@@ -165,7 +170,7 @@ def _get_cls_annotation(func: Callable, name: str) -> Tuple[str, str]:
 
     if not isinstance(cls, str):
         cls_name = cls.__name__
-    return cls_name.lower(), Union[cls, Type[cls]] if name == 'cls' else cls
+    return cls_name.lower(), cls
 
 
 def _sanitize_name(name: str, func: Callable, container: Container) -> str:
@@ -217,7 +222,7 @@ def _signature_to_str(sgn: Signature, func_name: Optional[str] = None) -> str:
 
     Parameters
     ----------
-    sgn : :class:`Signature<inspect.Signature>`
+    sgn : :class:`~inspect.Signature`
         A Signature object.
 
     func_name : :class:`str`, optional

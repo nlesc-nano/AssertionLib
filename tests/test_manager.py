@@ -6,7 +6,7 @@ try:
     import numpy as np
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
-    NUMPY_EX: Optional[ImportError] = ex
+    NUMPY_EX = ex
 
 from assertionlib import assertion
 from assertionlib.functions import skip_if
@@ -15,6 +15,7 @@ from assertionlib.functions import skip_if
 def test_abs() -> None:
     """Test :meth:`AssertionManager.abs`."""
     assertion.abs(5)
+    assertion.abs(5, 6)
     assertion.abs(0, invert=True)
     assertion.abs(5, 6, 7, 8, exception=TypeError)
     assertion.abs([], exception=TypeError)
