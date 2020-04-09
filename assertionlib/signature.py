@@ -69,7 +69,8 @@ def _get_backup_signature() -> Signature:
         Parameter(name='args', kind=VP),
         Parameter(name='invert', kind=KO, default=False, annotation=bool),
         Parameter(name='exception', kind=KO, default=None, annotation=ExType),  # type: ignore
-        Parameter(name='post_process', kind=KO, default=None, annotation=Callable[[Any], Any]),
+        Parameter(name='post_process', kind=KO, default=None, annotation=Optional[Callable[[Any], Any]]),  # noqa: E105
+        Parameter(name='message', kind=KO, default=None, annotation=Optional[str]),
         Parameter(name='kwargs', kind=VK)
     ]
     return Signature(parameters=parameters, return_annotation=None)
@@ -140,12 +141,14 @@ def generate_signature(func: Callable) -> Signature:
     invert_name = _sanitize_name('invert', func, prm_dict[KO])
     exception_name = _sanitize_name('exception', func, prm_dict[KO])
     post_process_name = _sanitize_name('post_process', func, prm_dict[KO])
+    message = _sanitize_name('message', func, prm_dict[KO])
 
     # Ensure the parameter dict contains the following 4 parameters
     prm_dict[KO].append(Parameter(name=invert_name, kind=KO, default=False, annotation=bool))
     prm_dict[KO].append(Parameter(name=exception_name, kind=KO, default=None, annotation=ExType))  # type: ignore  # noqa
     prm_dict[KO].append(Parameter(name=post_process_name, kind=KO,
-                                  default=None, annotation=Callable[[Any], Any]))
+                                  default=None, annotation=Optional[Callable[[Any], Any]]))
+    prm_dict[KO].append(Parameter(name=message, kind=KO, default=None, annotation=Optional[str]))
 
     if not prm_dict[VP]:
         prm_dict[VP].append(Parameter(name='args', kind=VP))

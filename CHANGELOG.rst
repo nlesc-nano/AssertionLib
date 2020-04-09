@@ -11,8 +11,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 * Marked AssertionLib as a typed package (`PEP 561 <https://www.python.org/dev/peps/pep-0561/>`_).
 * Introduced updates and fixes to the type-annotations across the board.
 * Exposed ``NDRepr``, ``aNDRepr`` and ``AbstractDataClass`` in the main ``__init__.py`` file.
+* Added the ``__slots__`` attribute to ``AbstractDataClass``.
 * Added the ``AssertionManager.any()`` and ``AssertionManager.all()`` methods.
-* Added the ``post_process`` keyword to all ``AssertionManager`` assertion methods.
+* Added the ``post_process`` and ``message`` keywords to all
+  ``AssertionManager`` assertion methods.
 
 
 2.1.0

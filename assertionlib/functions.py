@@ -92,7 +92,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     # Update the docstring and sanitize the signature
     signature_str = signature_str.replace('(func, ', '(')
     signature_str = signature_str.replace(', *args', '').replace(', **kwargs', '')
-    signature_str = signature_str.replace(', invert=invert, exception=exception, post_process=post_process', '')  # noqa
+    signature_str = signature_str.replace(', invert=invert, exception=exception, post_process=post_process, message=message', '')  # noqa
     function.__doc__ = create_assertion_doc(func, signature_str)
 
     # Update annotations
@@ -112,7 +112,8 @@ def _set_annotations(func_new: Callable, func_old: Callable) -> None:
     annotations['return'] = None
     annotations['invert'] = bool
     annotations['exception'] = Optional[Type[Exception]]
-    annotations['post_process'] = Callable[[Any], Any]
+    annotations['post_process'] = Optional[Callable[[Any], Any]]
+    annotations['message'] = Optional[str]
 
     # Create an additional annotation incase **func_old** is an instance- or class-method
     with contextlib.suppress(ValueError):  # Raised if **func_old** has no readable signature
@@ -185,6 +186,9 @@ exception : :class:`type` [:exc:`Exception`], optional
 post_process : :class:`~collections.abc.Callable`, optional
     Apply post-processing to the to-be asserted data before asserting aforementioned data.
     Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+
+message : :data:`~typing.Any`, optional
+    A custom error message to-be passed to the ``assert`` statement.
 
 \*args/\**kwargs : :data:`~typing.Any`
     Parameters for catching excess variable positional and keyword arguments.

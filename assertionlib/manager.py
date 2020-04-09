@@ -250,12 +250,23 @@ class _MetaAM(_MetaADC):
             bind_callable(cls, func, name)
 
         cls.allclose = cls.isclose  # type: ignore
+
+        # On windows os.path.isdir is an alias for the ._isdir function
+        if os.name == 'nt':
+            cls.isdir = cls._isdir
+            cls.isdir.__name__ = 'isdir'
+            cls.isdir.__qualname__ = 'isdir'
+            cls.isdir.__doc__ = cls.isdir.__doc__.replace('_isdir', 'isdir')
+            del cls._isdir
         return cls
 
 
 class _Str:
-    def __init__(self, value: str) -> None: self.value = value
-    def __repr__(self) -> str: return str(self.value)
+    def __init__(self, value: str) -> None:
+        self.value = value
+
+    def __repr__(self) -> str:
+        return str(self.value)
 
 
 class _NoneException(Exception):
@@ -327,6 +338,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
     def assert_(self, func: Callable[..., T], *args: Any, invert: bool = False,
                 exception: Optional[Type[Exception]] = None,
                 post_process: Optional[Callable[[T], Any]] = None,
+                message: Optional[str] = None,
                 **kwargs: Any) -> None:
         r"""Perform the following assertion: :code:`assert func(*args, **kwargs)`.
 
@@ -355,7 +367,10 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             Apply post-processing to the to-be asserted data before asserting aforementioned data.
             Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
 
-        \**kwargs : :data:`~typing.Any`, optional
+        message : :data:`~typing.Any`, optional
+            A custom error message to-be passed to the ``assert`` statement.
+
+        \**kwargs : :class:`str`, optional
             Keyword arguments for **func**.
 
 
@@ -388,9 +403,9 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
                 output = func(*args, **kwargs)
 
             if post_process is None:
-                assert output
+                assert output, message
             else:
-                assert post_process(output)
+                assert post_process(output), message
             if exception_ is not _NoneException:  # i.e. the exception parameter is not None
                 raise AssertionError(f"Failed to raise {exception_.__name__!r}")
 
@@ -398,12 +413,20 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             pass  # Not relevant if the exception parameter is None
 
         except Exception as ex:  # This is an unexpected exception
-            err = self._get_exc_message(ex, func, *args, output=output,
-                                        invert=invert, post_process=post_process, **kwargs)
-            raise AssertionError(err) from ex
+            exc = AssertionError(self._get_exc_message(
+                ex, func, *args, output=output, invert=invert,
+                post_process=post_process, **kwargs
+            ))
+
+            if type(ex) is AssertionError:
+                exc.__cause__ = None
+                raise exc
+            else:
+                raise exc from ex
 
     def __call__(self, value: T, invert: bool = False,
-                 post_process: Optional[Callable[[T], Any]] = None) -> None:
+                 post_process: Optional[Callable[[T], Any]] = None,
+                 message: Optional[str] = None) -> None:
         """Equivalent to :code:`assert value`.
 
         Examples
@@ -433,7 +456,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         :rtype: :data:`None`
 
         """
-        return self.assert_(return_value, value, invert=invert, post_process=post_process)
+        return self.assert_(return_value, value, invert=invert,
+                            post_process=post_process, message=message)
 
     def add_to_instance(self, func: Callable, name: Optional[str] = None,
                         override_attr: bool = False) -> None:
@@ -477,7 +501,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     def _get_exc_message(self, ex: Exception, func: Callable[..., T], *args: Any,
                          invert: bool = False, output: Any = None,
-                         post_process: Optional[Callable[[T], Any]],
+                         post_process: Optional[Callable[[T], Any]] = None,
                          **kwargs: Any) -> str:
         r"""Return a formatted exception message for failed assertions.
 

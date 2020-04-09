@@ -41,6 +41,7 @@ A few examples of some basic assertion:
 .. code:: python
 
     >>> from assertionlib import assertion
+    >>> import numpy as np
 
     # Assert the output of specific callables
     >>> assertion.eq(5, 5)  # 5 == 5
@@ -48,16 +49,23 @@ A few examples of some basic assertion:
     >>> assertion.gt(6, 5)  # 5 > 6
     >>> assertion.isinstance(5, int)
     >>> assertion.hasattr(5, '__init__')
+    >>> assertion.any([False, False, True])
+    >>> assertion.isfinite(1.0)
 
     # Simply assert a value
     >>> assertion(5 == 5)
     >>> assertion(isinstance(5, int))
 
+    # Apply post-processing before conducting the assertion
+    >>> ar_large = np.ones(10)
+    >>> ar_small = np.zeros(10)
+    >>> assertion.lt(ar_large, ar_small, post_process=all)  # all(ar_large > ar_small)
+
     # Perform an assertion which will raise an AssertionError
-    >>> assertion.eq(5, 6)  # 5 == 6
+    >>> assertion.eq(5, 6, message='Fancy custom error message')  # 5 == 6
     AssertionError: output = eq(a, b); assert output
 
-    exception: AssertionError = AssertionError()
+    exception: AssertionError = AssertionError('Fancy custom error message')
 
     output: bool = False
     a: int = 5
@@ -123,7 +131,7 @@ method and adding it to an instance with ``AssertionManager.add_to_instance()``:
     >>> assertion.assert_(my_fancy_func, 5)
     AssertionError: output = my_fancy_func(a); assert output
 
-    exception: AssertionError = AssertionError()
+    exception: AssertionError = AssertionError(None)
 
     output: bool = False
     a: int = 5
@@ -133,7 +141,7 @@ method and adding it to an instance with ``AssertionManager.add_to_instance()``:
     >>> assertion.my_fancy_func(5)
     AssertionError: output = my_fancy_func(a); assert output
 
-    exception: AssertionError = AssertionError()
+    exception: AssertionError = AssertionError(None)
 
     output: bool = False
     a: int = 5

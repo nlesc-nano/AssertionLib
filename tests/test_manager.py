@@ -15,7 +15,7 @@ from assertionlib.functions import skip_if
 def test_abs() -> None:
     """Test :meth:`AssertionManager.abs`."""
     assertion.abs(5)
-    assertion.abs(5, 6)
+    assertion.abs(5)
     assertion.abs(0, invert=True)
     assertion.abs(5, 6, 7, 8, exception=TypeError)
     assertion.abs([], exception=TypeError)

@@ -338,7 +338,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             A new instance constructed from this instance.
 
         """
-        copy_func = cast(Callable[[T], T], lambda n: n if not deep else copy.deepcopy)
+        copy_func = cast(Callable[[T], T], copy.deepcopy if deep else lambda n: n)
 
         cls = type(self)
         ret = cls.__new__(cls)

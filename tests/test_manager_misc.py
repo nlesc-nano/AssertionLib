@@ -1,5 +1,6 @@
 """Tests for the :class:`AssertionManager<assertionlib.manager.AssertionManager>` class."""
 
+import operator
 from sys import version_info
 from typing import Optional, cast
 
@@ -144,14 +145,25 @@ def test_assert_() -> None:
     except TypeError:
         pass
     else:
-        raise AssertionError
+        raise AssertionError('Failed to raise a TypeError')
 
     try:
         assertion.assert_(len, [1], exception=AssertionError)
     except ValueError:
         pass
     else:
-        raise AssertionError
+        raise AssertionError('Failed to raise a ValueError')
+
+    func = operator.__invert__
+    assertion(False, post_process=func)
+    assertion(True, invert=True, post_process=func)
+
+    try:
+        assertion.truth(False, message='Funcy custom message')
+    except AssertionError as ex:
+        assertion.contains(str(ex), 'Funcy custom message')
+    else:
+        raise AssertionError('Failed to raise am AssertionError')
 
 
 def test_repr() -> None:
@@ -198,6 +210,32 @@ def test_function_eq() -> None:
     assertion.function_eq(func1, func3, invert=True)
     assertion.function_eq(func1, func4, invert=True)
     assertion.function_eq(func1, None, exception=TypeError)
+
+
+def test_any() -> None:
+    """Test :meth:`AssertionManager.any`."""
+    assertion.any([True, True, False])
+    assertion.any({True, True, False})
+    assertion.any({True: None, False: None})
+
+    assertion.any({False: None, False: None}, invert=True)
+    assertion.any((False, False), invert=True)
+
+    assertion.any(True, exception=TypeError)
+    assertion.any(5, exception=TypeError)
+
+
+def test_all() -> None:
+    """Test :meth:`AssertionManager.all`."""
+    assertion.all([True, True, True])
+    assertion.all({True, True, True})
+    assertion.all({True: None, True: None})
+
+    assertion.all({True: None, False: None}, invert=True)
+    assertion.all((False, False), invert=True)
+
+    assertion.all(True, exception=TypeError)
+    assertion.all(5, exception=TypeError)
 
 
 def test_get_exc_message() -> None:
