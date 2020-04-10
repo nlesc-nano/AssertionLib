@@ -57,7 +57,14 @@ setup(
         'numpy'
     ],
     extras_require={
-        'test': ['pytest', 'pytest-cov', 'pycodestyle', 'numpy'],
-        'doc': ['sphinx>=2.1', 'sphinx_rtd_theme']
+        'doc': ['sphinx>=2.1', 'sphinx_rtd_theme'],
+        'test': [
+            'pytest',
+            'pytest-cov',
+            'pycodestyle',
+            'numpy',
+            'numpy-stubs',
+            'pytest-mypy@https://github.com/nlesc-nano/pytest-mypy'
+        ],
     }
 )

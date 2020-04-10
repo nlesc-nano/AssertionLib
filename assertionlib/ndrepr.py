@@ -63,9 +63,9 @@ from typing import Any, Dict, Callable, Union, Tuple, Optional, TYPE_CHECKING
 from itertools import chain, islice
 
 if TYPE_CHECKING:
-    from scm.plams import Molecule, Atom, Bond, Settings
+    from scm.plams import Molecule, Atom, Bond, Settings  # type: ignore
     from numpy import ndarray
-    from pandas import DataFrame, Series
+    from pandas import DataFrame, Series  # type: ignore
 else:
     Molecule = 'scm.plams.mol.molecule.Molecule'
     Atom = 'scm.plams.mol.molecule.Atom'

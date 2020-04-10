@@ -187,13 +187,13 @@ def test_call() -> None:
 @skip_if(NUMPY_EX)
 def test_shape_eq() -> None:
     """Test :meth:`AssertionManager.shape_eq`."""
-    ar1 = np.random.rand(10, 10)
-    ar2 = np.random.rand(10, 10)
+    ar1: np.ndarray = np.random.rand(10, 10)
+    ar2: np.ndarray = np.random.rand(10, 10)
     shape = ar1.shape
 
     assertion.shape_eq(ar1, ar2)
     assertion.shape_eq(ar1, shape)
-    assertion.shape_eq(ar1, 5, invert=True)
+    assertion.shape_eq(ar1, (5,), invert=True)
 
     assertion.shape_eq(ar1, ar1, ar1, ar1, exception=TypeError)
     assertion.shape_eq(shape, ar1, exception=AttributeError)
@@ -201,10 +201,10 @@ def test_shape_eq() -> None:
 
 def test_function_eq() -> None:
     """Test :meth:`AssertionManager.function_eq`."""
-    func1 = lambda x: x + 5
-    func2 = lambda x: x + 5
-    func3 = lambda x: 5 + x
-    func4 = lambda x: x / 5 + 9.0**2
+    func1 = lambda x: x + 5  # noqa: E731
+    func2 = lambda x: x + 5  # noqa: E731
+    func3 = lambda x: 5 + x  # noqa: E731
+    func4 = lambda x: x / 5 + 9.0**2  # noqa: E731
 
     assertion.function_eq(func1, func2)
     assertion.function_eq(func1, func3, invert=True)

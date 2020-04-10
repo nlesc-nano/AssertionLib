@@ -132,7 +132,7 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
         A callable object forming the basis of the to-be created assertion function.
 
     """
-    _empty = inspect._empty
+    _empty = inspect._empty  # type: ignore
 
     def _to_str(prm: inspect.Parameter) -> str:
         """Create a string from **prm**; ensure that callables are represented by their __name__."""
@@ -346,7 +346,7 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
     try:
         _module = func.__module__
     except AttributeError:  # Unbound methods don't have the `__module__` attribute
-        _module = func.__objclass__.__module__
+        _module = func.__objclass__.__module__  # type: ignore
 
     # Convert the extracted __module__ into an actual valid module
     module = MODULE_DICT.get(_module, _module)

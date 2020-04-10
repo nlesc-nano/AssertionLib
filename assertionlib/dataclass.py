@@ -60,7 +60,7 @@ def recursion_safeguard(fallback: UserFunc) -> Callable[[UserFunc], UserFunc]:
         running: Set[Tuple[int, int]] = set()
 
         @wraps(user_function)
-        def wrapper(self, *args, **kwargs):
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> T:
             key = id(self), get_ident()
             if key in running:
                 return fallback(self, *args, **kwargs)
@@ -76,22 +76,22 @@ def recursion_safeguard(fallback: UserFunc) -> Callable[[UserFunc], UserFunc]:
 
 
 class _MetaADC(ABCMeta):
-    def __new__(mcls, name, bases, namespace, **kwargs) -> '_MetaADC':
-        cls = super().__new__(mcls, name, bases, namespace, **kwargs)
-        if not cls._HASHABLE:
+    def __new__(mcls, name, bases, namespace) -> '_MetaADC':
+        cls = cast(_MetaADC, super().__new__(mcls, name, bases, namespace))
+        if not cls._HASHABLE:  # type: ignore
             setattr(cls, '__hash__', mcls._hash_template1)
         else:
-            func = recursion_safeguard(cls._repr_fallback)(mcls._hash_template2)
+            func = recursion_safeguard(cls._repr_fallback)(mcls._hash_template2)  # type: ignore
             setattr(cls, '__hash__', func)
         return cls
 
     @staticmethod
-    def _hash_template1(self) -> NoReturn:
+    def _hash_template1(self: Any) -> NoReturn:
         """Unhashable type; raise a :exc:`TypeError`."""
         raise TypeError(f"Unhashable type: {self.__class__.__name__!r}")
 
     @staticmethod
-    def _hash_template2(self) -> int:
+    def _hash_template2(self: Any) -> int:
         """Return the hash of this instance.
 
         The returned hash is constructed from two components:
@@ -338,7 +338,10 @@ class AbstractDataClass(metaclass=_MetaADC):
             A new instance constructed from this instance.
 
         """
-        copy_func = cast(Callable[[T], T], copy.deepcopy if deep else lambda n: n)
+        def return_arg(arg: T) -> T:
+            return arg
+
+        copy_func = cast(Callable[[T], T], copy.deepcopy if deep else return_arg)
 
         cls = type(self)
         ret = cls.__new__(cls)
@@ -406,7 +409,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             Construct a dictionary from this instance with all non-private instance variables.
 
         """
-        return cls(**dct)
+        return cls(**dct)  # type: ignore
 
     @classmethod
     def inherit_annotations(cls) -> Callable[[UserFunc], UserFunc]:

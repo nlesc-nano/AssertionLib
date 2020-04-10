@@ -24,7 +24,8 @@ API
 
 import sys
 from typing import Callable, Optional, Type, Dict, Container, Tuple, Any
-from inspect import Parameter, Signature, signature, _empty, _ParameterKind
+from inspect import Parameter, Signature, signature, _ParameterKind
+from inspect import _empty  # type: ignore
 from itertools import chain
 import warnings
 
@@ -156,16 +157,16 @@ def generate_signature(func: Callable) -> Signature:
         prm_dict[VK].append(Parameter(name='kwargs', kind=VK))
 
     # Construct and return a new signature
-    parameters = chain.from_iterable(prm_dict.values())
+    parameters = list(chain.from_iterable(prm_dict.values()))
     return Signature(parameters=parameters, return_annotation=None)
 
 
 def _get_cls_annotation(func: Callable) -> Tuple[str, str]:
     """Return an annotation for ``self`` or ``cls``."""
     if hasattr(func, '__self__'):
-        cls = func.__self__.__class__
+        cls = func.__self__.__class__  # type: ignore
     elif hasattr(func, '__objclass__'):
-        cls = func.__objclass__
+        cls = func.__objclass__  # type: ignore
     elif hasattr(func, '__qualname__') and '.' in func.__qualname__:
         cls_name = cls = func.__qualname__.split('.')[0]
     else:
