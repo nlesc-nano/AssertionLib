@@ -6,7 +6,7 @@ from assertionlib import assertion
 from assertionlib.dataclass import AbstractDataClass
 
 
-def test_HASHABLE() -> None:
+def test_hashable() -> None:
     """Tests for :meth:`AbstractDataClass._HASHABLE`."""
     class _TestClass1(AbstractDataClass):
         _HASHABLE = True
@@ -28,7 +28,7 @@ def test_init() -> None:
     assertion.eq(self._hash, 0)
 
 
-def test_PRIVATE_ATTR() -> None:
+def test_private_attr() -> None:
     """Tests for :meth:`AbstractDataClass._PRIVATE_ATTR`."""
     cls = AbstractDataClass
     self = cls()

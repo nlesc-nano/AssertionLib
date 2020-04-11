@@ -190,6 +190,7 @@ import builtins
 import textwrap
 import operator
 from types import MappingProxyType
+from inspect import Parameter
 from string import ascii_lowercase
 from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence, cast, Iterable,
                     FrozenSet, TypeVar)
@@ -229,7 +230,7 @@ class _MetaAM(_MetaADC):
         len_eq, str_eq, shape_eq, function_eq
     })
 
-    def __new__(mcls, name, bases, namespace) -> '_MetaAM':
+    def __new__(mcls, name, bases, namespace) -> '_MetaAM':  # noqa: N804
         cls = cast('_MetaAM', super().__new__(mcls, name, bases, namespace))
 
         exclude = mcls.EXCLUDE
@@ -612,7 +613,6 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         """  # noqa
         # Unpack parameters
         empty = inspect._empty  # type: ignore
-        Parameter = inspect.Parameter
         parameters = signature.parameters
         kind = Parameter.POSITIONAL_OR_KEYWORD
 

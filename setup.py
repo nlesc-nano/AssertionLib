@@ -53,7 +53,7 @@ setup(
     tests_require=[
         'pytest',
         'pytest-cov',
-        'pycodestyle',
+        'pytest-flake8',
         'numpy',
         'typing_extensions',
         'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
@@ -64,7 +64,7 @@ setup(
         'test': [
             'pytest',
             'pytest-cov',
-            'pycodestyle',
+            'pytest-flake8',
             'numpy',
             'typing_extensions',
             'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',

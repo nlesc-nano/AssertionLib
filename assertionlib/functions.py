@@ -165,8 +165,8 @@ def _create_assertion_func(func: Callable) -> Tuple[FunctionType, str]:
     func_new = FunctionType(code, {'func': func}, func.__name__, defaults)
 
     # Set default values for keyword-only parameters
-    KO = inspect.Parameter.KEYWORD_ONLY
-    kwdefault = {k: v.default for k, v in sgn.parameters.items() if v.kind is KO}
+    ko = inspect.Parameter.KEYWORD_ONLY
+    kwdefault = {k: v.default for k, v in sgn.parameters.items() if v.kind is ko}
     if kwdefault:
         func_new.__kwdefaults__ = kwdefault
 

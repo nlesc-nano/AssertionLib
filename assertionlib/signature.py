@@ -34,7 +34,7 @@ from .ndrepr import aNDRepr
 if sys.version_info < (3, 7):
     from collections import OrderedDict
 else:  # Dictionaries are ordered starting from python 3.7
-    from builtins import dict as OrderedDict  # type: ignore
+    from builtins import dict as OrderedDict  # type: ignore # noqa
 
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
 POK: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD
@@ -70,7 +70,7 @@ def _get_backup_signature() -> Signature:
         Parameter(name='args', kind=VP),
         Parameter(name='invert', kind=KO, default=False, annotation=bool),
         Parameter(name='exception', kind=KO, default=None, annotation=ExType),  # type: ignore
-        Parameter(name='post_process', kind=KO, default=None, annotation=Optional[Callable[[Any], Any]]),  # noqa: E105
+        Parameter(name='post_process', kind=KO, default=None, annotation=Optional[Callable[[Any], Any]]),  # noqa: E105, E501
         Parameter(name='message', kind=KO, default=None, annotation=Optional[str]),
         Parameter(name='kwargs', kind=VK)
     ]
