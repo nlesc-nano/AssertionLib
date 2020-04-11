@@ -68,9 +68,9 @@ A few examples of some basic assertion:
     Traceback (most recent call last):
       ...
     AssertionError: output = eq(a, b); assert output
-    <BLANKLINE>
+
     exception: AssertionError = AssertionError('Fancy custom error message')
-    <BLANKLINE>
+
     output: bool = False
     a: int = 5
     b: int = 6
@@ -85,9 +85,9 @@ A few examples of AssertionErrors raised due to incorrect method signatures:
     Traceback (most recent call last):
       ...
     AssertionError: output = len(obj); assert output
-    <BLANKLINE>
+
     exception: TypeError = TypeError("object of type 'int' has no len()")
-    <BLANKLINE>
+
     output: NoneType = None
     obj: int = 5
 
@@ -100,9 +100,9 @@ A few examples of AssertionErrors raised due to incorrect method signatures:
     Traceback (most recent call last):
       ...
     AssertionError: output = eq(a, b, _a, _b); assert output
-    <BLANKLINE>
+
     exception: TypeError = TypeError('eq expected 2 arguments, got 4')
-    <BLANKLINE>
+
     output: NoneType = None
     a: int = 5
     b: int = 5
@@ -127,9 +127,9 @@ during/before the assertion process:
     Traceback (most recent call last):
       ...
     AssertionError: output = len(obj); assert output
-    <BLANKLINE>
+
     exception: AssertionError = AssertionError("Failed to raise 'TypeError'")
-    <BLANKLINE>
+
     output: int = 1
     obj: list = [5]
 
@@ -150,9 +150,9 @@ method and adding it to an instance with ``AssertionManager.add_to_instance()``:
     Traceback (most recent call last):
       ...
     AssertionError: output = my_fancy_func(a); assert output
-    <BLANKLINE>
+
     exception: AssertionError = AssertionError(None)
-    <BLANKLINE>
+
     output: bool = False
     a: int = 5
 
@@ -162,9 +162,9 @@ method and adding it to an instance with ``AssertionManager.add_to_instance()``:
     Traceback (most recent call last):
       ...
     AssertionError: output = my_fancy_func(a); assert output
-    <BLANKLINE>
+
     exception: AssertionError = AssertionError(None)
-    <BLANKLINE>
+
     output: bool = False
     a: int = 5
 
