@@ -63,7 +63,7 @@ setup(
             'pytest-cov',
             'pycodestyle',
             'numpy',
-            'numpy-stubs',
+            'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
             'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
         ],
     }
