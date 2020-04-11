@@ -92,6 +92,7 @@ def generate_signature(func: Callable) -> Signature:
     .. code:: python
 
         >>> import inspect
+        >>> from assertionlib.signature import generate_signature
 
         >>> func = enumerate  # The builtin enumerate function
         >>> Signature = inspect.Signature
@@ -102,9 +103,9 @@ def generate_signature(func: Callable) -> Signature:
         (iterable, start=0)
 
         # Print the newly create signature
-        >>> sgn2: Signature = generate_signatures(func)
+        >>> sgn2: Signature = generate_signature(func)
         >>> print(sgn2)
-        (self, iterable, *args, start=0, invert_: bool = False, exception_: Union[Type[Exception], NoneType] = None, **kwargs) -> None
+        (self, iterable, *args, start=0, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, post_process: Union[Callable[[Any], Any], NoneType] = None, message: Union[str, NoneType] = None, **kwargs) -> None
 
     Parameters
     ----------
@@ -117,7 +118,7 @@ def generate_signature(func: Callable) -> Signature:
         The signature of **func** with the ``self`` and ``invert`` parameters.
         Return :data:`BACK_SIGNATURE` if funcs' signature cannot be read.
 
-    """  # noqa
+    """  # noqa: E501
     try:
         sgn = signature(func)
     except ValueError:  # Not all callables have a signature which can be read.

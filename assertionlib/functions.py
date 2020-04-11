@@ -203,7 +203,6 @@ See also
 --------
 {domain}:
 {summary}
-
 """
 
 
@@ -217,35 +216,44 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
     --------
     .. code:: python
 
-        >>> docstring: str = wrap_docstring(isinstance)
+        >>> from assertionlib.functions import create_assertion_doc
+
+        >>> docstring: str = create_assertion_doc(isinstance)
         >>> print(docstring)
         Perform the following assertion: :code:`assert isinstance(*args, **kwargs)`.
-
+        <BLANKLINE>
         Parameters
         ----------
         invert : :class:`bool`
             Invert the output of the assertion: :code:`assert not isinstance(*args, **kwargs)`.
             This value should only be supplied as keyword argument.
-
+        <BLANKLINE>
         exception : :class:`type` [:exc:`Exception`], optional
             Assert that **exception** is raised during/before the assertion operation.
             This value should only be supplied as keyword argument.
-
+        <BLANKLINE>
         post_process : :class:`~collections.abc.Callable`, optional
             Apply post-processing to the to-be asserted data before asserting aforementioned data.
             Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
-
+        <BLANKLINE>
+        message : :data:`~typing.Any`, optional
+            A custom error message to-be passed to the ``assert`` statement.
+        <BLANKLINE>
         \*args/\**kwargs : :data:`~typing.Any`
             Parameters for catching excess variable positional and keyword arguments.
-
+        <BLANKLINE>
+        <BLANKLINE>
+        :rtype: :data:`None`
+        <BLANKLINE>
         See also
         --------
         :func:`~builtins.isinstance`:
             Return whether an object is an instance of a class or of a subclass thereof.
-
+        <BLANKLINE>
             A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
             check against. This is equivalent to ``isinstance(x, A) or isinstance(x, B)
             or ...`` etc.
+        <BLANKLINE>
 
     Parameters
     ----------
@@ -300,6 +308,7 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
     .. code:: python
 
         >>> from collections import OrderedDict
+        >>> from assertionlib.functions import get_sphinx_domain
 
         >>> value1: str = get_sphinx_domain(int)
         >>> print(value1)
@@ -307,7 +316,7 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
 
         >>> value2: str = get_sphinx_domain(list.count)
         >>> print(value2)
-        :meth:`~list.count`
+        :meth:`~builtins.list.count`
 
         >>> value3: str = get_sphinx_domain(OrderedDict)
         >>> print(value3)
@@ -402,9 +411,14 @@ NoneFunc = Callable[..., None]
 def skip_if(condition: Any) -> Callable[[UserFunc], Union[UserFunc, NoneFunc]]:
     """A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
 
+    A :exc:`UserWarning` is issued if **condition** evaluates to ``True``.
+
     Examples
     --------
     .. code:: python
+
+        >>> import warnings
+        >>> from assertionlib.functions import skip_if
 
         >>> condition = Exception("Error")
 
@@ -412,12 +426,18 @@ def skip_if(condition: Any) -> Callable[[UserFunc], Union[UserFunc, NoneFunc]]:
         ...     print(True)
 
         >>> @skip_if(condition)
-        >>> def func2() -> None:
+        ... def func2() -> None:
         ...     print(True)
 
         >>> func1()
         True
-        >>> func2()
+
+        >>> with warnings.catch_warnings():  # Convert the warning into a raised exception
+        ...     warnings.simplefilter("error", UserWarning)
+        ...     func2()
+        Traceback (most recent call last):
+          ...
+        UserWarning: Exception('Error') evaluated to True; skipping call to func2(...)
 
     """
     def skip() -> None:
@@ -429,7 +449,7 @@ def skip_if(condition: Any) -> Callable[[UserFunc], Union[UserFunc, NoneFunc]]:
             if not condition:
                 return cast(T, func(*args, **kwargs))
 
-            exc = UserWarning(f"{condition!r:.70} evaluated to 'True'; skipping call to {func.__name__}(...)")  # noqa: E501
+            exc = UserWarning(f"{condition!r:.70} evaluated to True; skipping call to {func.__name__}(...)")  # noqa: E501
             if isinstance(condition, BaseException):
                 exc.__cause__ = condition
 

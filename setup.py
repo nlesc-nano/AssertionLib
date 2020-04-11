@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+from typing import Dict
 
-from setuptools import setup
+from setuptools import setup  # type: ignore
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 # To update the package version number, edit assertionlib/__version__.py
-version = {}
+version: Dict[str, str] = {}
 with open(os.path.join(here, 'assertionlib', '__version__.py')) as f:
     exec(f.read(), version)
 

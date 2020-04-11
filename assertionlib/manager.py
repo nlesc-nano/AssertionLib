@@ -438,13 +438,16 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         --------
         .. code:: python
 
-            >>> assertion = AssertionManager()
+            >>> from assertionlib import assertion
+
             >>> assertion(5 == 5)
             >>> assertion(5 == 6)
+            Traceback (most recent call last):
+              ...
             AssertionError: output = return_value(value); assert output
-
-            exception: AssertionError = AssertionError()
-
+            <BLANKLINE>
+            exception: AssertionError = AssertionError(None)
+            <BLANKLINE>
             output: bool = False
             value: bool = False
 
@@ -523,11 +526,13 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
             >>> msg = assertion._get_exc_message(ex, func, a, b)
             >>> raise AssertionError(msg)
+            Traceback (most recent call last):
+              ...
             AssertionError: output = contains(a, b); assert output
-
-            exception: AssertionError = AssertionError()
-
-            output: bool = False
+            <BLANKLINE>
+            exception: TypeError = TypeError('Fancy custom exception')
+            <BLANKLINE>
+            output: NoneType = None
             a: list = [1, 2, 3, 4]
             b: int = 5
 
@@ -564,10 +569,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         __tracebackhide__ = True
 
         # Construct a string-reprensentation of the to-be assert function
-        try:
-            name = func.__qualname__
-        except AttributeError:  # Not all callables have the __qualname__ attribute
-            name = func.__name__
+        name: str = getattr(func, '__qualname__', func.__name__)
 
         # Construct a signature of the to-be asserted function
         try:
