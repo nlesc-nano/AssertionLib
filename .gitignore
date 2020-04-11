@@ -106,5 +106,9 @@ venv.bak/
 
 # Visual Studio Code
 .vscode/
+
+# MyPy
 .mypy_cache/
-ipython.html
+html/
+index.html
+mypy-html.css

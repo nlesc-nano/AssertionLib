@@ -4,7 +4,8 @@ from typing import Tuple
 import os
 import textwrap
 
-import pycodestyle  # formerly known as pep8
+# formerly known as pep8
+import pycodestyle  # type: ignore
 
 INCLUDE_PATHS: Tuple[str, ...] = ('assertionlib', 'tests')
 EXCLUDE_PATHS: Tuple[str, ...] = ()

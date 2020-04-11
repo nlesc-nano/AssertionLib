@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+2.2.1
+*****
+* Added a mypy test.
+* Further refined type annotations.
+
+
 2.2.0
 *****
 * Marked AssertionLib as a typed package (`PEP 561 <https://www.python.org/dev/peps/pep-0561/>`_).

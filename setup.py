@@ -54,10 +54,21 @@ setup(
         'pytest',
         'pytest-cov',
         'pycodestyle',
-        'numpy'
+        'numpy',
+        'typing_extensions',
+        'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
+        'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
     ],
     extras_require={
-        'test': ['pytest', 'pytest-cov', 'pycodestyle', 'numpy'],
-        'doc': ['sphinx>=2.1', 'sphinx_rtd_theme']
+        'doc': ['sphinx>=2.1', 'sphinx_rtd_theme'],
+        'test': [
+            'pytest',
+            'pytest-cov',
+            'pycodestyle',
+            'numpy',
+            'typing_extensions',
+            'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
+            'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
+        ],
     }
 )

@@ -253,11 +253,11 @@ class _MetaAM(_MetaADC):
 
         # On windows os.path.isdir is an alias for the ._isdir function
         if os.name == 'nt':
-            cls.isdir = cls._isdir
-            cls.isdir.__name__ = 'isdir'
-            cls.isdir.__qualname__ = 'isdir'
-            cls.isdir.__doc__ = cls.isdir.__doc__.replace('_isdir', 'isdir')
-            del cls._isdir
+            cls.isdir = cls._isdir  # type: ignore
+            cls.isdir.__name__ = 'isdir'  # type: ignore
+            cls.isdir.__qualname__ = 'isdir'  # type: ignore
+            cls.isdir.__doc__ = cls.isdir.__doc__.replace('_isdir', 'isdir')  # type: ignore
+            del cls._isdir  # type: ignore
         return cls
 
 
@@ -349,7 +349,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         Parameters
         ----------
-        func : :data:`coollections.abc.Callable`
+        func : :class:`~collections.abc.Callable`
             The callable whose output will be evaluated.
 
         \*args : :data:`~typing.Any`
@@ -406,8 +406,12 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
                 assert output, message
             else:
                 assert post_process(output), message
+
             if exception_ is not _NoneException:  # i.e. the exception parameter is not None
-                raise AssertionError(f"Failed to raise {exception_.__name__!r}")
+                message_ = f"Failed to raise {exception_.__name__!r}"
+                if message is not None:
+                    message_ += f'; {message}'
+                raise AssertionError(message_)
 
         except exception_:  # This is the expected exception
             pass  # Not relevant if the exception parameter is None
@@ -607,7 +611,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         """  # noqa
         # Unpack parameters
-        empty = inspect._empty
+        empty = inspect._empty  # type: ignore
         Parameter = inspect.Parameter
         parameters = signature.parameters
         kind = Parameter.POSITIONAL_OR_KEYWORD
