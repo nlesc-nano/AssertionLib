@@ -60,15 +60,14 @@ import builtins
 import textwrap
 from typing import Any, Dict, Callable, Union, Tuple, Optional, Mapping, List, TYPE_CHECKING
 from itertools import chain, islice
-from types import (
-    BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType,
-    MethodType, MethodDescriptorType
-)
 
 if TYPE_CHECKING:
     from scm.plams import Molecule, Atom, Bond, Settings  # type: ignore
     from numpy import ndarray
     from pandas import DataFrame, Series  # type: ignore
+
+    from types import (BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType,
+                       MethodType, MethodDescriptorType)
 else:
     Molecule = 'scm.plams.mol.molecule.Molecule'
     Atom = 'scm.plams.mol.molecule.Atom'
@@ -77,6 +76,13 @@ else:
     ndarray = 'numpy.ndarray'
     Series = 'pandas.core.series.Series'
     DataFrame = 'pandas.core.frame.DataFrame'
+
+    BuiltinFunctionType = "builtins.builtin_function_or_method"
+    BuiltinMethodType = "builtins.builtin_function_or_method"
+    ModuleType = "builtins.module"
+    FunctionType = "builtins.function"
+    MethodType = "builtins.method"
+    MethodDescriptorType = "builtins.method_descriptor"
 
 try:
     import numpy as np
