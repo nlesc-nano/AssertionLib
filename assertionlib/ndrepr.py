@@ -54,6 +54,7 @@ API
 
 """  # noqa
 
+import sys
 import inspect
 import reprlib
 import builtins
@@ -66,8 +67,20 @@ if TYPE_CHECKING:
     from numpy import ndarray
     from pandas import DataFrame, Series  # type: ignore
 
-    from types import (BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType,
-                       MethodType, MethodDescriptorType)
+    from types import (BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType, MethodType)
+    if sys.version_info >= (3, 7):
+        from types import MethodDescriptorType
+
+    else:
+        from typing_extensions import Protocol
+
+        class MethodDescriptorType(Protocol):
+            """See https://github.com/python/typeshed/blob/master/stdlib/3/types.pyi ."""
+            __name__: str
+            __qualname__: str
+            __objclass__: type
+            def __call__(self, *args: Any, **kwargs: Any) -> Any: ...  # noqa: E302
+            def __get__(self, obj: Any, type: type = ...) -> Any: ...  # noqa: E302
 else:
     Molecule = 'scm.plams.mol.molecule.Molecule'
     Atom = 'scm.plams.mol.molecule.Atom'
