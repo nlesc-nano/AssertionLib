@@ -30,15 +30,15 @@ API
 
 import os
 import dis
-import types
 import inspect
 import textwrap
+import warnings
 import functools
 import contextlib
-from types import MappingProxyType, FunctionType
+from types import MappingProxyType, FunctionType, MethodType, CodeType
 from itertools import zip_longest
 from typing import (
-    Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar, TYPE_CHECKING
+    Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar, cast, TYPE_CHECKING
 )
 
 from .signature import generate_signature, _signature_to_str, _get_cls_annotation
@@ -84,7 +84,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     :rtype: :data:`None`
 
     """
-    name = name if name is not None else func.__name__
+    name_: str = name if name is not None else func.__name__
 
     # Create the new function
     function, signature_str = _create_assertion_func(func)
@@ -100,10 +100,10 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
 
     # Set the new method
     if isinstance(class_type, type):  # A class
-        setattr(class_type, name, function)
+        setattr(class_type, name_, function)
     else:  # A class instance
-        method = types.MethodType(function, class_type)  # Create a bound method
-        setattr(class_type, name, method)
+        method = MethodType(function, class_type)  # Create a bound method
+        setattr(class_type, name_, method)
 
 
 def _set_annotations(func_new: Callable, func_old: Callable) -> None:
@@ -115,7 +115,7 @@ def _set_annotations(func_new: Callable, func_old: Callable) -> None:
     annotations['post_process'] = Optional[Callable[[Any], Any]]
     annotations['message'] = Optional[str]
 
-    # Create an additional annotation incase **func_old** is an instance- or class-method
+    # Create an additional annotation in case **func_old** is an instance-method
     with contextlib.suppress(ValueError):  # Raised if **func_old** has no readable signature
         prm = inspect.signature(func_old).parameters
         if 'self' in prm:
@@ -123,7 +123,7 @@ def _set_annotations(func_new: Callable, func_old: Callable) -> None:
             annotations[key] = value
 
 
-def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
+def _create_assertion_func(func: Callable) -> Tuple[FunctionType, str]:
     """Generate the assertion function for :func:`bind_callable`.
 
     Parameters
@@ -147,19 +147,22 @@ def _create_assertion_func(func: Callable) -> Tuple[types.FunctionType, str]:
     sgn_str2: str = _signature_to_str(sgn, 'func')
 
     # Create the code object for the to-be returned function
-    code_compile = compile(
+    code_compile: CodeType = compile(
         f'def {func.__name__}{sgn_str1}: __tracebackhide__ = True; self.assert_{sgn_str2}',
         "<string>", "exec"
     )
-    for code in code_compile.co_consts:
-        if isinstance(code, types.CodeType):
+    for code in code_compile.co_consts:  # Type: CodeType
+        if isinstance(code, CodeType):
             break
+    else:
+        raise TypeError(f"Failed to identify a {CodeType.__name__!r} instance "
+                        "in the compiled code")
 
     # Extract the default arguments for positional or keyword parameters
     defaults: Optional[Tuple[object, ...]] = code_compile.co_consts[-1]
     if isinstance(defaults, str):  # no default arguments
         defaults = None
-    func_new = types.FunctionType(code, {'func': func}, func.__name__, defaults)
+    func_new = FunctionType(code, {'func': func}, func.__name__, defaults)
 
     # Set default values for keyword-only parameters
     KO = inspect.Parameter.KEYWORD_ONLY
@@ -258,23 +261,18 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
     :class:`str`
         A new docstring constructed from **funcs'** docstring.
 
-    """  # noqa
+    """
     # domain is :class:`...`, :func:`...` or :meth:`...`
     domain = get_sphinx_domain(func)
-    sgn = signature if signature is not None else '(*args, **kwargs)'
+    sgn: str = signature if signature is not None else '(*args, **kwargs)'
 
     # Create a summary for a single `See Also` section using the docstring of **func**
     indent = 4 * ' '
-    func_doc = getattr(func, '__doc__', 'No description.')
-    if func_doc is None:
-        func_doc = 'No description.'
+    func_doc: str = func.__doc__ or 'No description.'
     func_summary = textwrap.indent(func_doc, indent)
 
     # Return a new docstring
-    try:
-        name = func.__qualname__
-    except AttributeError:
-        name = func.__name__
+    name: str = getattr(func, '__qualname__', func.__name__)
     return BASE_DOCSTRING.format(name=name, signature=sgn, domain=domain, summary=func_summary)
 
 
@@ -289,7 +287,7 @@ MODULE_DICT: Mapping[str, str] = MappingProxyType({
 def _is_builtin_func(func: Callable) -> bool:
     """Check if **func** is a builtin function."""
     try:
-        return inspect.isbuiltin(func) and '.' not in func.__qualname__
+        return inspect.isbuiltin(func) and '.' not in getattr(func, '__qualname__', '')
     except AttributeError:
         return False
 
@@ -340,7 +338,7 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
         Raised if **func** is neither a class or a (builtin) function or method.
 
     """
-    name = getattr(func, '__qualname__', func.__name__)
+    name: str = getattr(func, '__qualname__', func.__name__)
 
     # Extract the __module__ from **func**
     try:
@@ -358,14 +356,15 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
         return f':meth:`~{module}.{name}`'
     elif inspect.isclass(func):
         return f':class:`~{module}.{name}`'
-    raise TypeError(f"{repr(name)} is neither a (builtin) function, method nor class")
+    raise TypeError(f"{name!r} is neither a (builtin) function, method nor class")
 
 
 #: An immutable mapping of to-be replaced substrings and their replacements.
 README_MAPPING: Mapping[str, str] = MappingProxyType({'``': '|', '()': ''})
 
 
-def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = README_MAPPING,
+def load_readme(readme: Union[str, os.PathLike] = 'README.rst',
+                replace: Mapping[str, str] = README_MAPPING,
                 **kwargs: Any) -> str:
     r"""Load and return the content of a readme file located in the same directory as this file.
 
@@ -390,23 +389,24 @@ def load_readme(readme: str = 'README.rst', replace: Mapping[str, str] = README_
     """
     readme_abs: str = os.path.join(os.path.dirname(__file__), readme)
     with open(readme_abs, 'r') as f:
-        ret = f.read(**kwargs)
+        ret: str = f.read(**kwargs)
     for old, new in replace.items():
         ret = ret.replace(old, new)
     return ret
 
 
 UserFunc = Callable[..., T]
+NoneFunc = Callable[..., None]
 
 
-def skip_if(condition: Any) -> Callable[[UserFunc], UserFunc]:
+def skip_if(condition: Any) -> Callable[[UserFunc], Union[UserFunc, NoneFunc]]:
     """A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
 
     Examples
     --------
     .. code:: python
 
-        >>> condition: bool = True
+        >>> condition = Exception("Error")
 
         >>> def func1() -> None:
         ...     print(True)
@@ -420,12 +420,21 @@ def skip_if(condition: Any) -> Callable[[UserFunc], UserFunc]:
         >>> func2()
 
     """
-    def skip() -> None: pass
+    def skip() -> None:
+        return None
 
-    def decorator(func: UserFunc) -> UserFunc:
+    def decorator(func: UserFunc) -> Union[UserFunc, NoneFunc]:
         @functools.wraps(func)
-        def wrapper():
-            return func() if not condition else skip()
+        def wrapper(*args: Any, **kwargs: Any) -> Optional[T]:
+            if not condition:
+                return cast(T, func(*args, **kwargs))
+
+            exc = UserWarning(f"{condition!r:.70} evaluated to 'True'; skipping call to {func.__name__}(...)")  # noqa: E501
+            if isinstance(condition, BaseException):
+                exc.__cause__ = condition
+
+            warnings.warn(exc, stacklevel=2)
+            return cast(None, skip())
         return wrapper
     return decorator
 
@@ -478,10 +487,9 @@ def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
         code1 = func1.__code__
         code2 = func2.__code__
     except AttributeError as ex:
-        tb = ex.__traceback__
         name, obj = ('func1', func1) if code1 is None else ('func2', func2)
-        raise TypeError(f"'{name}' expected a function or object with the '__code__' attribute; "
-                        f"observed type: '{obj.__class__.__name__}'").with_traceback(tb)
+        raise TypeError(f"{name!r} expected a function or object with the '__code__' attribute; "
+                        f"observed type: {obj.__class__.__name__!r}") from ex
 
     iterator = zip_longest(dis.get_instructions(code1), dis.get_instructions(code2))
     tup_list = [(_sanitize_instruction(i), _sanitize_instruction(j)) for i, j in iterator]

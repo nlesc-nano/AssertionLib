@@ -54,13 +54,16 @@ API
 
 """  # noqa
 
-import types
 import inspect
 import reprlib
 import builtins
 import textwrap
-from typing import Any, Dict, Callable, Union, Tuple, Optional, TYPE_CHECKING
+from typing import Any, Dict, Callable, Union, Tuple, Optional, Mapping, List, TYPE_CHECKING
 from itertools import chain, islice
+from types import (
+    BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType,
+    MethodType, MethodDescriptorType
+)
 
 if TYPE_CHECKING:
     from scm.plams import Molecule, Atom, Bond, Settings  # type: ignore
@@ -89,7 +92,7 @@ except ImportError as ex:
 
 __all__ = ['NDRepr', 'aNDRepr']
 
-BuiltinType = Union[types.BuiltinFunctionType, types.BuiltinMethodType]
+BuiltinType = Union[BuiltinFunctionType, BuiltinMethodType]
 
 
 class NDRepr(reprlib.Repr):
@@ -183,7 +186,7 @@ class NDRepr(reprlib.Repr):
 
     """
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Union[int, Mapping[str, Any]]) -> None:
         """Initialize a :class:`NDRepr` instance."""
         super().__init__()
         self.maxstring: int = 80
@@ -197,8 +200,8 @@ class NDRepr(reprlib.Repr):
         self.maxDataFrame: int = 12
         self.maxMolecule: int = 6
         self.maxSettings: int = self.maxdict
-        self.np_printoptions: Dict[str, Any] = {}
-        self.pd_printoptions: Dict[str, Any] = {}
+        self.np_printoptions: Mapping[str, Any] = {}
+        self.pd_printoptions: Mapping[str, Any] = {}
 
         # Update attributes based on **kwargs; raise an error if a key is unrecognized
         for k, v in kwargs.items():
@@ -211,6 +214,7 @@ class NDRepr(reprlib.Repr):
         if isinstance(obj, Exception):  # Refer all exceptions NDRepr.repr_Exception()
             return self.repr_Exception(obj, level)
         return super().repr1(obj, level)
+
     repr1.__doc__ = reprlib.Repr.repr1.__doc__
 
     def repr_float(self, obj: float, level: int) -> str:
@@ -230,17 +234,17 @@ class NDRepr(reprlib.Repr):
 
     # New methods for parsing callables
 
-    def repr_method(self, obj: types.MethodType, level: int) -> str:
+    def repr_method(self, obj: MethodType, level: int) -> str:
         """Create a :class:`str` representation of a bound method."""
         name, signature = self._parse_callable(obj, level)
         return f"<bound method '{name}{signature}'>"
 
-    def repr_method_descriptor(self, obj: 'types.MethodDescriptorType', level: int) -> str:
+    def repr_method_descriptor(self, obj: MethodDescriptorType, level: int) -> str:
         """Create a :class:`str` representation of an unbound method."""
         name, signature = self._parse_callable(obj, level)
         return f"<method '{name}{signature}'>"
 
-    def repr_function(self, obj: types.FunctionType, level: int) -> str:
+    def repr_function(self, obj: FunctionType, level: int) -> str:
         """Create a :class:`str` representation of a function."""
         name, signature = self._parse_callable(obj, level)
         return f"<function '{name}{signature}'>"
@@ -257,7 +261,7 @@ class NDRepr(reprlib.Repr):
         name, signature = self._parse_callable(obj, level)
         return f"<class '{name}{signature}'>"
 
-    def repr_module(self, obj: types.ModuleType, level: int) -> str:
+    def repr_module(self, obj: ModuleType, level: int) -> str:
         """Create a :class:`str` representation of a module."""
         return f"<module '{obj.__name__}'>"
 
@@ -290,15 +294,12 @@ class NDRepr(reprlib.Repr):
     def _parse_callable(self, obj: Callable, level: int) -> Tuple[str, str]:
         """Create a :class:`str` representation of the name and signature of a callable."""
         # Construct the name of the callable
-        try:
-            name = obj.__qualname__
-        except AttributeError:
-            name = obj.__name__
+        name: str = getattr(obj, '__qualname__', obj.__name__)
 
         # Construct the signature
         try:
             _signature = inspect.signature(obj)
-            signature = self.repr1(_signature, level - 1)
+            signature: str = self.repr1(_signature, level - 1)
         except ValueError:
             signature = '(...)'
 
@@ -350,7 +351,7 @@ class NDRepr(reprlib.Repr):
         elif level <= 0:
             return '\n...'
 
-        pieces = []
+        pieces: List[str] = []
         indent = 4 * ' '
         newlevel = level - 1
 
@@ -431,7 +432,7 @@ class NDRepr(reprlib.Repr):
         with pd.option_context(*args):
             return builtins.repr(obj)
 
-    def _get_ndformatter(self, obj: ndarray) -> Dict[str, Callable[..., str]]:
+    def _get_ndformatter(self, obj: ndarray) -> Dict[str, Callable[[Union[int, float]], str]]:
         """Return a value for the **formatter** argument in :func:`numpy.printoptions`."""
         if obj.dtype != float and obj.dtype != int:
             return {}

@@ -23,7 +23,7 @@ API
 """
 
 import sys
-from typing import Callable, Optional, Type, Dict, Container, Tuple, Any
+from typing import Callable, Optional, Type, Dict, Collection, Tuple, Any, List, Union
 from inspect import Parameter, Signature, signature, _ParameterKind
 from inspect import _empty  # type: ignore
 from itertools import chain
@@ -123,7 +123,7 @@ def generate_signature(func: Callable) -> Signature:
     except ValueError:  # Not all callables have a signature which can be read.
         return BACK_SIGNATURE
 
-    prm_dict: Dict[_ParameterKind, list] = OrderedDict({
+    prm_dict: Dict[_ParameterKind, List[Parameter]] = OrderedDict({
         POK: [Parameter(name='self', kind=POK)], VP: [], KO: [], VK: []
     })
 
@@ -161,14 +161,15 @@ def generate_signature(func: Callable) -> Signature:
     return Signature(parameters=parameters, return_annotation=None)
 
 
-def _get_cls_annotation(func: Callable) -> Tuple[str, str]:
+def _get_cls_annotation(func: Callable) -> Tuple[str, Union[str, type]]:
     """Return an annotation for ``self`` or ``cls``."""
     if hasattr(func, '__self__'):
-        cls = func.__self__.__class__  # type: ignore
+        cls: Union[str, type] = func.__self__.__class__  # type: ignore
     elif hasattr(func, '__objclass__'):
         cls = func.__objclass__  # type: ignore
     elif hasattr(func, '__qualname__') and '.' in func.__qualname__:
-        cls_name = cls = func.__qualname__.split('.')[0]
+        cls_name: str = func.__qualname__.split('.')[0]
+        cls = cls_name
     else:
         cls = func.__class__
 
@@ -177,12 +178,12 @@ def _get_cls_annotation(func: Callable) -> Tuple[str, str]:
     return cls_name.lower(), cls
 
 
-def _sanitize_name(name: str, func: Callable, container: Container) -> str:
+def _sanitize_name(name: str, func: Callable, prm_list: Collection[Parameter]) -> str:
     """Return **name** if it is not present in **container**, otherwise append it with ``'_'`` and try again."""  # noqa
-    if name in container:
+    if name in {prm.name for prm in prm_list}:
         warnings.warn(f"The '{name}' parameter is already defined in {aNDRepr.repr(func)}; "
                       f"renaming new parameter to '{name}_'", RuntimeWarning, stacklevel=2)
-        return _sanitize_name(name + '_', func, container)
+        return _sanitize_name(name + '_', func, prm_list)
     else:
         return name
 
