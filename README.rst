@@ -5,7 +5,7 @@
 .. image:: https://badge.fury.io/py/AssertionLib.svg
    :target: https://badge.fury.io/py/AssertionLib
 .. image:: https://github.com/nlesc-nano/AssertionLib/workflows/Python%20package/badge.svg
-   :target: https://github.com/nlesc-nano/AssertionLib/workflows/Python%20package/badge.svg
+   :target: https://github.com/nlesc-nano/AssertionLib/actions
 
 |
 
