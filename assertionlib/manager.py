@@ -406,8 +406,12 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
                 assert output, message
             else:
                 assert post_process(output), message
+
             if exception_ is not _NoneException:  # i.e. the exception parameter is not None
-                raise AssertionError(f"Failed to raise {exception_.__name__!r}")
+                message_ = f"Failed to raise {exception_.__name__!r}"
+                if message is not None:
+                    message_ += f'; {message}'
+                raise AssertionError(message_)
 
         except exception_:  # This is the expected exception
             pass  # Not relevant if the exception parameter is None
