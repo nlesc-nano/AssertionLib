@@ -64,7 +64,7 @@ setup(
             'pycodestyle',
             'numpy',
             'numpy-stubs',
-            'pytest-mypy@https://github.com/nlesc-nano/pytest-mypy'
+            'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
         ],
     }
 )
