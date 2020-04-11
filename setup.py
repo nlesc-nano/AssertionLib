@@ -56,7 +56,7 @@ setup(
         'pytest-cov',
         'pytest-flake8',
         'numpy',
-        'typing_extensions',
+        'typing-extensions>=3.6.4',
         'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
         'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
     ],
@@ -67,7 +67,7 @@ setup(
             'pytest-cov',
             'pytest-flake8',
             'numpy',
-            'typing_extensions',
+            'typing-extensions>=3.6.4',
             'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
             'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
         ],
