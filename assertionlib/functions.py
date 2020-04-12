@@ -42,7 +42,7 @@ from typing import (
     Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar, cast, TYPE_CHECKING
 )
 
-from .signature import generate_signature, _signature_to_str, _get_cls_annotation
+from .signature_utils import generate_signature, _signature_to_str, _get_cls_annotation
 
 if TYPE_CHECKING:
     from numpy import ndarray

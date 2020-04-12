@@ -1,12 +1,12 @@
 """
-assertionlib.signature
-======================
+assertionlib.signature_utils
+============================
 
 Various functions for manipulating function signatures.
 
 Index
 -----
-.. currentmodule:: assertionlib.signature
+.. currentmodule:: assertionlib.signature_utils
 .. autosummary::
     generate_signature
     BACK_SIGNATURE
@@ -94,7 +94,7 @@ def generate_signature(func: Callable) -> Signature:
     .. code:: python
 
         >>> from inspect import signature, Signature
-        >>> from assertionlib.signature import generate_signature
+        >>> from assertionlib.signature_utils import generate_signature
 
         >>> def func(iterable, start=0):
         ...     pass
