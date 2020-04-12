@@ -32,11 +32,12 @@ import warnings
 from .ndrepr import aNDRepr
 
 if sys.version_info < (3, 7):
-    from collections import OrderedDict
     SPACE = ''
+    from collections import OrderedDict
 else:  # Dictionaries are ordered starting from python 3.7
-    from builtins import dict as OrderedDict  # type: ignore # noqa
     SPACE = ' '
+    from builtins import dict as OrderedDict  # type: ignore # noqa
+
 
 
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
