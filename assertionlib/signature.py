@@ -33,8 +33,11 @@ from .ndrepr import aNDRepr
 
 if sys.version_info < (3, 7):
     from collections import OrderedDict
+    SPACE = ''
 else:  # Dictionaries are ordered starting from python 3.7
     from builtins import dict as OrderedDict  # type: ignore # noqa
+    SPACE = ' '
+
 
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
 POK: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD
@@ -83,7 +86,7 @@ BACK_SIGNATURE: Signature = _get_backup_signature()
 
 
 def generate_signature(func: Callable) -> Signature:
-    """Generate a new function signatures with the ``self``, ``invert`` and ``exception`` parameters.
+    f"""Generate a new function signatures with the ``self``, ``invert`` and ``exception`` parameters.
 
     Default to :data:`BACK_SIGNATURE` if a functions' signature cannot be read.
 
@@ -91,21 +94,21 @@ def generate_signature(func: Callable) -> Signature:
     --------
     .. code:: python
 
-        >>> import inspect
+        >>> from inspect import signature, Signature
         >>> from assertionlib.signature import generate_signature
 
-        >>> func = enumerate  # The builtin enumerate function
-        >>> Signature = inspect.Signature
+        >>> def func(iterable, start=0):
+        ...     pass
 
         # Print the signature of enumerate
-        >>> sgn1: Signature = inspect.signature(func)
+        >>> sgn1: Signature = signature(func)
         >>> print(sgn1)
         (iterable, start=0)
 
         # Print the newly create signature
         >>> sgn2: Signature = generate_signature(func)
         >>> print(sgn2)
-        (self, iterable, *args, start=0, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, post_process: Union[Callable[[Any], Any], NoneType] = None, message: Union[str, NoneType] = None, **kwargs) -> None
+        (self, iterable, *args, start=0, invert:{SPACE}bool{SPACE}={SPACE}False, exception:{SPACE}Union[Type[Exception], NoneType]{SPACE}={SPACE}None, post_process:{SPACE}Union[Callable[[Any], Any], NoneType]{SPACE}={SPACE}None, message: Union[str, NoneType]{SPACE}={SPACE}None, **kwargs) -> None
 
     Parameters
     ----------
@@ -200,7 +203,7 @@ _KIND_TO_STR: Dict[_ParameterKind, str] = {
 
 
 def _signature_to_str(sgn: Signature, func_name: Optional[str] = None) -> str:
-    """Create a string from a signature.
+    f"""Create a string from a signature.
 
     * The ``self`` parameter will be substituted for **func_name**,
       *i.e.* the name of the to-be asserted function.
@@ -211,16 +214,14 @@ def _signature_to_str(sgn: Signature, func_name: Optional[str] = None) -> str:
     --------
     .. code:: python
 
-        >>> import inspect
-
-        >>> Signature = inspect.Signature
+        >>> from inspect import signature, Signature
 
         >>> def func(self, a: int, b: float, *args, c=1, d=2, **kwargs) -> None:
         ...     pass
 
-        >>> sgn: Signature = inspect.signature(func)
+        >>> sgn: Signature = signature(func)
         >>> print(sgn)
-        (self, a: int, b: float, *args, c=1, d=2, **kwargs) -> None
+        (self, a:{SPACE}int, b:{SPACE}float, *args, c=1, d=2, **kwargs) -> None
 
         >>> sgn_str: str = _signature_to_str(sgn, func_name='fancy_func_name')
         >>> print(sgn_str)
