@@ -38,8 +38,6 @@ else:  # Dictionaries are ordered starting from python 3.7
     SPACE = ' '
     from builtins import dict as OrderedDict  # type: ignore # noqa
 
-
-
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
 POK: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD
 VP: _ParameterKind = Parameter.VAR_POSITIONAL
