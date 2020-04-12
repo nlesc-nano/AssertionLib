@@ -183,6 +183,7 @@ Miscellaneous assertions
 """
 
 import os
+import sys
 import math
 import inspect
 import reprlib
@@ -198,6 +199,11 @@ from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence, cast,
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq
 from .dataclass import AbstractDataClass, _MetaADC
+
+if sys.version_info <= (3, 6):
+    COMMA = ','
+else:
+    COMMA = ''
 
 __all__ = ['AssertionManager', 'assertion']
 
@@ -432,7 +438,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
     def __call__(self, value: T, invert: bool = False,
                  post_process: Optional[Callable[[T], Any]] = None,
                  message: Optional[str] = None) -> None:
-        """Equivalent to :code:`assert value`.
+        f"""Equivalent to :code:`assert value`.
 
         Examples
         --------
@@ -446,7 +452,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
               ...
             AssertionError: output = return_value(value); assert output
             <BLANKLINE>
-            exception: AssertionError = AssertionError(None)
+            exception: AssertionError = AssertionError(None{COMMA})
             <BLANKLINE>
             output: bool = False
             value: bool = False
@@ -456,9 +462,19 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         Parameters
         ----------
+        value : :data:`~typing.Any`
+            The to-be asserted value.
+
         invert : :class:`bool`
             If ``True``, invert the output of the assertion:
             :code:`assert not value`.
+
+        post_process : :class:`~collections.abc.Callable`, optional
+            Apply post-processing to the to-be asserted data before asserting aforementioned data.
+            Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+
+        message : :data:`~typing.Any`, optional
+            A custom error message to-be passed to the ``assert`` statement.
 
 
         :rtype: :data:`None`
@@ -511,7 +527,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
                          invert: bool = False, output: Any = None,
                          post_process: Optional[Callable[[T], Any]] = None,
                          **kwargs: Any) -> str:
-        r"""Return a formatted exception message for failed assertions.
+        f"""Return a formatted exception message for failed assertions.
 
         Examples
         --------
@@ -530,7 +546,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
               ...
             AssertionError: output = contains(a, b); assert output
             <BLANKLINE>
-            exception: TypeError = TypeError('Fancy custom exception')
+            exception: TypeError = TypeError('Fancy custom exception'{COMMA})
             <BLANKLINE>
             output: NoneType = None
             a: list = [1, 2, 3, 4]
@@ -544,7 +560,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         func : :class:`~collections.abc.Callable`
             The callable whose output has been evaluated.
 
-        \*args : :data:`~typing.Any`
+        \\*args : :data:`~typing.Any`
             Positional arguments supplied to **func**.
 
         invert : :class:`bool`
@@ -557,7 +573,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             Apply post-processing to the to-be asserted data before asserting aforementioned data.
             Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
 
-        \**kwargs : :data:`~typing.Any`, optional
+        \\**kwargs : :data:`~typing.Any`, optional
             Further optional keyword arguments supplied to **func**.
 
         Returns

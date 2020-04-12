@@ -30,6 +30,7 @@ API
 
 import os
 import dis
+import sys
 import inspect
 import textwrap
 import warnings
@@ -47,6 +48,11 @@ if TYPE_CHECKING:
     from numpy import ndarray
 else:
     ndarray = 'numpy.ndarray'
+
+if sys.version_info <= (3, 6):
+    COMMA = ','
+else:
+    COMMA = ''
 
 __all__ = ['get_sphinx_domain', 'create_assertion_doc', 'bind_callable', 'skip_if',
            'len_eq', 'str_eq', 'function_eq']
@@ -409,7 +415,7 @@ NoneFunc = Callable[..., None]
 
 
 def skip_if(condition: Any) -> Callable[[UserFunc], Union[UserFunc, NoneFunc]]:
-    """A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
+    f"""A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
 
     A :exc:`UserWarning` is issued if **condition** evaluates to ``True``.
 
@@ -437,9 +443,10 @@ def skip_if(condition: Any) -> Callable[[UserFunc], Union[UserFunc, NoneFunc]]:
         ...     func2()
         Traceback (most recent call last):
           ...
-        UserWarning: Exception('Error') evaluated to True; skipping call to func2(...)
+        UserWarning: Exception('Error'{COMMA}) evaluated to True; skipping call to func2(...)
 
     """
+
     def skip() -> None:
         return None
 
