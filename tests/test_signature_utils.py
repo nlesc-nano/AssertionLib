@@ -3,13 +3,13 @@
 from sys import version_info
 
 from assertionlib import assertion
-from assertionlib.signature import (
+from assertionlib.signature_utils import (
     _get_backup_signature, BACK_SIGNATURE, generate_signature, _signature_to_str
 )
 
 
 def test_get_backup_signature() -> None:
-    """Test :func:`assertionlib.signature._get_backup_signature`."""
+    """Test :func:`assertionlib.signature_utils._get_backup_signature`."""
     if version_info >= (3, 7):  # Python >= 3.7
         sgn_str = '<Signature (self, *args, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, post_process: Union[Callable[[Any], Any], NoneType] = None, message: Union[str, NoneType] = None, **kwargs) -> None>'  # noqa: E501
     else:  # Python < 3.7
@@ -23,7 +23,7 @@ def _test_func(a, *args, b=1, **kwargs): pass
 
 
 def test_generate_signature() -> None:
-    """Test :func:`assertionlib.signature.generate_signature`."""
+    """Test :func:`assertionlib.signature_utils.generate_signature`."""
     if version_info.minor >= 7:  # Python >= 3.7
         ref1 = '<Signature (self, a, *args, b=1, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, post_process: Union[Callable[[Any], Any], NoneType] = None, message: Union[str, NoneType] = None, **kwargs) -> None>'  # noqa: E501
         ref2 = '<Signature (self, *args, invert: bool = False, exception: Union[Type[Exception], NoneType] = None, post_process: Union[Callable[[Any], Any], NoneType] = None, message: Union[str, NoneType] = None, **kwargs) -> None>'  # noqa: E501
@@ -38,7 +38,7 @@ def test_generate_signature() -> None:
 
 
 def test_signature_to_str() -> None:
-    """Test :func:`assertionlib.signature._signature_to_str`."""
+    """Test :func:`assertionlib.signature_utils._signature_to_str`."""
     def test(a, *args, b=1, **kwargs):
         pass
 

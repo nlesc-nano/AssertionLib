@@ -1,12 +1,12 @@
 """
-assertionlib.signature
-======================
+assertionlib.signature_utils
+============================
 
 Various functions for manipulating function signatures.
 
 Index
 -----
-.. currentmodule:: assertionlib.signature
+.. currentmodule:: assertionlib.signature_utils
 .. autosummary::
     generate_signature
     BACK_SIGNATURE
@@ -32,9 +32,11 @@ import warnings
 from .ndrepr import aNDRepr
 
 if sys.version_info < (3, 7):
+    SPACE = ''
     from collections import OrderedDict
 else:  # Dictionaries are ordered starting from python 3.7
-    from builtins import dict as OrderedDict  # type: ignore
+    SPACE = ' '
+    from builtins import dict as OrderedDict  # type: ignore # noqa
 
 PO: _ParameterKind = Parameter.POSITIONAL_ONLY
 POK: _ParameterKind = Parameter.POSITIONAL_OR_KEYWORD
@@ -70,7 +72,7 @@ def _get_backup_signature() -> Signature:
         Parameter(name='args', kind=VP),
         Parameter(name='invert', kind=KO, default=False, annotation=bool),
         Parameter(name='exception', kind=KO, default=None, annotation=ExType),  # type: ignore
-        Parameter(name='post_process', kind=KO, default=None, annotation=Optional[Callable[[Any], Any]]),  # noqa: E105
+        Parameter(name='post_process', kind=KO, default=None, annotation=Optional[Callable[[Any], Any]]),  # noqa: E105, E501
         Parameter(name='message', kind=KO, default=None, annotation=Optional[str]),
         Parameter(name='kwargs', kind=VK)
     ]
@@ -83,7 +85,7 @@ BACK_SIGNATURE: Signature = _get_backup_signature()
 
 
 def generate_signature(func: Callable) -> Signature:
-    """Generate a new function signatures with the ``self``, ``invert`` and ``exception`` parameters.
+    f"""Generate a new function signatures with the ``self``, ``invert`` and ``exception`` parameters.
 
     Default to :data:`BACK_SIGNATURE` if a functions' signature cannot be read.
 
@@ -91,20 +93,21 @@ def generate_signature(func: Callable) -> Signature:
     --------
     .. code:: python
 
-        >>> import inspect
+        >>> from inspect import signature, Signature
+        >>> from assertionlib.signature_utils import generate_signature
 
-        >>> func = enumerate  # The builtin enumerate function
-        >>> Signature = inspect.Signature
+        >>> def func(iterable, start=0):
+        ...     pass
 
         # Print the signature of enumerate
-        >>> sgn1: Signature = inspect.signature(func)
+        >>> sgn1: Signature = signature(func)
         >>> print(sgn1)
         (iterable, start=0)
 
         # Print the newly create signature
-        >>> sgn2: Signature = generate_signatures(func)
+        >>> sgn2: Signature = generate_signature(func)
         >>> print(sgn2)
-        (self, iterable, *args, start=0, invert_: bool = False, exception_: Union[Type[Exception], NoneType] = None, **kwargs) -> None
+        (self, iterable, *args, start=0, invert:{SPACE}bool{SPACE}={SPACE}False, exception:{SPACE}Union[Type[Exception], NoneType]{SPACE}={SPACE}None, post_process:{SPACE}Union[Callable[[Any], Any], NoneType]{SPACE}={SPACE}None, message: Union[str, NoneType]{SPACE}={SPACE}None, **kwargs) -> None
 
     Parameters
     ----------
@@ -117,7 +120,7 @@ def generate_signature(func: Callable) -> Signature:
         The signature of **func** with the ``self`` and ``invert`` parameters.
         Return :data:`BACK_SIGNATURE` if funcs' signature cannot be read.
 
-    """  # noqa
+    """  # noqa: E501
     try:
         sgn = signature(func)
     except ValueError:  # Not all callables have a signature which can be read.
@@ -199,7 +202,7 @@ _KIND_TO_STR: Dict[_ParameterKind, str] = {
 
 
 def _signature_to_str(sgn: Signature, func_name: Optional[str] = None) -> str:
-    """Create a string from a signature.
+    f"""Create a string from a signature.
 
     * The ``self`` parameter will be substituted for **func_name**,
       *i.e.* the name of the to-be asserted function.
@@ -210,16 +213,14 @@ def _signature_to_str(sgn: Signature, func_name: Optional[str] = None) -> str:
     --------
     .. code:: python
 
-        >>> import inspect
-
-        >>> Signature = inspect.Signature
+        >>> from inspect import signature, Signature
 
         >>> def func(self, a: int, b: float, *args, c=1, d=2, **kwargs) -> None:
         ...     pass
 
-        >>> sgn: Signature = inspect.signature(func)
+        >>> sgn: Signature = signature(func)
         >>> print(sgn)
-        (self, a: int, b: float, *args, c=1, d=2, **kwargs) -> None
+        (self, a:{SPACE}int, b:{SPACE}float, *args, c=1, d=2, **kwargs) -> None
 
         >>> sgn_str: str = _signature_to_str(sgn, func_name='fancy_func_name')
         >>> print(sgn_str)

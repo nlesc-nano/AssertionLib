@@ -76,7 +76,7 @@ def recursion_safeguard(fallback: UserFunc) -> Callable[[UserFunc], UserFunc]:
 
 
 class _MetaADC(ABCMeta):
-    def __new__(mcls, name, bases, namespace) -> '_MetaADC':
+    def __new__(mcls, name, bases, namespace) -> '_MetaADC':  # noqa: N804
         cls = cast(_MetaADC, super().__new__(mcls, name, bases, namespace))
         if not cls._HASHABLE:  # type: ignore
             setattr(cls, '__hash__', mcls._hash_template1)

@@ -56,7 +56,7 @@ def test_contains() -> None:
     assertion.contains(5, 5, exception=TypeError)
 
 
-def test_countOf() -> None:
+def test_countof() -> None:
     """Test :meth:`AssertionManager.countOf`."""
     assertion.countOf([1, 1, 1], 1)
     assertion.countOf([1, 1, 1], 2, invert=True)

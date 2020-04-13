@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+from typing import Dict
 
-from setuptools import setup
+from setuptools import setup  # type: ignore
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 # To update the package version number, edit assertionlib/__version__.py
-version = {}
+version: Dict[str, str] = {}
 with open(os.path.join(here, 'assertionlib', '__version__.py')) as f:
     exec(f.read(), version)
 
@@ -53,9 +54,9 @@ setup(
     tests_require=[
         'pytest',
         'pytest-cov',
-        'pycodestyle',
+        'pytest-flake8',
         'numpy',
-        'typing_extensions',
+        'typing-extensions>=3.6.4',
         'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
         'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
     ],
@@ -64,9 +65,9 @@ setup(
         'test': [
             'pytest',
             'pytest-cov',
-            'pycodestyle',
+            'pytest-flake8',
             'numpy',
-            'typing_extensions',
+            'typing-extensions>=3.6.4',
             'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
             'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
         ],

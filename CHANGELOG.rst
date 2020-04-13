@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+2.2.2
+*****
+* Replaced `pycodestyle <https://pypi.org/project/pycodestyle/>`_ tests with
+  `pytest-flake8 <https://pypi.org/project/pytest-flake8/>`_.
+* Added tests using `doctest <https://docs.python.org/3/library/doctest.html>`_.
+
+
 2.2.1
 *****
 * Added a mypy test.

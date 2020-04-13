@@ -74,7 +74,7 @@ def test_callables() -> None:
 
 
 @skip_if(NUMPY_EX)
-def test_Signature() -> None:
+def test_signature() -> None:
     """Tests for :meth:`NDRepr.repr_Signature`."""
     sgn1 = inspect.signature(len)
     sgn2 = inspect.signature(np.testing.assert_allclose)

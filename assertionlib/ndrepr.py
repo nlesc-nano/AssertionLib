@@ -243,7 +243,7 @@ class NDRepr(reprlib.Repr):
             return f'{obj:{i}.{i}e}'
         return f'{obj:{i}.{i}f}'  # Exponential notation
 
-    def repr_Exception(self, obj: Exception, level: int) -> str:
+    def repr_Exception(self, obj: Exception, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of an :exc`Exception` instance."""
         value = str(obj)
         i = self.maxException
@@ -284,7 +284,7 @@ class NDRepr(reprlib.Repr):
         """Create a :class:`str` representation of a module."""
         return f"<module '{obj.__name__}'>"
 
-    def repr_Signature(self, obj: inspect.Signature, level: int) -> str:
+    def repr_Signature(self, obj: inspect.Signature, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a :class:`~inspect.Signature` instance."""
         i = self.maxSignature
         signature = str(obj)
@@ -326,7 +326,7 @@ class NDRepr(reprlib.Repr):
 
     # New PLAMS-related methods
 
-    def repr_Molecule(self, obj: Molecule, level: int) -> str:
+    def repr_Molecule(self, obj: Molecule, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a |plams.Molecule| instance."""
         if level <= 0:
             return f'{obj.__class__.__name__}(...)'
@@ -362,7 +362,7 @@ class NDRepr(reprlib.Repr):
         indent = 4 * ' '
         return f'{obj.__class__.__name__}(\n{textwrap.indent(ret[:-1], indent)}\n)'
 
-    def repr_Settings(self, obj: Settings, level: int) -> str:
+    def repr_Settings(self, obj: Settings, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a |plams.Settings| instance."""
         n = len(obj)
         if not obj:
@@ -391,14 +391,14 @@ class NDRepr(reprlib.Repr):
             return f'{obj.__class__.__name__}(\n{textwrap.indent(ret[1:], indent)}\n)'
         return ret
 
-    def repr_Atom(self, obj: Atom, level: int) -> str:
+    def repr_Atom(self, obj: Atom, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a |plams.Atom| instance."""
         decimal = self.maxfloat
         space = 14 - (6 - decimal)  # The default PLAMS values for space and decimal are 14 and 6
         ret = obj.str(decimal=decimal, space=space).strip()
         return f'{obj.__class__.__name__}({ret})'
 
-    def repr_Bond(self, obj: Bond, level: int) -> str:
+    def repr_Bond(self, obj: Bond, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a |plams.Bond| instance."""
         return f'{obj.__class__.__name__}({obj})'
 
@@ -420,7 +420,7 @@ class NDRepr(reprlib.Repr):
         with np.printoptions(**kwargs):
             return builtins.repr(obj)
 
-    def repr_DataFrame(self, obj: DataFrame, level: int) -> str:
+    def repr_DataFrame(self, obj: DataFrame, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a :class:`pandas.DataFrame` instance."""
         if PANDAS_EX is not None:
             raise PANDAS_EX
@@ -436,7 +436,7 @@ class NDRepr(reprlib.Repr):
         with pd.option_context(*args):
             return builtins.repr(obj)
 
-    def repr_Series(self, obj: Series, level: int) -> str:
+    def repr_Series(self, obj: Series, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a :class:`pandas.Series` instance."""
         if PANDAS_EX is not None:
             raise PANDAS_EX

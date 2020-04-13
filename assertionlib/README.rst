@@ -25,8 +25,8 @@ A module for holding the ``assertionlib.NDRepr()`` class,
 a subclass of the builtin ``reprlib.Repr()`` class.
 
 
-``assertionlib.signature``
---------------------------
+``assertionlib.signature_utils``
+--------------------------------
 Various functions for manipulating the signatures of callables.
 
 

@@ -18,7 +18,7 @@
 
 
 ##################
-AssertionLib 2.2.1
+AssertionLib 2.2.2
 ##################
 
 A package for performing assertions and providing informative exception messages.
@@ -61,10 +61,12 @@ A few examples of some basic assertion:
     # Apply post-processing before conducting the assertion
     >>> ar_large = np.ones(10)
     >>> ar_small = np.zeros(10)
-    >>> assertion.lt(ar_large, ar_small, post_process=all)  # all(ar_large > ar_small)
+    >>> assertion.gt(ar_large, ar_small, post_process=all)  # all(ar_large > ar_small)
 
     # Perform an assertion which will raise an AssertionError
     >>> assertion.eq(5, 6, message='Fancy custom error message')  # 5 == 6
+    Traceback (most recent call last):
+      ...
     AssertionError: output = eq(a, b); assert output
 
     exception: AssertionError = AssertionError('Fancy custom error message')
@@ -80,6 +82,8 @@ A few examples of AssertionErrors raised due to incorrect method signatures:
     >>> from assertionlib import assertion
 
     >>> assertion.len(5)
+    Traceback (most recent call last):
+      ...
     AssertionError: output = len(obj); assert output
 
     exception: TypeError = TypeError("object of type 'int' has no len()")
@@ -87,7 +91,14 @@ A few examples of AssertionErrors raised due to incorrect method signatures:
     output: NoneType = None
     obj: int = 5
 
+
+.. code:: python
+
+    >>> from assertionlib import assertion
+
     >>> assertion.eq(5, 5, 5, 5)
+    Traceback (most recent call last):
+      ...
     AssertionError: output = eq(a, b, _a, _b); assert output
 
     exception: TypeError = TypeError('eq expected 2 arguments, got 4')
@@ -107,10 +118,14 @@ during/before the assertion process:
     >>> from assertionlib import assertion
 
     >>> len(5)
+    Traceback (most recent call last):
+      ...
     TypeError: object of type 'int' has no len()
 
     >>> assertion.len(5, exception=TypeError)  # i.e. len(5) should raise a TypeError
     >>> assertion.len([5], exception=TypeError)
+    Traceback (most recent call last):
+      ...
     AssertionError: output = len(obj); assert output
 
     exception: AssertionError = AssertionError("Failed to raise 'TypeError'")
@@ -124,13 +139,16 @@ method and adding it to an instance with ``AssertionManager.add_to_instance()``:
 
 .. code:: python
 
+    >>> from typing import Any
     >>> from assertionlib import assertion
 
-    >>> my_fancy_func(a):
+    >>> def my_fancy_func(a: Any) -> bool:
     ...     return False
 
     # Approach #1, supply to-be asserted callable to assertion.assert_()
     >>> assertion.assert_(my_fancy_func, 5)
+    Traceback (most recent call last):
+      ...
     AssertionError: output = my_fancy_func(a); assert output
 
     exception: AssertionError = AssertionError(None)
@@ -141,6 +159,8 @@ method and adding it to an instance with ``AssertionManager.add_to_instance()``:
     # Approach #2, permanantly add a new bound method using assertion.add_to_instance()
     >>> assertion.add_to_instance(my_fancy_func)
     >>> assertion.my_fancy_func(5)
+    Traceback (most recent call last):
+      ...
     AssertionError: output = my_fancy_func(a); assert output
 
     exception: AssertionError = AssertionError(None)
