@@ -41,12 +41,13 @@ from functools import wraps
 from threading import get_ident
 from typing import (
     Any, Dict, Set, Iterable, Tuple, ClassVar, NoReturn, cast, Iterator, Union,
-    Callable, Optional, Mapping, TypeVar
+    Callable, Optional, Mapping, TypeVar, Type
 )
 
 __all__ = ['AbstractDataClass']
 
 T = TypeVar('T')
+AT = TypeVar('AT', bound='AbstractDataClass')
 UserFunc = Callable[..., T]
 
 
@@ -324,7 +325,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         """Return if **v1** and **v2** are equivalent."""
         return v1 == v2
 
-    def copy(self, deep: bool = False) -> 'AbstractDataClass':
+    def copy(self: AT, deep: bool = False) -> AT:
         """Return a shallow or deep copy of this instance.
 
         Parameters
@@ -349,11 +350,11 @@ class AbstractDataClass(metaclass=_MetaADC):
             setattr(ret, k, copy_func(v))
         return ret
 
-    def __copy__(self) -> 'AbstractDataClass':
+    def __copy__(self: AT) -> AT:
         """Return a shallow copy of this instance; see :meth:`AbstractDataClass.copy`."""
         return self.copy(deep=False)
 
-    def __deepcopy__(self, memo: Optional[Dict[int, Any]] = None) -> 'AbstractDataClass':
+    def __deepcopy__(self: AT, memo: Optional[Dict[int, Any]] = None) -> AT:
         """Return a deep copy of this instance; see :meth:`AbstractDataClass.copy`."."""
         return self.copy(deep=True)
 
@@ -389,7 +390,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             return {k: copy.copy(v) for k, v in self._iter_attrs() if k not in self._PRIVATE_ATTR}
 
     @classmethod
-    def from_dict(cls, dct: Mapping[str, Any]) -> 'AbstractDataClass':
+    def from_dict(cls: Type[AT], dct: Mapping[str, Any]) -> AT:
         """Construct a instance of this objects' class from a dictionary with keyword arguments.
 
         Parameters
@@ -439,7 +440,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             Return a shallow copy of this instance; see :meth:`SubClass.copy`.
 
             >>> print(SubClass.__copy__.__annotations__)
-            {'return': 'SubClass'}
+            {'self': ~AT, 'return': ~AT}
 
         """
         def decorator(func: UserFunc) -> UserFunc:
