@@ -239,22 +239,16 @@ class _MetaAM(_MetaADC):
     def __new__(mcls, name, bases, namespace) -> '_MetaAM':  # noqa: N804
         cls = cast('_MetaAM', super().__new__(mcls, name, bases, namespace))
 
-        exclude = mcls.EXCLUDE
-        include = mcls.INCLUDE
-        operator_set = set(operator.__all__)  # type: ignore
+        operator_set: Set[str] = set(operator.__all__) - mcls.EXCLUDE  # type: ignore
 
         # Iterature over the __all__ attribute of the operator builtin module
         for name in operator_set:
-            if name[1:] in operator_set or name[1:] + '_' in operator_set or name in exclude:
-                continue  # Exclude inplace operations
-
-            func = getattr(operator, name)
+            func: Callable = getattr(operator, name)
             bind_callable(cls, func, name)
 
         # Iterate over all remaining callables
-        for func in include:
-            name = func.__name__
-            bind_callable(cls, func, name)
+        for func in mcls.INCLUDE:
+            bind_callable(cls, func)
 
         cls.allclose = cls.isclose  # type: ignore
 
