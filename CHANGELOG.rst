@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+2.3.0
+*****
+* Added the ``AssertionManager.xor()`` method.
+* Annotate most ``AssertionManager`` methods using Protocols.
+* Moved Protocols to their own separate stub module.
+* Cleaned up the ``_MetaAM`` metaclass.
+
+
 2.2.2
 *****
 * Replaced `pycodestyle <https://pypi.org/project/pycodestyle/>`_ tests with
