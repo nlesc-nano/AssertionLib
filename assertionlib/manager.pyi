@@ -1,3 +1,5 @@
+"""Stub files for :mode:`assertionlib.manager`."""
+
 import os
 import sys
 import types

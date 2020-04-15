@@ -1,3 +1,5 @@
+"""A stub-only module containing a number of :class:`~typing.Protocol` subclasses."""
+
 import sys
 import types
 from typing import (
