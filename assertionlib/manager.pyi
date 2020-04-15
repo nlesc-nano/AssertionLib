@@ -60,9 +60,9 @@ from .protocol import (
 )
 
 if sys.version_info >= (3, 8):
-    from typing import Final
+    from typing import Final, final
 else:
-    from typing_extensions import Final
+    from typing_extensions import Final, final
 
 T = TypeVar('T')
 RT = TypeVar('RT')
@@ -82,6 +82,7 @@ class _Str(Generic[T]):
     value: T = ...
     def __init__(self, value: T) -> None: ...
 
+@final
 class _NoneException(Exception): ...
 
 class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
