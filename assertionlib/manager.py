@@ -273,7 +273,7 @@ class _Str:
         return str(self.value)
 
 
-class _NoneException(Exception):
+class _NoneException(BaseException):
     """An empty exception used by :meth:`AssertionManager.assert_` incase the **exception** parameter is ``None``."""  # noqa
 
 
