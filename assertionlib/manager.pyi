@@ -14,7 +14,6 @@ from typing import (
     Type,
     TypeVar,
     Tuple,
-    Dict,
     Union,
     Sized,
     SupportsFloat,
@@ -23,11 +22,9 @@ from typing import (
     Sequence,
     Mapping,
     Container,
-    ClassVar,
     Iterable,
     NoReturn,
     Generic,
-    type_check_only,
     overload
 )
 
