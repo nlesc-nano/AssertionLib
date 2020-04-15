@@ -194,7 +194,7 @@ from types import MappingProxyType
 from inspect import Parameter
 from string import ascii_lowercase
 from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence, cast, Iterable,
-                    FrozenSet, TypeVar)
+                    FrozenSet, TypeVar, NoReturn)
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq
@@ -275,6 +275,8 @@ class _Str:
 
 class _NoneException(BaseException):
     """An empty exception used by :meth:`AssertionManager.assert_` incase the **exception** parameter is ``None``."""  # noqa
+    def __init__(self, *args: Any) -> NoReturn:  # type: ignore
+        raise TypeError(f"{self.__class__.__name__!r} cannot not be initiated")
 
 
 class AssertionManager(AbstractDataClass, metaclass=_MetaAM):

@@ -83,7 +83,8 @@ class _Str(Generic[T]):
     def __init__(self, value: T) -> None: ...
 
 @final
-class _NoneException(BaseException): ...
+class _NoneException(BaseException):
+    def __init__(self, *args: Any) -> NoReturn: ...  # type: ignore
 
 class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
     repr_instance: Optional[reprlib.Repr]
