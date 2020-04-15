@@ -262,7 +262,8 @@ def test_xor() -> None:
 @skip_if(NUMPY_EX)
 def test_or_np() -> None:
     """Test :meth:`AssertionManager.not_` with a NumPy array."""
-    assertion.or_(np.random.rand(10), 6, exception=TypeError)
+    array: np.ndarray = np.random.rand(10)
+    assertion.or_(array, 6, exception=TypeError)
 
 
 def test_pos() -> None:
@@ -326,4 +327,5 @@ def test_truth() -> None:
 @skip_if(NUMPY_EX)
 def test_truth_np() -> None:
     """Test :meth:`AssertionManager.truth` with a NumPy array."""
-    assertion.truth(np.random.rand(10), exception=ValueError)
+    array: np.ndarray = np.random.rand(10)
+    assertion.truth(array, exception=ValueError)
