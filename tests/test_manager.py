@@ -250,6 +250,15 @@ def test_or() -> None:
     assertion.or_(5, 6, 7, 8, exception=TypeError)
 
 
+def test_xor() -> None:
+    """Test :meth:`AssertionManager.xor`."""
+    assertion.xor(5, 6)
+    assertion.xor(0, 6)
+    assertion.xor(5, 0)
+    assertion.xor(0, 0, invert=True)
+    assertion.xor(5, 6, 7, 8, exception=TypeError)
+
+
 @skip_if(NUMPY_EX)
 def test_or_np() -> None:
     """Test :meth:`AssertionManager.not_` with a NumPy array."""
