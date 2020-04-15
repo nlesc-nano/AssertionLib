@@ -38,7 +38,7 @@ Various functions for manipulating the signatures of callables.
 .. |assertionlib.functions| replace:: :mod:`assertionlib.functions`
 .. |assertionlib.manager| replace:: :mod:`assertionlib.manager`
 .. |assertionlib.ndrepr| replace:: :mod:`assertionlib.ndrepr`
-.. |assertionlib.signature| replace:: :mod:`assertionlib.signature`
+.. |assertionlib.signature_utils| replace:: :mod:`assertionlib.signature_utils`
 
 .. |assertionlib.AssertionManager| replace:: :class:`assertionlib.AssertionManager<assertionlib.manager.AssertionManager>`
 .. |assertionlib.NDRepr| replace:: :class:`assertionlib.NDRepr<assertionlib.ndrepr.NDRepr>`

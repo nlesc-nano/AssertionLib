@@ -196,7 +196,7 @@ post_process : :class:`~collections.abc.Callable`, optional
     Apply post-processing to the to-be asserted data before asserting aforementioned data.
     Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
 
-message : :data:`~typing.Any`, optional
+message : :class:`str`, optional
     A custom error message to-be passed to the ``assert`` statement.
 
 \*args/\**kwargs : :data:`~typing.Any`
@@ -242,7 +242,7 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
             Apply post-processing to the to-be asserted data before asserting aforementioned data.
             Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
         <BLANKLINE>
-        message : :data:`~typing.Any`, optional
+        message : :class:`str`, optional
             A custom error message to-be passed to the ``assert`` statement.
         <BLANKLINE>
         \*args/\**kwargs : :data:`~typing.Any`
@@ -253,7 +253,7 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
         <BLANKLINE>
         See also
         --------
-        :func:`~builtins.isinstance`:
+        :func:`isinstance()<python:isinstance>`:
             Return whether an object is an instance of a class or of a subclass thereof.
         <BLANKLINE>
             A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
@@ -290,6 +290,8 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
     return BASE_DOCSTRING.format(name=name, signature=sgn, domain=domain, summary=func_summary)
 
 
+ModuleMapping = Mapping[str, str]
+
 #: A dictionary which translates certain __module__ values to an actual valid modules
 MODULE_DICT: Mapping[str, str] = MappingProxyType({
     'genericpath': 'os.path',
@@ -318,11 +320,11 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
 
         >>> value1: str = get_sphinx_domain(int)
         >>> print(value1)
-        :class:`~builtins.int`
+        :class:`int<python:int>`
 
         >>> value2: str = get_sphinx_domain(list.count)
         >>> print(value2)
-        :meth:`~builtins.list.count`
+        :meth:`list.count()<python:list.count>`
 
         >>> value3: str = get_sphinx_domain(OrderedDict)
         >>> print(value3)
@@ -364,14 +366,23 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
     # Convert the extracted __module__ into an actual valid module
     module = MODULE_DICT.get(_module, _module)
 
-    # Return the domain as either :func:`...`, :meth:`...` or :class:`...`
+    # Identify the sphinx domain
     if inspect.isfunction(func) or _is_builtin_func(func):
-        return f':func:`~{module}.{name}`'
+        directive = 'func'
     elif inspect.ismethod(func) or inspect.ismethoddescriptor(func) or inspect.isbuiltin(func):
-        return f':meth:`~{module}.{name}`'
+        directive = 'meth'
     elif inspect.isclass(func):
-        return f':class:`~{module}.{name}`'
-    raise TypeError(f"{name!r} is neither a (builtin) function, method nor class")
+        directive = 'class'
+
+    # Return the domain as either :func:`...`, :meth:`...` or :class:`...`
+    try:
+        if module != 'builtins':
+            return f':{directive}:`~{module}.{name}`'
+        else:
+            parenthesis = '()' if directive in {'func', 'meth'} else ''
+            return f':{directive}:`{name}{parenthesis}<python:{name}>`'
+    except UnboundLocalError as ex:
+        raise TypeError(f"{name!r} is neither a (builtin) function, method nor class") from ex
 
 
 #: An immutable mapping of to-be replaced substrings and their replacements.
@@ -415,7 +426,27 @@ NoneFunc = Callable[..., None]
 
 
 def skip_if(condition: Any) -> Callable[[UserFunc], Union[UserFunc, NoneFunc]]:
-    f"""A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
+
+    def skip() -> None:
+        return None
+
+    def decorator(func: UserFunc) -> Union[UserFunc, NoneFunc]:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Optional[T]:
+            if not condition:
+                return cast(T, func(*args, **kwargs))
+
+            exc = UserWarning(f"{condition!r:.70} evaluated to True; skipping call to {func.__name__}(...)")  # noqa: E501
+            if isinstance(condition, BaseException):
+                exc.__cause__ = condition
+
+            warnings.warn(exc, stacklevel=2)
+            return cast(None, skip())
+        return wrapper
+    return decorator
+
+
+skip_if.__doc__ = f"""A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
 
     A :exc:`UserWarning` is issued if **condition** evaluates to ``True``.
 
@@ -447,32 +478,38 @@ def skip_if(condition: Any) -> Callable[[UserFunc], Union[UserFunc, NoneFunc]]:
 
     """
 
-    def skip() -> None:
-        return None
-
-    def decorator(func: UserFunc) -> Union[UserFunc, NoneFunc]:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Optional[T]:
-            if not condition:
-                return cast(T, func(*args, **kwargs))
-
-            exc = UserWarning(f"{condition!r:.70} evaluated to True; skipping call to {func.__name__}(...)")  # noqa: E501
-            if isinstance(condition, BaseException):
-                exc.__cause__ = condition
-
-            warnings.warn(exc, stacklevel=2)
-            return cast(None, skip())
-        return wrapper
-    return decorator
-
 
 def len_eq(a: Sized, b: int) -> bool:
-    """Check if the length of **a** is equivalent to **b**: :code:`len(a) == b`."""
+    """Check if the length of **a** is equivalent to **b**: :code:`len(a) == b`.
+
+    Parameters
+    ----------
+    a : :class:`~collections.abc.Sized`
+        The object whose size will be evaluated.
+
+    b : :class:`int`
+        The integer that will be matched against the size of **a**.
+
+    """
     return len(a) == b
 
 
 def str_eq(a: T, b: str, str_converter: Callable[[T], str] = repr) -> bool:
-    """Check if the string-representation of **a** is equivalent to **b**: :code:`repr(a) == b`."""
+    """Check if the string-representation of **a** is equivalent to **b**: :code:`repr(a) == b`.
+
+    Parameters
+    ----------
+    a : :data:`~typing.Any`
+        An object whose string represention will be evaluated.
+
+    b : :class:`str`
+        The string that will be matched against the string-output of **a**.
+
+    str_converter : :class:`Callable[[Any], str]<collections.abc.Callable>`
+        The callable for constructing **a**'s string representation.
+        Uses :func:`repr` by default.
+
+    """
     return str_converter(a) == b
 
 
@@ -482,6 +519,14 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
     **b** should be either an object with the ``shape`` attribute (*e.g.* a NumPy array)
     or a :class:`tuple` representing a valid array shape.
 
+    Parameters
+    ----------
+    a : :class:`numpy.ndarray`
+        A NumPy array.
+
+    b : :class:`numpy.ndarray` or :class:`tuple` [:class:`int`, ...]
+        A NumPy array or a tuple of integers representing the shape of **a**.
+
     """  # noqa
     return a.shape == getattr(b, 'shape', b)
 
@@ -489,8 +534,13 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
 def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
     """Check if two functions are equivalent by checking if their :attr:`__code__` is identical.
 
-    **func1** and **func2** should be instances of :class:`~types.FunctionType`
+    **func1** and **func2** should be instances of :data:`~types.FunctionType`
     or any other object with access to the :attr:`__code__` attribute.
+
+    Parameters
+    ----------
+    func1/func2 : :data:`~types.FunctionType`
+        Two functions.
 
     Examples
     --------

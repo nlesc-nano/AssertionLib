@@ -75,7 +75,7 @@ Assertions based on the builtin :mod:`math` module.
     AssertionManager.isinf
     AssertionManager.isnan
 
-Assertions based on :mod:`builtin<builtins>` functions.
+Assertions based on the builtin :mod:`builtins` module.
 
 .. autosummary::
     :nosignatures:
@@ -162,8 +162,8 @@ Assertions based on the builtin :mod:`math` module
 .. automethod:: AssertionManager.isinf
 .. automethod:: AssertionManager.isnan
 
-Assertions based on :class:`builtin<builtins>` functions
---------------------------------------------------------
+Assertions based on the builtin :mod:`builtins` module
+------------------------------------------------------
 .. automethod:: AssertionManager.callable
 .. automethod:: AssertionManager.hasattr
 .. automethod:: AssertionManager.isinstance
@@ -213,6 +213,9 @@ T = TypeVar('T')
 def return_value(value: T) -> T:
     """Return the supplied **value** in unaltered form."""
     return value
+
+
+return_value.__name__ = return_value.__qualname__ = ''
 
 
 class _MetaAM(_MetaADC):
@@ -298,7 +301,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         which in turn should produce a string representation of passed objects.
         If ``None``, default the builtin :func:`repr` function.
 
-    _repr_fallback : :class:`~collections.abc.Callable` [[:data:`~typing.Any`], :class:`str`]
+    _repr_fallback : :class:`Callable[[Any], str]<collections.abc.Callable>`
         A fallback value in case :attr:`AssertionManager.repr_instance` is ``None``.
 
     _maxstring_fallback : :class:`int`
@@ -350,7 +353,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
         Parameters
         ----------
-        func : :class:`~collections.abc.Callable`
+        func : :class:`Callable[..., T]<collections.abc.Callable>`
             The callable whose output will be evaluated.
 
         \*args : :data:`~typing.Any`
@@ -364,9 +367,10 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             Assert that **exception** is raised during/before the assertion operation.
             The only dissalowed value is :exc:`AssertionError`.
 
-        post_process : :class:`~collections.abc.Callable`, optional
+        post_process : :class:`Callable[[T], Any]<collections.abc.Callable>`, optional
             Apply post-processing to the to-be asserted data before asserting aforementioned data.
-            Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+            Example functions would be the likes of :func:`any()<python:any>` and
+            :func:`all()<python:all>`.
 
         message : :data:`~typing.Any`, optional
             A custom error message to-be passed to the ``assert`` statement.
@@ -432,7 +436,10 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
     def __call__(self, value: T, invert: bool = False,
                  post_process: Optional[Callable[[T], Any]] = None,
                  message: Optional[str] = None) -> None:
-        f"""Equivalent to :code:`assert value`.
+        return self.assert_(return_value, value, invert=invert,
+                            post_process=post_process, message=message)
+
+    __call__.__doc__ = f"""Equivalent to :code:`assert value`.
 
         Examples
         --------
@@ -444,38 +451,35 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             >>> assertion(5 == 6)
             Traceback (most recent call last):
               ...
-            AssertionError: output = return_value(value); assert output
+            AssertionError: output = (value); assert output
             <BLANKLINE>
             exception: AssertionError = AssertionError(None{COMMA})
             <BLANKLINE>
             output: bool = False
             value: bool = False
 
-        Note: :func:`return_value` is a function which, as the name implies,
-        returns the passed value in unaltered form.
 
         Parameters
         ----------
-        value : :data:`~typing.Any`
+        value : :data:`T<typing.Any>`
             The to-be asserted value.
 
         invert : :class:`bool`
             If ``True``, invert the output of the assertion:
             :code:`assert not value`.
 
-        post_process : :class:`~collections.abc.Callable`, optional
+        post_process : :class:`Callable[[T], Any]<collections.abc.Callable>`, optional
             Apply post-processing to the to-be asserted data before asserting aforementioned data.
-            Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+            Example functions would be the likes of :func:`any()<python:any>` and
+            :func:`all()<python:all>`.
 
-        message : :data:`~typing.Any`, optional
+        message : :class:`str`, optional
             A custom error message to-be passed to the ``assert`` statement.
 
 
         :rtype: :data:`None`
 
         """
-        return self.assert_(return_value, value, invert=invert,
-                            post_process=post_process, message=message)
 
     def add_to_instance(self, func: Callable, name: Optional[str] = None,
                         override_attr: bool = False) -> None:
@@ -521,7 +525,43 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
                          invert: bool = False, output: Any = None,
                          post_process: Optional[Callable[[T], Any]] = None,
                          **kwargs: Any) -> str:
-        f"""Return a formatted exception message for failed assertions.
+        __tracebackhide__ = True
+
+        # Construct a string-reprensentation of the to-be assert function
+        name: str = getattr(func, '__qualname__', func.__name__)
+
+        # Construct a signature of the to-be asserted function
+        try:
+            _signature = inspect.signature(func)
+            signature: Any = self._get_exc_signature(_signature, args, kwargs)
+            parameters: Iterable = signature.parameters
+        except ValueError:  # Not all callables have a signature
+            signature = '(...)'
+            parameters = (f'_{i}' for i in ascii_lowercase)
+
+        not_ = '' if not invert else ' not'
+        out = 'post_process(output)' if post_process is not None else 'output'
+        ret = f'output ={not_} {name}{signature}; assert {out}'
+
+        # Create a description of the exception
+        ret += '\n\n' + self._get_prm_description('exception', ex)
+
+        # Create a description of the to-be returned value
+        ret += '\n\n' + self._get_prm_description('output', output)
+        if post_process is not None:
+            ret += '\n' + self._get_prm_description('post_process', post_process)
+
+        # Create a description of positional arguments
+        for key, value in zip(parameters, args):
+            ret += '\n' + self._get_prm_description(key, value)
+
+        # Create a description of keyword arguments
+        for key, value in kwargs.items():
+            ret += '\n' + self._get_prm_description(key, value)
+
+        return ret
+
+    _get_exc_message.__doc__ = f"""Return a formatted exception message for failed assertions.
 
         Examples
         --------
@@ -576,41 +616,6 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             A newly-formatted exception message to-be raised by :meth:`AssertionManager.assert_`.
 
         """  # noqa
-        __tracebackhide__ = True
-
-        # Construct a string-reprensentation of the to-be assert function
-        name: str = getattr(func, '__qualname__', func.__name__)
-
-        # Construct a signature of the to-be asserted function
-        try:
-            _signature = inspect.signature(func)
-            signature: Any = self._get_exc_signature(_signature, args, kwargs)
-            parameters: Iterable = signature.parameters
-        except ValueError:  # Not all callables have a signature
-            signature = '(...)'
-            parameters = (f'_{i}' for i in ascii_lowercase)
-
-        not_ = '' if not invert else ' not'
-        out = 'post_process(output)' if post_process is not None else 'output'
-        ret = f'output ={not_} {name}{signature}; assert {out}'
-
-        # Create a description of the exception
-        ret += '\n\n' + self._get_prm_description('exception', ex)
-
-        # Create a description of the to-be returned value
-        ret += '\n\n' + self._get_prm_description('output', output)
-        if post_process is not None:
-            ret += '\n' + self._get_prm_description('post_process', post_process)
-
-        # Create a description of positional arguments
-        for key, value in zip(parameters, args):
-            ret += '\n' + self._get_prm_description(key, value)
-
-        # Create a description of keyword arguments
-        for key, value in kwargs.items():
-            ret += '\n' + self._get_prm_description(key, value)
-
-        return ret
 
     @staticmethod
     def _get_exc_signature(signature: inspect.Signature, args: Sequence[str],

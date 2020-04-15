@@ -85,42 +85,6 @@ BACK_SIGNATURE: Signature = _get_backup_signature()
 
 
 def generate_signature(func: Callable) -> Signature:
-    f"""Generate a new function signatures with the ``self``, ``invert`` and ``exception`` parameters.
-
-    Default to :data:`BACK_SIGNATURE` if a functions' signature cannot be read.
-
-    Examples
-    --------
-    .. code:: python
-
-        >>> from inspect import signature, Signature
-        >>> from assertionlib.signature_utils import generate_signature
-
-        >>> def func(iterable, start=0):
-        ...     pass
-
-        # Print the signature of enumerate
-        >>> sgn1: Signature = signature(func)
-        >>> print(sgn1)
-        (iterable, start=0)
-
-        # Print the newly create signature
-        >>> sgn2: Signature = generate_signature(func)
-        >>> print(sgn2)
-        (self, iterable, *args, start=0, invert:{SPACE}bool{SPACE}={SPACE}False, exception:{SPACE}Union[Type[Exception], NoneType]{SPACE}={SPACE}None, post_process:{SPACE}Union[Callable[[Any], Any], NoneType]{SPACE}={SPACE}None, message: Union[str, NoneType]{SPACE}={SPACE}None, **kwargs) -> None
-
-    Parameters
-    ----------
-    func : :class:`~collections.abc.Callable`
-        A callable object.
-
-    Returns
-    -------
-    :class:`~inspect.Signature`
-        The signature of **func** with the ``self`` and ``invert`` parameters.
-        Return :data:`BACK_SIGNATURE` if funcs' signature cannot be read.
-
-    """  # noqa: E501
     try:
         sgn = signature(func)
     except ValueError:  # Not all callables have a signature which can be read.
@@ -164,6 +128,44 @@ def generate_signature(func: Callable) -> Signature:
     return Signature(parameters=parameters, return_annotation=None)
 
 
+generate_signature.__doc__ = f"""Generate a new function signatures with the ``self``, ``invert`` and ``exception`` parameters.
+
+    Default to :data:`BACK_SIGNATURE` if a functions' signature cannot be read.
+
+    Examples
+    --------
+    .. code:: python
+
+        >>> from inspect import signature, Signature
+        >>> from assertionlib.signature_utils import generate_signature
+
+        >>> def func(iterable, start=0):
+        ...     pass
+
+        # Print the signature of enumerate
+        >>> sgn1: Signature = signature(func)
+        >>> print(sgn1)
+        (iterable, start=0)
+
+        # Print the newly create signature
+        >>> sgn2: Signature = generate_signature(func)
+        >>> print(sgn2)
+        (self, iterable, *args, start=0, invert:{SPACE}bool{SPACE}={SPACE}False, exception:{SPACE}Union[Type[Exception], NoneType]{SPACE}={SPACE}None, post_process:{SPACE}Union[Callable[[Any], Any], NoneType]{SPACE}={SPACE}None, message: Union[str, NoneType]{SPACE}={SPACE}None, **kwargs) -> None
+
+    Parameters
+    ----------
+    func : :class:`~collections.abc.Callable`
+        A callable object.
+
+    Returns
+    -------
+    :class:`~inspect.Signature`
+        The signature of **func** with the ``self`` and ``invert`` parameters.
+        Return :data:`BACK_SIGNATURE` if funcs' signature cannot be read.
+
+    """  # noqa: E501
+
+
 def _get_cls_annotation(func: Callable) -> Tuple[str, Union[str, type]]:
     """Return an annotation for ``self`` or ``cls``."""
     if hasattr(func, '__self__'):
@@ -202,7 +204,21 @@ _KIND_TO_STR: Dict[_ParameterKind, str] = {
 
 
 def _signature_to_str(sgn: Signature, func_name: Optional[str] = None) -> str:
-    f"""Create a string from a signature.
+    func_name = 'self' if func_name is None else func_name
+    parameters = []
+    for name, prm in sgn.parameters.items():
+        if name == 'self':
+            value = func_name
+        elif prm.default is not _empty:
+            value = f'{name}={name}'
+        else:
+            value = _KIND_TO_STR[prm.kind].format(name)
+        parameters.append(value)
+
+    return '(' + ', '.join(i for i in parameters) + ')'
+
+
+_signature_to_str.__doc__ = f"""Create a string from a signature.
 
     * The ``self`` parameter will be substituted for **func_name**,
       *i.e.* the name of the to-be asserted function.
@@ -240,15 +256,3 @@ def _signature_to_str(sgn: Signature, func_name: Optional[str] = None) -> str:
         A stringified version of **sgn**.
 
     """
-    func_name = 'self' if func_name is None else func_name
-    parameters = []
-    for name, prm in sgn.parameters.items():
-        if name == 'self':
-            value = func_name
-        elif prm.default is not _empty:
-            value = f'{name}={name}'
-        else:
-            value = _KIND_TO_STR[prm.kind].format(name)
-        parameters.append(value)
-
-    return '(' + ', '.join(i for i in parameters) + ')'
