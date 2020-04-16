@@ -31,6 +31,10 @@ class _SupportsCode(Protocol):
     __code__: types.CodeType
 
 @type_check_only
+class _SupportsBool(Protocol):
+    def __bool__(self) -> bool: ...
+
+@type_check_only
 class _SupportsNeg(Protocol[RT_co]):
     def __neg__(self) -> RT_co: ...
 
@@ -111,9 +115,9 @@ class _SupportsOr(Protocol[T_contra, RT_co]):
     def __or__(self, x: T_contra) -> RT_co: ...
 
 @type_check_only
-class _SupportsEq(Protocol[RT_co]):
-    def __eq__(self, x: Any) -> RT_co: ...  # type: ignore
+class _SupportsEq(Protocol[T_contra, RT_co]):
+    def __eq__(self, x: T_contra) -> RT_co: ...  # type: ignore
 
 @type_check_only
-class _SupportsNe(Protocol[RT_co]):
-    def __ne__(self, x: Any) -> RT_co: ...  # type: ignore
+class _SupportsNe(Protocol[T_contra, RT_co]):
+    def __ne__(self, x: T_contra) -> RT_co: ...  # type: ignore

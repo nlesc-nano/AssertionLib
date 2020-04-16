@@ -87,6 +87,7 @@ Assertions based on the builtin :mod:`builtins` module.
     AssertionManager.len
     AssertionManager.any
     AssertionManager.all
+    AssertionManager.isdisjoint
 
 
 Miscellaneous assertions.
@@ -171,6 +172,7 @@ Assertions based on the builtin :mod:`builtins` module
 .. automethod:: AssertionManager.len
 .. automethod:: AssertionManager.any
 .. automethod:: AssertionManager.all
+.. automethod:: AssertionManager.isdisjoint
 
 Miscellaneous assertions
 ------------------------
@@ -197,7 +199,7 @@ from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence, cast,
                     FrozenSet, TypeVar, NoReturn)
 
 from .ndrepr import aNDRepr
-from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq
+from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq, isdisjoint
 from .dataclass import AbstractDataClass, _MetaADC
 
 if sys.version_info <= (3, 6):
@@ -236,10 +238,10 @@ class _MetaAM(_MetaADC):
         os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
         math.isclose, math.isfinite, math.isinf, math.isnan,
         isinstance, issubclass, callable, hasattr, len, bool, any, all,
-        len_eq, str_eq, shape_eq, function_eq
+        len_eq, str_eq, shape_eq, function_eq, isdisjoint
     })
 
-    def __new__(mcls, name, bases, namespace) -> '_MetaAM':  # noqa: N804
+    def __new__(mcls, name, bases, namespace) -> '_MetaAM':
         cls = cast('_MetaAM', super().__new__(mcls, name, bases, namespace))
 
         operator_set: Set[str] = set(operator.__all__) - mcls.EXCLUDE  # type: ignore

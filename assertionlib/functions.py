@@ -14,6 +14,7 @@ Index
     skip_if
     len_eq
     str_eq
+    isdisjoint
     function_eq
 
 API
@@ -24,6 +25,7 @@ API
 .. autofunction:: skip_if
 .. autofunction:: len_eq
 .. autofunction:: str_eq
+.. autofunction:: isdisjoint
 .. autofunction:: function_eq
 
 """
@@ -39,7 +41,8 @@ import contextlib
 from types import MappingProxyType, FunctionType, MethodType, CodeType
 from itertools import zip_longest
 from typing import (
-    Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar, cast, TYPE_CHECKING
+    Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar,
+    cast, Set, Iterable, TYPE_CHECKING
 )
 
 from .signature_utils import generate_signature, _signature_to_str, _get_cls_annotation
@@ -529,6 +532,26 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
 
     """  # noqa
     return a.shape == getattr(b, 'shape', b)
+
+
+def isdisjoint(a: Set, b: Iterable) -> bool:
+    """Check if **a** has no elements in **b**.
+
+    Parameters
+    ----------
+    a : :class:`~collections.abc.Set`
+        A set-like object.
+
+    b : :class:`~collections.abc.Iterable`
+        An iterable.
+
+    See Also
+    --------
+    :meth:`set.isdisjoint()<python:set.isdisjoint>`
+        Return ``True`` if two sets have a null intersection.
+
+    """
+    return a.isdisjoint(b)
 
 
 def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
