@@ -195,8 +195,10 @@ import operator
 from types import MappingProxyType
 from inspect import Parameter
 from string import ascii_lowercase
-from typing import (Callable, Any, Type, Set, Optional, Mapping, Sequence, cast, Iterable,
-                    FrozenSet, TypeVar, NoReturn)
+from typing import (
+    Callable, Any, Type, Set, Optional, Mapping, Sequence, cast, Iterable,
+    FrozenSet, TypeVar, NoReturn, Union
+)
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, len_eq, str_eq, shape_eq, function_eq, isdisjoint
@@ -230,7 +232,7 @@ class _MetaAM(_MetaADC):
 
     #: A :class:`frozenset` of to-be ignored functions in :mod:`operator`.
     EXCLUDE: FrozenSet[str] = frozenset({
-        'setitem', 'delitem', 'attrgetter', 'methodcaller', 'itemgetter', 'length_hint'
+        'setitem', 'delitem', 'attrgetter', 'methodcaller', 'itemgetter'
     })
 
     #: A :class:`frozenset` of callables which need an assertion function.
@@ -241,7 +243,7 @@ class _MetaAM(_MetaADC):
         len_eq, str_eq, shape_eq, function_eq, isdisjoint
     })
 
-    def __new__(mcls, name, bases, namespace) -> '_MetaAM':
+    def __new__(mcls, name, bases, namespace) -> '_MetaAM':  # noqa: N804
         cls = cast('_MetaAM', super().__new__(mcls, name, bases, namespace))
 
         operator_set: Set[str] = set(operator.__all__) - mcls.EXCLUDE  # type: ignore
@@ -394,15 +396,17 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         __tracebackhide__ = True
 
         # Set exception to _NoneException
-        exception_ = cast(Type[Exception], _NoneException if exception is None else exception)
-
-        if not (isinstance(exception_, type) and issubclass(exception_, Exception)):
-            raise TypeError("'exception' expected 'None' or an Exception type; "
-                            f"observed {self.repr(exception)} "
-                            f"of type {exception.__class__.__name__!r}")
-        elif exception_ is AssertionError:
-            raise ValueError("'AssertionError' is not allowed as value "
-                             "for the 'exception' parameter")
+        if exception is None:
+            exception_: Union[Type[_NoneException], Type[Exception]] = _NoneException
+        else:
+            if not (isinstance(exception, type) and issubclass(exception, Exception)):
+                raise TypeError("'exception' expected 'None' or an Exception type; "
+                                f"observed {self.repr(exception)} "
+                                f"of type {exception.__class__.__name__!r}")
+            elif exception is AssertionError:
+                raise ValueError("'AssertionError' is not allowed as value "
+                                 "for the 'exception' parameter")
+            exception_ = exception
 
         output: Any = None
         try:

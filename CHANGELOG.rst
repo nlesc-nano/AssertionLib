@@ -8,7 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 2.3.0
 *****
-* Added the ``AssertionManager.xor()`` and ``AssertionManager.isdisjoint()`` methods.
+* Added the ``AssertionManager.xor()``, ``AssertionManager.isdisjoint()`` and ``AssertionManager.length_hint()`` methods.
 * Annotate most ``AssertionManager`` methods using Protocols.
 * Moved Protocols to their own separate stub module.
 * Cleaned up the ``_MetaAM`` metaclass.

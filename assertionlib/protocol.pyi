@@ -31,6 +31,10 @@ class _SupportsCode(Protocol):
     __code__: types.CodeType
 
 @type_check_only
+class _SupportsLengthHint(Protocol):
+    def __length_hint__(self) -> int: ...
+
+@type_check_only
 class _SupportsBool(Protocol):
     def __bool__(self) -> bool: ...
 
@@ -113,6 +117,10 @@ class _SupportsXor(Protocol[T_contra, RT_co]):
 @type_check_only
 class _SupportsOr(Protocol[T_contra, RT_co]):
     def __or__(self, x: T_contra) -> RT_co: ...
+
+@type_check_only
+class _SupportsAnd(Protocol[T_contra, RT_co]):
+    def __and__(self, x: T_contra) -> RT_co: ...
 
 @type_check_only
 class _SupportsEq(Protocol[T_contra, RT_co]):
