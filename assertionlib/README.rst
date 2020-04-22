@@ -25,11 +25,6 @@ A module for holding the ``assertionlib.NDRepr()`` class,
 a subclass of the builtin ``reprlib.Repr()`` class.
 
 
-``assertionlib.signature_utils``
---------------------------------
-Various functions for manipulating the signatures of callables.
-
-
 .. _`Python 3.7`: https://www.python.org/dev/peps/pep-0557/
 
 .. |dataclasses| replace:: :mod:`dataclasses`
@@ -38,7 +33,6 @@ Various functions for manipulating the signatures of callables.
 .. |assertionlib.functions| replace:: :mod:`assertionlib.functions`
 .. |assertionlib.manager| replace:: :mod:`assertionlib.manager`
 .. |assertionlib.ndrepr| replace:: :mod:`assertionlib.ndrepr`
-.. |assertionlib.signature_utils| replace:: :mod:`assertionlib.signature_utils`
 
 .. |assertionlib.AssertionManager| replace:: :class:`assertionlib.AssertionManager<assertionlib.manager.AssertionManager>`
 .. |assertionlib.NDRepr| replace:: :class:`assertionlib.NDRepr<assertionlib.ndrepr.NDRepr>`

@@ -33,19 +33,19 @@ API
 import os
 import dis
 import sys
-import inspect
 import textwrap
 import warnings
 import functools
-import contextlib
-from types import MappingProxyType, FunctionType, MethodType, CodeType
+from types import MappingProxyType, FunctionType, MethodType
 from itertools import zip_longest
 from typing import (
     Callable, Any, Optional, Union, Sized, Mapping, Tuple, Type, TypeVar,
-    cast, Set, Iterable, TYPE_CHECKING
+    cast, AbstractSet, Iterable, TYPE_CHECKING
 )
-
-from .signature_utils import generate_signature, _signature_to_str, _get_cls_annotation
+from inspect import (
+    signature, Parameter, Signature, isbuiltin, isfunction, ismethod,
+    ismethoddescriptor, isclass, _empty  # type: ignore
+)
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -93,93 +93,52 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
     :rtype: :data:`None`
 
     """
-    name_: str = name if name is not None else func.__name__
-
     # Create the new function
-    function, signature_str = _create_assertion_func(func)
-
-    # Update the docstring and sanitize the signature
-    signature_str = signature_str.replace('(func, ', '(')
-    signature_str = signature_str.replace(', *args', '').replace(', **kwargs', '')
-    signature_str = signature_str.replace(', invert=invert, exception=exception, post_process=post_process, message=message', '')  # noqa
-    function.__doc__ = create_assertion_doc(func, signature_str)
-
-    # Update annotations
-    _set_annotations(function, func)
+    function = create_assertion_func(func)
+    if name is not None:
+        function.__name__ = name
 
     # Set the new method
+
     if isinstance(class_type, type):  # A class
-        setattr(class_type, name_, function)
+        function.__qualname__ = f'{class_type.__name__}.{function.__name__}'
+        setattr(class_type, function.__name__, function)
     else:  # A class instance
+        function.__qualname__ = f'{class_type.__class__.__name__}.{function.__name__}'
         method = MethodType(function, class_type)  # Create a bound method
-        setattr(class_type, name_, method)
+        setattr(class_type, function.__name__, method)
 
 
-def _set_annotations(func_new: Callable, func_old: Callable) -> None:
-    """Assign Annotations to the assertion function in :func:`bind_callable`."""
-    func_new.__annotations__ = annotations = getattr(func_old, '__annotations__', {}).copy()
-    annotations['return'] = None
-    annotations['invert'] = bool
-    annotations['exception'] = Optional[Type[Exception]]
-    annotations['post_process'] = Optional[Callable[[Any], Any]]
-    annotations['message'] = Optional[str]
+def create_assertion_func(func: Callable[..., Any]) -> Callable[..., None]:
+    def wrapper(self, *args: Any,
+                invert: bool = False,
+                exception: Optional[Type[Exception]] = None,
+                post_process: Optional[Callable[[Any], Any]] = None,
+                message: Optional[str] = None,
+                **kwargs: Any) -> None:
+        __tracebackhide__ = True
 
-    # Create an additional annotation in case **func_old** is an instance-method
-    with contextlib.suppress(ValueError):  # Raised if **func_old** has no readable signature
-        prm = inspect.signature(func_old).parameters
-        if 'self' in prm:
-            key, value = _get_cls_annotation(func_old)
-            annotations[key] = value
+        self.assert_(
+            func, *args,
+            exception=exception, invert=invert, post_process=post_process, message=message,
+            **kwargs
+        )
 
-
-def _create_assertion_func(func: Callable) -> Tuple[FunctionType, str]:
-    """Generate the assertion function for :func:`bind_callable`.
-
-    Parameters
-    ----------
-    func : :class:`~collections.abc.Callable`
-        A callable object forming the basis of the to-be created assertion function.
-
-    """
-    _empty = inspect._empty  # type: ignore
-
-    def _to_str(prm: inspect.Parameter) -> str:
-        """Create a string from **prm**; ensure that callables are represented by their __name__."""
-        ret = str(prm)
-        default = prm.default
-        if default is not _empty:
-            ret = ret.replace(str(default), 'obj')
-        return ret
-
-    sgn: inspect.Signature = generate_signature(func)
-    sgn_str1: str = '(' + ', '.join(_to_str(v) for v in sgn.parameters.values()) + ')'
-    sgn_str2: str = _signature_to_str(sgn, 'func')
-
-    # Create the code object for the to-be returned function
-    code_compile: CodeType = compile(
-        f'def {func.__name__}{sgn_str1}: __tracebackhide__ = True; self.assert_{sgn_str2}',
-        "<string>", "exec"
-    )
-    for code in code_compile.co_consts:  # Type: CodeType
-        if isinstance(code, CodeType):
-            break
+    try:
+        prm_list = list(signature(func).parameters.values())
+        prm_list.insert(0, Parameter('self', Parameter.POSITIONAL_ONLY, annotation=Any))
+    except ValueError:
+        prm_list = [Parameter('self', Parameter.POSITIONAL_ONLY, annotation=Any),
+                    Parameter('args', Parameter.VAR_POSITIONAL, annotation=Any),
+                    Parameter('kwargs', Parameter.VAR_KEYWORD, annotation=Any)]
     else:
-        raise TypeError(f"Failed to identify a {CodeType.__name__!r} instance "
-                        "in the compiled code")
+        if prm_list[-1].kind is not Parameter.VAR_KEYWORD:
+            prm_list.append(Parameter('kwargs', Parameter.VAR_KEYWORD, annotation=Any))
 
-    # Extract the default arguments for positional or keyword parameters
-    defaults: Optional[Tuple[object, ...]] = code_compile.co_consts[-1]
-    if isinstance(defaults, str):  # no default arguments
-        defaults = None
-    func_new = FunctionType(code, {'func': func}, func.__name__, defaults)
-
-    # Set default values for keyword-only parameters
-    ko = inspect.Parameter.KEYWORD_ONLY
-    kwdefault = {k: v.default for k, v in sgn.parameters.items() if v.kind is ko}
-    if kwdefault:
-        func_new.__kwdefaults__ = kwdefault
-
-    return func_new, sgn_str2
+    wrapper.__name__ = wrapper.__qualname__ = func.__name__
+    wrapper.__doc__ = create_assertion_doc(func)
+    wrapper.__signature__ = Signature(parameters=prm_list, return_annotation=None)
+    return wrapper
 
 
 #: A string with the (to-be formatted) docstring returned by :func:`wrap_docstring`
@@ -187,7 +146,7 @@ BASE_DOCSTRING: str = r"""Perform the following assertion: :code:`assert {name}{
 
 Parameters
 ----------
-invert : :class:`bool`
+{parameters}invert : :class:`bool`
     Invert the output of the assertion: :code:`assert not {name}{signature}`.
     This value should only be supplied as keyword argument.
 
@@ -197,13 +156,12 @@ exception : :class:`type` [:exc:`Exception`], optional
 
 post_process : :class:`~collections.abc.Callable`, optional
     Apply post-processing to the to-be asserted data before asserting aforementioned data.
-    Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+    Example functions would be the likes of :func:`any()<python:any>` and :func:`all()<python:all>`.
+    This value should only be supplied as keyword argument.
 
 message : :class:`str`, optional
     A custom error message to-be passed to the ``assert`` statement.
-
-\*args/\**kwargs : :data:`~typing.Any`
-    Parameters for catching excess variable positional and keyword arguments.
+    This value should only be supplied as keyword argument.
 
 
 :rtype: :data:`None`
@@ -215,7 +173,7 @@ See also
 """
 
 
-def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str:
+def create_assertion_doc(func: Callable) -> str:
     r"""Create a new NumPy style assertion docstring from the docstring of **func**.
 
     The summary of **funcs'** docstring, if available, is added to the ``"See also"`` section,
@@ -269,31 +227,44 @@ def create_assertion_doc(func: Callable, signature: Optional[str] = None) -> str
     func : :class:`~collections.abc.Callable`
         A callable whose output is to-be asserted.
 
-    signature : :class:`str`, optional
-        Provide a custom signature for **func**.
-        If ``None``, default to ``(*args, **kwargs)``.
-
     Returns
     -------
     :class:`str`
         A new docstring constructed from **funcs'** docstring.
 
     """
-    # domain is :class:`...`, :func:`...` or :meth:`...`
+    try:
+        _sgn = signature(func)
+    except ValueError:
+        _sgn = Signature(parameters=[Parameter('args', Parameter.VAR_POSITIONAL, annotation=Any),
+                                     Parameter('kwargs', Parameter.VAR_KEYWORD, annotation=Any)],
+                         return_annotation=None)
+        sgn = '(*args, **kwargs)'
+    else:
+        sgn = '(' + ', '.join((k if v.default is _empty else f'{k}={k}') for k, v in _sgn.parameters.items()) + ')'
+
+    name = getattr(func, '__qualname__', func.__name__)
     domain = get_sphinx_domain(func)
-    sgn: str = signature if signature is not None else '(*args, **kwargs)'
+    summary = textwrap.indent(func.__doc__ or 'No description.', 4 * ' ')
 
-    # Create a summary for a single `See Also` section using the docstring of **func**
-    indent = 4 * ' '
-    func_doc: str = func.__doc__ or 'No description.'
-    func_summary = textwrap.indent(func_doc, indent)
+    parameters = ''
+    for k, v in _sgn.parameters.items():
+        prm_type = str(v.kind).lower().replace("_", " ")
+        _annotation = v.annotation
+        if _annotation is _empty:
+            annotation = f':data:`~typing.Any`'
+        else:
+            try:
+                annotation = get_sphinx_domain(_annotation)
+            except (AttributeError, TypeError) as ex:
+                print(_annotation, repr(ex))
+                annotation = f"``{_annotation}``"
+        parameters += f'{k} : {annotation}\n    The {prm_type} argument ``{k}``  of {domain}.\n\n'
 
-    # Return a new docstring
-    name: str = getattr(func, '__qualname__', func.__name__)
-    return BASE_DOCSTRING.format(name=name, signature=sgn, domain=domain, summary=func_summary)
+    return BASE_DOCSTRING.format(
+        parameters=parameters, name=name, signature=sgn, domain=domain, summary=summary
+    )
 
-
-ModuleMapping = Mapping[str, str]
 
 #: A dictionary which translates certain __module__ values to an actual valid modules
 MODULE_DICT: Mapping[str, str] = MappingProxyType({
@@ -306,7 +277,7 @@ MODULE_DICT: Mapping[str, str] = MappingProxyType({
 def _is_builtin_func(func: Callable) -> bool:
     """Check if **func** is a builtin function."""
     try:
-        return inspect.isbuiltin(func) and '.' not in getattr(func, '__qualname__', '')
+        return isbuiltin(func) and '.' not in getattr(func, '__qualname__', '')
     except AttributeError:
         return False
 
@@ -370,11 +341,11 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
     module = MODULE_DICT.get(_module, _module)
 
     # Identify the sphinx domain
-    if inspect.isfunction(func) or _is_builtin_func(func):
+    if isfunction(func) or _is_builtin_func(func):
         directive = 'func'
-    elif inspect.ismethod(func) or inspect.ismethoddescriptor(func) or inspect.isbuiltin(func):
+    elif ismethod(func) or ismethoddescriptor(func) or isbuiltin(func):
         directive = 'meth'
-    elif inspect.isclass(func):
+    elif isclass(func):
         directive = 'class'
 
     # Return the domain as either :func:`...`, :meth:`...` or :class:`...`
@@ -534,7 +505,7 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
     return a.shape == getattr(b, 'shape', b)
 
 
-def isdisjoint(a: Set, b: Iterable) -> bool:
+def isdisjoint(a: AbstractSet, b: Iterable) -> bool:
     """Check if **a** has no elements in **b**.
 
     Parameters

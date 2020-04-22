@@ -11,4 +11,3 @@ Index
     4_ndrepr
     5_dataclass
     6_functions
-    7_signature_utils
