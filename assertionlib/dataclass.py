@@ -48,31 +48,31 @@ __all__ = ['AbstractDataClass']
 
 T = TypeVar('T')
 AT = TypeVar('AT', bound='AbstractDataClass')
-UserFunc = Callable[..., T]
+FT = TypeVar('FT', bound=Callable[..., T])
 
 
-def recursion_safeguard(fallback: UserFunc) -> Callable[[UserFunc], UserFunc]:
+def recursion_safeguard(fallback: FT) -> Callable[[FT], FT]:
     """Decorate a function such that it calls **fallback** in case of recursive calls.
 
     Implementation based on :func:`reprlib.recursive_repr`.
 
     """
-    def decorating_function(user_function: UserFunc) -> UserFunc:
+    def decorating_function(user_function: FT) -> FT:
         running: Set[Tuple[int, int]] = set()
 
         @wraps(user_function)
-        def wrapper(self: Any, *args: Any, **kwargs: Any) -> T:
+        def wrapper(self, *args: Any, **kwargs: Any) -> T:
             key = id(self), get_ident()
             if key in running:
                 return fallback(self, *args, **kwargs)
 
             running.add(key)
             try:
-                result = user_function(self, *args, **kwargs)
+                result: T = user_function(self, *args, **kwargs)
             finally:
                 running.discard(key)
             return result
-        return wrapper
+        return cast(FT, wrapper)
     return decorating_function
 
 
@@ -87,12 +87,12 @@ class _MetaADC(ABCMeta):
         return cls
 
     @staticmethod
-    def _hash_template1(self: Any) -> NoReturn:
+    def _hash_template1(self) -> NoReturn:
         """Unhashable type; raise a :exc:`TypeError`."""
         raise TypeError(f"Unhashable type: {self.__class__.__name__!r}")
 
     @staticmethod
-    def _hash_template2(self: Any) -> int:
+    def _hash_template2(self) -> int:
         """Return the hash of this instance.
 
         The returned hash is constructed from two components:
@@ -103,7 +103,7 @@ class _MetaADC(ABCMeta):
         then its :func:`id` is used for hashing.
 
         This method will raise a :exc:`TypeError` if the class attribute
-        :attr:`AbstractDataClass._HASHABLE` is ``False``.
+        :attr:`AbstractDataClass._HASHABLE` is :data:`False`.
 
         See Also
         --------
@@ -163,11 +163,11 @@ class AbstractDataClass(metaclass=_MetaADC):
 
     _HASHABLE : :class:`bool`
         A class variable denoting whether or not class instances are hashable.
-        The :attr:`AbstractDataClass.__hash__` method will be unavailable if ``False``.
+        The :attr:`AbstractDataClass.__hash__` method will be unavailable if :data:`False`.
 
     _hash : :class:`int`
         An attribute for caching the :func:`hash` of this instance.
-        Only available if :attr:`AbstractDataClass._HASHABLE` is ``True``.
+        Only available if :attr:`AbstractDataClass._HASHABLE` is :data:`True`.
 
     """
 
@@ -177,7 +177,7 @@ class AbstractDataClass(metaclass=_MetaADC):
     _PRIVATE_ATTR: Set[str] = frozenset()  # type: ignore
 
     #: Whether or not this class is hashable.
-    #: If ``False``, raise a :exc:`TypeError` when calling :meth:`AbstractDataClass.__hash__`.
+    #: If :data:`False`, raise a :exc:`TypeError` when calling :meth:`AbstractDataClass.__hash__`.
     _HASHABLE: ClassVar[bool] = True
 
     #: Empty slots which can be filled by subclasses.
@@ -366,7 +366,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         Parameters
         ----------
         return_private : :class:`bool`
-            If ``True``, return both public and private instance variables.
+            If :data:`True`, return both public and private instance variables.
             Private instance variables are defined in :data:`AbstractDataClass._PRIVATE_ATTR`.
 
         Returns
@@ -413,7 +413,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         return cls(**dct)  # type: ignore
 
     @classmethod
-    def inherit_annotations(cls) -> Callable[[UserFunc], UserFunc]:
+    def inherit_annotations(cls) -> Callable[[FT], FT]:
         """A decorator for inheriting annotations and docstrings.
 
         Can be applied to methods of :class:`AbstractDataClass` subclasses to automatically
@@ -443,7 +443,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             {'self': ~AT, 'return': ~AT}
 
         """
-        def decorator(func: UserFunc) -> UserFunc:
+        def decorator(func: FT) -> FT:
             cls_func: str = getattr(cls, func.__name__)
             sub_cls_name: str = func.__qualname__.split('.')[0]
 

@@ -52,24 +52,22 @@ setup(
     python_requires='>=3.6',
     test_suite='tests',
     tests_require=[
-        'pytest',
+        'pytest>=4.1.0',
         'pytest-cov',
-        'pytest-flake8',
+        'pytest-flake8>=1.0.3',
         'numpy',
-        'typing-extensions>=3.6.4',
-        'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
-        'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
+        'typing-extensions>=3.7.4; python_version<"3.8"',
+        'pytest-mypy>=0.6.2'
     ],
     extras_require={
         'doc': ['sphinx>=2.1', 'sphinx_rtd_theme'],
         'test': [
-            'pytest',
+            'pytest>=4.1.0',
             'pytest-cov',
-            'pytest-flake8',
+            'pytest-flake8>=1.0.3',
             'numpy',
-            'typing-extensions>=3.6.4',
-            'numpy-stubs@git+https://github.com/numpy/numpy-stubs@master',
-            'pytest-mypy@git+https://github.com/nlesc-nano/pytest-mypy@master'
+            'typing-extensions>=3.7.4; python_version<"3.8"',
+            'pytest-mypy>=0.6.2'
         ],
     }
 )

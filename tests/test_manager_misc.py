@@ -8,7 +8,7 @@ from assertionlib import assertion, AssertionManager
 from assertionlib.functions import skip_if
 
 try:
-    import numpy as np
+    import numpy as np  # type: ignore
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
     NUMPY_EX = ex
@@ -88,13 +88,13 @@ def test_as_dict() -> None:
 
 
 class _TestClass:
-    def instance_meth(self): return True
+    def instance_meth(self) -> bool: return True
 
     @classmethod
-    def class_meth(cls): return True
+    def class_meth(cls) -> bool: return True
 
     @staticmethod
-    def static_meth(): return True
+    def static_meth() -> bool: return True
 
 
 def test_add_to_instance() -> None:
@@ -244,8 +244,8 @@ def test_get_exc_message() -> None:
     func = len
     args = (1,)
 
-    str1 = assertion._get_exc_message(ex, func, *args, invert=False, output=None)
-    str2 = assertion._get_exc_message(ex, func, *args, invert=True, output=None)
+    str1 = assertion._get_exc_message(ex, func, *args, invert=False, output=None)  # type: ignore
+    str2 = assertion._get_exc_message(ex, func, *args, invert=True, output=None)  # type: ignore
     comma = ',' if version_info.minor < 7 else ''   # For Python 3.6 and later
     ref1 = f"""output = len(obj); assert output
 

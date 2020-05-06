@@ -64,7 +64,7 @@ from itertools import chain, islice
 
 if TYPE_CHECKING:
     from scm.plams import Molecule, Atom, Bond, Settings  # type: ignore
-    from numpy import ndarray
+    from numpy import ndarray  # type: ignore
     from pandas import DataFrame, Series  # type: ignore
 
     from types import (BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType, MethodType)
@@ -90,8 +90,7 @@ else:
     Series = 'pandas.core.series.Series'
     DataFrame = 'pandas.core.frame.DataFrame'
 
-    BuiltinFunctionType = "builtins.builtin_function_or_method"
-    BuiltinMethodType = "builtins.builtin_function_or_method"
+    BuiltinFunctionType = BuiltinMethodType = "builtins.builtin_function_or_method"
     ModuleType = "builtins.module"
     FunctionType = "builtins.function"
     MethodType = "builtins.method"
@@ -261,7 +260,7 @@ class NDRepr(reprlib.Repr):
     def repr_method_descriptor(self, obj: MethodDescriptorType, level: int) -> str:
         """Create a :class:`str` representation of an unbound method."""
         name, signature = self._parse_callable(obj, level)
-        return f"<method '{name}{signature}'>"
+        return f"<method descriptor '{name}{signature}'>"
 
     def repr_function(self, obj: FunctionType, level: int) -> str:
         """Create a :class:`str` representation of a function."""
@@ -361,6 +360,9 @@ class NDRepr(reprlib.Repr):
         obj.unset_atoms_id()
         indent = 4 * ' '
         return f'{obj.__class__.__name__}(\n{textwrap.indent(ret[:-1], indent)}\n)'
+
+    def repr_Dataset(self, obj, level: int) -> str:
+        return repr(obj)
 
     def repr_Settings(self, obj: Settings, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a |plams.Settings| instance."""
