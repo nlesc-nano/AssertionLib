@@ -259,7 +259,7 @@ class _MetaAM(_MetaADC):
         cls.allclose = cls.isclose  # type: ignore
 
         # On windows os.path.isdir is an alias for the ._isdir function
-        if os.name == 'nt':
+        if hasattr(cls, '_isdir'):
             cls.isdir = isdir = cls._isdir  # type: ignore
             isdir.__name__ = 'isdir'
             isdir.__qualname__ = f'{cls.__name__}.isdir'

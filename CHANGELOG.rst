@@ -14,6 +14,12 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 * Cleaned up the ``_MetaAM`` metaclass.
 
 
+2.2.3
+*****
+* Windows bug fix: Check for the presence of the ``AssertionManager._isdir()``
+  rather than the type of operating system.
+
+
 2.2.2
 *****
 * Replaced `pycodestyle <https://pypi.org/project/pycodestyle/>`_ tests with
