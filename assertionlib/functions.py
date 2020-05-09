@@ -91,6 +91,14 @@ DEFAULT_PRM: Tuple[Parameter, Parameter] = (
 )
 
 
+def set_docstring(docstring: Optional[str]) -> Callable[[FT], FT]:
+    """A decorator for assigning docstrings."""
+    def wrapper(func: FT) -> FT:
+        func.__doc__ = docstring
+        return func
+    return wrapper
+
+
 def _to_positional(iterable: Iterable[Parameter]) -> List[Parameter]:
     """Helper function for :func:`to_positional`; used in creating the new :class:`~inspect.Parameter` list."""  # noqa: E501
     ret = []
@@ -120,7 +128,7 @@ Example
     ... def func2(a: int, b: int = 0) -> int:
     ...     pass
 
-    >>> print(signature(func1), signature(func2), sep='\n')
+    >>> print(signature(func1), signature(func2), sep='\\n')
     (a:{SPACE}int, b:{SPACE}int{SPACE}={SPACE}0) -> int
     (a:{SPACE}int, /, *, b:{SPACE}int{SPACE}= 0) -> int
 
@@ -134,14 +142,6 @@ def to_positional(func: FT) -> FT:
         parameters=prm_list, return_annotation=sgn.return_annotation
     )
     return func
-
-
-def set_docstring(docstring: Optional[str]) -> Callable[[FT], FT]:
-    """A decorator for assigning docstrings."""
-    def wrapper(func: FT) -> FT:
-        func.__doc__ = docstring
-        return func
-    return wrapper
 
 
 def bind_callable(class_type: Union[type, Any], func: Callable,
