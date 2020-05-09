@@ -130,7 +130,7 @@ Example
 
     >>> print(signature(func1), signature(func2), sep='\\n')
     (a:{SPACE}int, b:{SPACE}int{SPACE}={SPACE}0) -> int
-    (a:{SPACE}int, /, *, b:{SPACE}int{SPACE}= 0) -> int
+    (a:{SPACE}int, /, *, b:{SPACE}int{SPACE}={SPACE}0) -> int
 
 """)  # noqa: E501
 def to_positional(func: FT) -> FT:
