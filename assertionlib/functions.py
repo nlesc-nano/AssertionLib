@@ -51,7 +51,7 @@ from inspect import (
     isclass
 )
 
-if sys.version_info <= (3, 6):
+if sys.version_info < (3, 7):
     COMMA = ','
     SPACE = ''
 else:

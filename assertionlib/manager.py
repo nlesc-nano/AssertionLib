@@ -203,7 +203,7 @@ from .functions import bind_callable, set_docstring
 from .assertion_functions import len_eq, str_eq, shape_eq, function_eq, isdisjoint
 from .dataclass import AbstractDataClass, _MetaADC
 
-if sys.version_info <= (3, 6):
+if sys.version_info < (3, 7):
     COMMA = ','
 else:
     COMMA = ''
