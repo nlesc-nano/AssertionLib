@@ -550,7 +550,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         >>> a = [1, 2, 3, 4]
         >>> b = 5
 
-        >>> msg = assertion._get_exc_message(ex, func, a, b)
+        >>> msg = assertion._get_exc_message(ex, contains, a, b)
         >>> raise AssertionError(msg)
         Traceback (most recent call last):
             ...
