@@ -543,10 +543,10 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
     --------
     .. code:: python
 
-        >>> import operator
+        >>> def contains(a, b):
+        ...     return b in a
 
         >>> ex = TypeError('Fancy custom exception')
-        >>> func = operator.contains
         >>> a = [1, 2, 3, 4]
         >>> b = 5
 
