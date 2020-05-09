@@ -30,7 +30,7 @@ from typing import (
     overload
 )
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from .dataclass import AbstractDataClass, _MetaADC
 from .protocol import (
