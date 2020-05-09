@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+2.3.0
+*****
+* Added the ``AssertionManager.xor()``, ``AssertionManager.isdisjoint()`` and ``AssertionManager.length_hint()`` methods.
+* Annotate most ``AssertionManager`` methods using Protocols.
+* Moved Protocols to their own separate stub module.
+* Cleaned up the ``_MetaAM`` metaclass.
+* Reworked some of the internals of ``AssertionManager``.
+* Added tests using `pydocstyle <https://github.com/henry0312/pytest-pydocstyle>`_.
+
+
 2.2.3
 *****
 * Windows bug fix: Check for the presence of the ``AssertionManager._isdir()``

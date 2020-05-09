@@ -1,8 +1,4 @@
-"""
-assertionlib.ndrepr
-====================
-
-A module for holding the :class:`NDRepr` class, a subclass of the builtin :class:`reprlib.Repr` class.
+"""A module for holding the :class:`NDRepr` class, a subclass of the builtin :class:`reprlib.Repr` class.
 
 Index
 -----
@@ -31,6 +27,7 @@ Type-specific repr methods:
     NDRepr.repr_ndarray
     NDRepr.repr_DataFrame
     NDRepr.repr_Series
+    NDRepr.repr_Dataset
 
 API
 ---
@@ -51,8 +48,9 @@ API
 .. automethod:: NDRepr.repr_ndarray
 .. automethod:: NDRepr.repr_DataFrame
 .. automethod:: NDRepr.repr_Series
+.. automethod:: NDRepr.repr_Dataset
 
-"""  # noqa
+"""  # noqa: E501
 
 import sys
 import inspect
@@ -62,10 +60,13 @@ import textwrap
 from typing import Any, Dict, Callable, Union, Tuple, Optional, Mapping, List, TYPE_CHECKING
 from itertools import chain, islice
 
+from .functions import set_docstring
+
 if TYPE_CHECKING:
     from scm.plams import Molecule, Atom, Bond, Settings  # type: ignore
-    from numpy import ndarray
+    from numpy import ndarray  # type: ignore
     from pandas import DataFrame, Series  # type: ignore
+    from h5py import Dataset  # type: ignore
 
     from types import (BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType, MethodType)
     if sys.version_info >= (3, 7):
@@ -76,6 +77,7 @@ if TYPE_CHECKING:
 
         class MethodDescriptorType(Protocol):
             """See https://github.com/python/typeshed/blob/master/stdlib/3/types.pyi ."""
+
             __name__: str
             __qualname__: str
             __objclass__: type
@@ -89,9 +91,9 @@ else:
     ndarray = 'numpy.ndarray'
     Series = 'pandas.core.series.Series'
     DataFrame = 'pandas.core.frame.DataFrame'
+    Dataset = 'h5py._h1.dataset.Dataset'
 
-    BuiltinFunctionType = "builtins.builtin_function_or_method"
-    BuiltinMethodType = "builtins.builtin_function_or_method"
+    BuiltinFunctionType = BuiltinMethodType = "builtins.builtin_function_or_method"
     ModuleType = "builtins.module"
     FunctionType = "builtins.function"
     MethodType = "builtins.method"
@@ -206,7 +208,7 @@ class NDRepr(reprlib.Repr):
     """
 
     def __init__(self, **kwargs: Union[int, Mapping[str, Any]]) -> None:
-        """Initialize a :class:`NDRepr` instance."""
+        """Initialize an :class:`NDRepr` instance."""
         super().__init__()
         self.maxstring: int = 80
 
@@ -229,12 +231,11 @@ class NDRepr(reprlib.Repr):
                                      f'has no attribute {self.repr(k)}')
             setattr(self, k, v)
 
+    @set_docstring(reprlib.Repr.repr1.__doc__)
     def repr1(self, obj: Any, level: int) -> str:
         if isinstance(obj, Exception):  # Refer all exceptions NDRepr.repr_Exception()
             return self.repr_Exception(obj, level)
         return super().repr1(obj, level)
-
-    repr1.__doc__ = reprlib.Repr.repr1.__doc__
 
     def repr_float(self, obj: float, level: int) -> str:
         """Create a :class:`str` representation of a :class:`float` instance."""  # noqa
@@ -261,7 +262,7 @@ class NDRepr(reprlib.Repr):
     def repr_method_descriptor(self, obj: MethodDescriptorType, level: int) -> str:
         """Create a :class:`str` representation of an unbound method."""
         name, signature = self._parse_callable(obj, level)
-        return f"<method '{name}{signature}'>"
+        return f"<method descriptor '{name}{signature}'>"
 
     def repr_function(self, obj: FunctionType, level: int) -> str:
         """Create a :class:`str` representation of a function."""
@@ -450,6 +451,10 @@ class NDRepr(reprlib.Repr):
 
         with pd.option_context(*args):
             return builtins.repr(obj)
+
+    def repr_Dataset(self, obj: Dataset, level: int) -> str:  # noqa: N802
+        """Create a :class:`str` representation of a :class:`h5py.Dataset` instance."""
+        return repr(obj)
 
     def _get_ndformatter(self, obj: ndarray) -> Dict[str, Callable[[Union[int, float]], str]]:
         """Return a value for the **formatter** argument in :func:`numpy.printoptions`."""

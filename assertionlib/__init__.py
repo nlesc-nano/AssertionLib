@@ -1,3 +1,5 @@
+"""AssertionLib."""
+
 from .__version__ import __version__
 
 from .ndrepr import NDRepr, aNDRepr

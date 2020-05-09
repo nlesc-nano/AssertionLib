@@ -1,1 +1,3 @@
-__version__ = '2.2.3'
+"""The AssertionLib version."""
+
+__version__ = '2.3.0'

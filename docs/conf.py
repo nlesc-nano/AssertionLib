@@ -35,7 +35,7 @@ needs_sphinx = '2.1'  # 2.0 or higher
 #     'signature' – Show typehints as its signature (default)
 #     'none' – Do not show typehints
 # New in version 2.1.
-autodoc_typehints = 'none'
+autodoc_typehints = 'signature'
 
 
 # Output is processed with HTML4 writer.

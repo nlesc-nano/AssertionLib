@@ -38,10 +38,11 @@ install:
 
     # Install the tests
     - pip install .[test] --upgrade
+    - pip install git+https://github.com/numpy/numpy-stubs@master
 
 script:
     # Run the unitary tests excluding the expensive computations
-    - pytest assertionlib tests docs
+    - pytest assertionlib tests
     - coverage xml && coverage report -m
 
 branches:

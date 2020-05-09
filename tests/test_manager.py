@@ -3,7 +3,7 @@
 from typing import Optional
 
 try:
-    import numpy as np
+    import numpy as np  # type: ignore
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
     NUMPY_EX = ex
@@ -250,10 +250,20 @@ def test_or() -> None:
     assertion.or_(5, 6, 7, 8, exception=TypeError)
 
 
+def test_xor() -> None:
+    """Test :meth:`AssertionManager.xor`."""
+    assertion.xor(5, 6)
+    assertion.xor(0, 6)
+    assertion.xor(5, 0)
+    assertion.xor(0, 0, invert=True)
+    assertion.xor(5, 6, 7, 8, exception=TypeError)
+
+
 @skip_if(NUMPY_EX)
 def test_or_np() -> None:
     """Test :meth:`AssertionManager.not_` with a NumPy array."""
-    assertion.or_(np.random.rand(10), 6, exception=TypeError)
+    array: np.ndarray = np.random.rand(10)
+    assertion.or_(array, 6, exception=TypeError)
 
 
 def test_pos() -> None:
@@ -317,4 +327,5 @@ def test_truth() -> None:
 @skip_if(NUMPY_EX)
 def test_truth_np() -> None:
     """Test :meth:`AssertionManager.truth` with a NumPy array."""
-    assertion.truth(np.random.rand(10), exception=ValueError)
+    array: np.ndarray = np.random.rand(10)
+    assertion.truth(array, exception=ValueError)
