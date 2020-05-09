@@ -53,8 +53,10 @@ from inspect import (
 
 if sys.version_info <= (3, 6):
     COMMA = ','
+    SPACE = ''
 else:
     COMMA = ''
+    SPACE = ' '
 
 if TYPE_CHECKING:
     from enum import IntEnum
@@ -102,28 +104,28 @@ def _to_positional(iterable: Iterable[Parameter]) -> List[Parameter]:
     return ret
 
 
+@set_docstring(f"""Decorate a function's :attr:`__signature__` such that all positional-or-keyword arguments are changed to either positional- or keyword-only.
+
+Example
+-------
+.. code:: python
+
+    >>> from inspect import signature
+    >>> from assertionlib.functions import to_positional
+
+    >>> def func1(a: int, b: int = 0) -> int:
+    ...     pass
+
+    >>> @to_positional
+    ... def func2(a: int, b: int = 0) -> int:
+    ...     pass
+
+    >>> print(signature(func1), signature(func2), sep='\n')
+    (a:{SPACE}int, b:{SPACE}int{SPACE}={SPACE}0) -> int
+    (a:{SPACE}int, /, *, b:{SPACE}int{SPACE}= 0) -> int
+
+""")  # noqa: E501
 def to_positional(func: FT) -> FT:
-    r"""Decorate a function's :attr:`__signature__` such that all positional-or-keyword arguments are changed to either positional- or keyword-only.
-
-    Example
-    -------
-    .. code:: python
-
-        >>> from inspect import signature
-        >>> from assertionlib.functions import to_positional
-
-        >>> def func1(a: int, b: int = 0) -> int:
-        ...     pass
-
-        >>> @to_positional
-        ... def func2(a: int, b: int = 0) -> int:
-        ...     pass
-
-        >>> print(signature(func1), signature(func2), sep='\n')
-        (a: int, b: int = 0) -> int
-        (a: int, /, *, b: int = 0) -> int
-
-    """  # noqa: E501
     sgn = signature(func)
     prm_dict = sgn.parameters
 
