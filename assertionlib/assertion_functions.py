@@ -1,8 +1,4 @@
-"""
-assertionlib.assertion_functions
-================================
-
-A module with various new assertion functions.
+"""A module with various new assertion functions.
 
 Index
 -----
@@ -155,7 +151,7 @@ def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
     --------
     .. code:: python
 
-        >>> from assertionlib.functions import function_eq
+        >>> from assertionlib.assertion_functions import function_eq
 
         >>> func1 = lambda x: x + 5
         >>> func2 = lambda x: x + 5

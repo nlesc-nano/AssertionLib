@@ -1,8 +1,4 @@
-"""
-assertionlib.dataclass
-======================
-
-A class with a number of generic pre-defined (magic) methods inspired by dataclass of Python 3.7.
+"""A class with a number of generic pre-defined (magic) methods inspired by dataclass of Python 3.7.
 
 Index
 -----
@@ -32,7 +28,7 @@ API
 .. automethod:: AbstractDataClass.from_dict
 .. automethod:: AbstractDataClass.inherit_annotations
 
-"""
+"""  # noqa: E501
 
 import textwrap
 import copy
@@ -48,7 +44,7 @@ __all__ = ['AbstractDataClass']
 
 T = TypeVar('T')
 AT = TypeVar('AT', bound='AbstractDataClass')
-FT = TypeVar('FT', bound=Callable[..., T])
+FT = TypeVar('FT', bound=Callable[..., Any])
 
 
 def recursion_safeguard(fallback: FT) -> Callable[[FT], FT]:
@@ -61,14 +57,14 @@ def recursion_safeguard(fallback: FT) -> Callable[[FT], FT]:
         running: Set[Tuple[int, int]] = set()
 
         @wraps(user_function)
-        def wrapper(self, *args: Any, **kwargs: Any) -> T:
+        def wrapper(self, *args: Any, **kwargs: Any) -> Any:
             key = id(self), get_ident()
             if key in running:
                 return fallback(self, *args, **kwargs)
 
             running.add(key)
             try:
-                result: T = user_function(self, *args, **kwargs)
+                result = user_function(self, *args, **kwargs)
             finally:
                 running.discard(key)
             return result
@@ -223,7 +219,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         """Fallback function for :meth:`AbstractDataClass.__repr__` incase of recursive calls."""
         return object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]
 
-    @recursion_safeguard(fallback=_repr_fallback)
+    @recursion_safeguard(fallback=_repr_fallback)  # type: ignore
     def __repr__(self) -> str:
         """Return a (machine readable) string representation of this instance.
 
@@ -280,7 +276,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         """Fallback function for :meth:`AbstractDataClass.__eq__` incase of recursive calls."""
         return self is value
 
-    @recursion_safeguard(fallback=_eq_fallback)
+    @recursion_safeguard(fallback=_eq_fallback)  # type: ignore
     def __eq__(self, value: Any) -> bool:
         """Check if this instance is equivalent to **value**.
 

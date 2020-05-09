@@ -2,9 +2,11 @@
 
 import operator
 from sys import version_info
-from typing import Optional, cast
+from typing import Optional, cast, Callable
+from functools import partial
 
 from assertionlib import assertion, AssertionManager
+from assertionlib.manager import _Str, _NoneException  # type: ignore
 from assertionlib.functions import skip_if
 
 try:
@@ -154,6 +156,20 @@ def test_assert_() -> None:
     else:
         raise AssertionError('Failed to raise a ValueError')
 
+    try:
+        assertion.eq(1, 1, exception=TypeError, message='<MARKER>')
+    except AssertionError as ex:
+        assertion.contains(str(ex), '<MARKER>')
+    else:
+        raise AssertionError('Failed to raise an AssertionError')
+
+    try:
+        assertion.contains(1, 1, exception=ValueError)
+    except AssertionError as ex:
+        assertion.isinstance(ex.__cause__, TypeError)
+    else:
+        raise AssertionError('Failed to raise an AssertionError')
+
     func = operator.__invert__
     assertion(False, post_process=func)
     assertion(True, invert=True, post_process=func)
@@ -238,14 +254,42 @@ def test_all() -> None:
     assertion.all(5, exception=TypeError)
 
 
+def test_isdisjoint() -> None:
+    """Test :meth:`AssertionManager.isdisjoint`."""
+    class _Test1():
+        isdisjoint = False
+
+    class _Test2():
+        def isdisjoint(self): return False
+
+    assertion.isdisjoint([1], [2])
+    assertion.isdisjoint({1}, [2])
+    assertion.isdisjoint({1}, {2})
+    assertion.isdisjoint([1], [1], invert=True)
+    assertion.isdisjoint(5, 6, 7, 8, exception=TypeError)
+    assertion.isdisjoint([[1]], [2], exception=TypeError)
+    assertion.isdisjoint(_Test1(), [2], exception=TypeError)
+    assertion.isdisjoint(_Test2(), [2], exception=TypeError)
+
+
+def test_round() -> None:
+    """Test :meth:`AssertionManager.round`."""
+    assertion.round(0.6)
+    assertion.round(60, ndigits=-2)
+    assertion.round(0.4, invert=True)
+    assertion.round(40, ndigits=-2, invert=True)
+    assertion.round(40, 1, 1, exception=TypeError)
+    assertion.round('bob', exception=TypeError)
+
+
 def test_get_exc_message() -> None:
     """Test :meth:`AssertionManager._get_exc_message`."""
     ex = TypeError("object of type 'int' has no len()")
-    func = len
+    func1 = len
     args = (1,)
 
-    str1 = assertion._get_exc_message(ex, func, *args, invert=False, output=None)  # type: ignore
-    str2 = assertion._get_exc_message(ex, func, *args, invert=True, output=None)  # type: ignore
+    str1 = assertion._get_exc_message(ex, func1, *args, invert=False, output=None)  # type: ignore
+    str2 = assertion._get_exc_message(ex, func1, *args, invert=True, output=None)  # type: ignore
     comma = ',' if version_info.minor < 7 else ''   # For Python 3.6 and later
     ref1 = f"""output = len(obj); assert output
 
@@ -262,3 +306,36 @@ obj: int = 1"""
 
     assertion.eq(str1, ref1)
     assertion.eq(str2, ref2)
+
+    func2: Callable = assertion._get_exc_message  # type: ignore
+    assertion.assert_(func2, ex, 1, exception=TypeError)
+
+    func3 = partial(len)
+    str3 = assertion._get_exc_message(ex, func3)  # type: ignore
+    assertion.contains(str3, 'functools.partial(<built-in function len>)')
+
+    class Func():
+        def __call__(self): pass
+
+    str4 = assertion._get_exc_message(ex, Func())  # type: ignore
+    assertion.contains(str4, 'output = func(); assert output')
+
+
+def test_str() -> None:
+    """Test :class:`_Str`."""
+    a = _Str('bob')
+    assertion.eq(repr(a), str('bob'))
+    assertion.eq(str(a), str('bob'))
+
+
+def test_none_exception() -> None:
+    """Test :class:`_NoneException`."""
+    assertion.assert_(_NoneException, exception=TypeError)
+    assertion.issubclass(_NoneException, Exception, invert=True)
+
+
+def test_property() -> None:
+    """Test :attr:`AssertionManager.repr` and :attr:`AssertionManager.maxstring`."""
+    manager_ = AssertionManager(None)
+    assertion.is_(manager_.repr, repr)
+    assertion.eq(manager_.maxstring, 80)

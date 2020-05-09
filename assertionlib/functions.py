@@ -1,8 +1,4 @@
-"""
-assertionlib.functions
-======================
-
-Various functions related to the :class:`.AssertionManager` class.
+"""Various functions related to the :class:`.AssertionManager` class.
 
 Index
 -----
@@ -70,6 +66,7 @@ __all__ = [
 ]
 
 T = TypeVar('T')
+FT = TypeVar('FT', bound=Callable[..., Any])
 
 PO = Parameter.POSITIONAL_ONLY
 POK = Parameter.POSITIONAL_OR_KEYWORD
@@ -93,7 +90,7 @@ DEFAULT_PRM: Tuple[Parameter, Parameter] = (
 
 
 def _to_positional(iterable: Iterable[Parameter]) -> List[Parameter]:
-    """Helper function for :func:`to_positional`; used in creating the new :class:`~inspect.Parameter` list."""  # noqa
+    """Helper function for :func:`to_positional`; used in creating the new :class:`~inspect.Parameter` list."""  # noqa: E501
     ret = []
     for prm in iterable:
         if prm.kind is not POK:
@@ -105,7 +102,7 @@ def _to_positional(iterable: Iterable[Parameter]) -> List[Parameter]:
     return ret
 
 
-def to_positional(func: Callable[..., T]) -> Callable[..., T]:
+def to_positional(func: FT) -> FT:
     r"""Decorate a function's :attr:`__signature__` such that all positional-or-keyword arguments are changed to either positional- or keyword-only.
 
     Example
@@ -126,7 +123,7 @@ def to_positional(func: Callable[..., T]) -> Callable[..., T]:
         (a: int, b: int = 0) -> int
         (a: int, /, *, b: int = 0) -> int
 
-    """  # noqa
+    """  # noqa: E501
     sgn = signature(func)
     prm_dict = sgn.parameters
 
@@ -137,9 +134,9 @@ def to_positional(func: Callable[..., T]) -> Callable[..., T]:
     return func
 
 
-def set_docstring(docstring: str) -> Callable[[Callable[..., T]], Callable[..., T]]:
+def set_docstring(docstring: Optional[str]) -> Callable[[FT], FT]:
     """A decorator for assigning docstrings."""
-    def wrapper(func: Callable[..., T]) -> Callable[..., T]:
+    def wrapper(func: FT) -> FT:
         func.__doc__ = docstring
         return func
     return wrapper
@@ -194,7 +191,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
 
 
 def create_assertion_func(func: Callable[..., Any]) -> Callable[..., None]:
-    __tracebackhide__ = True
+    """Construct an assertion function from **func**."""
 
     def wrapper(self, *args: Any,
                 invert: bool = False,
@@ -218,9 +215,11 @@ def create_assertion_func(func: Callable[..., Any]) -> Callable[..., None]:
     except ValueError:
         prm_list = list(DEFAULT_PRM)
     else:
-        if prm_list[-1].kind is not VK:
+        if not prm_list or prm_list[-1].kind is not VK:
             prm_list.append(Parameter('kwargs', kind=VK, annotation=Any))
     finally:
+        if prm_list and prm_list[0].name == 'self':
+            prm_list[0] = Parameter('obj', kind=PO, annotation=prm_list[0].annotation)
         prm_list.insert(0, Parameter('self', kind=PO))
 
     wrapper.__name__ = wrapper.__qualname__ = func.__name__
@@ -235,7 +234,6 @@ BASE_DOCSTRING: str = r"""Perform the following assertion: :code:`assert {name}{
 Parameters
 ----------
 {parameters}
-
 Keyword Arguments
 -----------------
 invert : :class:`bool`
@@ -276,27 +274,32 @@ def create_assertion_doc(func: Callable) -> str:
 
         >>> docstring: str = create_assertion_doc(isinstance)
         >>> print(docstring)
-        Perform the following assertion: :code:`assert isinstance(*args, **kwargs)`.
+        Perform the following assertion: :code:`assert isinstance(obj, class_or_tuple)`.
         <BLANKLINE>
         Parameters
         ----------
+        obj
+            The positional-only argument ``obj``  of :func:`isinstance()<python:isinstance>`.
+        <BLANKLINE>
+        class_or_tuple
+            The positional-only argument ``class_or_tuple``  of :func:`isinstance()<python:isinstance>`.
+        <BLANKLINE>
+        <BLANKLINE>
+        Keyword Arguments
+        -----------------
         invert : :class:`bool`
-            Invert the output of the assertion: :code:`assert not isinstance(*args, **kwargs)`.
-            This value should only be supplied as keyword argument.
+            If :data:`True`, invert the output of the assertion:
+            :code:`assert not isinstance(obj, class_or_tuple)`.
         <BLANKLINE>
         exception : :class:`type` [:exc:`Exception`], optional
             Assert that **exception** is raised during/before the assertion operation.
-            This value should only be supplied as keyword argument.
         <BLANKLINE>
-        post_process : :class:`~collections.abc.Callable`, optional
+        post_process : :data:`Callable[[Any], bool]<typing.Callable>`, optional
             Apply post-processing to the to-be asserted data before asserting aforementioned data.
-            Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+            Example values would be the likes of :func:`any()<python:any>` and :func:`all()<python:all>`.
         <BLANKLINE>
         message : :class:`str`, optional
             A custom error message to-be passed to the ``assert`` statement.
-        <BLANKLINE>
-        \*args/\**kwargs : :data:`~typing.Any`
-            Parameters for catching excess variable positional and keyword arguments.
         <BLANKLINE>
         <BLANKLINE>
         :rtype: :data:`None`
@@ -311,6 +314,7 @@ def create_assertion_doc(func: Callable) -> str:
             or ...`` etc.
         <BLANKLINE>
 
+
     Parameters
     ----------
     func : :class:`~collections.abc.Callable`
@@ -321,7 +325,7 @@ def create_assertion_doc(func: Callable) -> str:
     :class:`str`
         A new docstring constructed from **funcs'** docstring.
 
-    """
+    """  # noqa: E501
     try:
         __sgn = signature(func)
         sgn = Signature(_to_positional(__sgn.parameters.values()), return_annotation=None)
@@ -329,7 +333,8 @@ def create_assertion_doc(func: Callable) -> str:
         sgn = Signature(parameters=DEFAULT_PRM, return_annotation=None)
         sgn_str = '(*args, **kwargs)'
     else:
-        sgn_str = '(' + ', '.join((k if v.default is _empty else f'{k}={k}') for k, v in sgn.parameters.items()) + ')'
+        kv = sgn.parameters.items()
+        sgn_str = '(' + ', '.join((k if v.default is _empty else f'{k}={k}') for k, v in kv) + ')'
 
     name = getattr(func, '__qualname__', func.__name__)
     domain = get_sphinx_domain(func)
@@ -355,10 +360,7 @@ MODULE_DICT: Mapping[str, str] = MappingProxyType({
 
 def _is_builtin_func(func: Callable) -> bool:
     """Check if **func** is a builtin function."""
-    try:
-        return isbuiltin(func) and '.' not in getattr(func, '__qualname__', '')
-    except AttributeError:
-        return False
+    return isbuiltin(func) and '.' not in getattr(func, '__qualname__', '')
 
 
 def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE_DICT) -> str:
@@ -511,12 +513,12 @@ Examples
     UserWarning: Exception('Error'{COMMA}) evaluated to True; skipping call to func2(...)
 
 """)  # noqa: E501
-def skip_if(condition: Any) -> Callable[[Callable[..., T]], Union[Callable[..., T], NoneFunc]]:
+def skip_if(condition: Any) -> Callable[[FT], Union[FT, NoneFunc]]:
     """Placeholder."""
     def skip() -> None:
         return None
 
-    def decorator(func: Callable[..., T]) -> Union[Callable[..., T], NoneFunc]:
+    def decorator(func: FT) -> Union[FT, NoneFunc]:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Optional[T]:
             if not condition:

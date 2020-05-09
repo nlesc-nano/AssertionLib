@@ -51,8 +51,8 @@ def test_callables() -> None:
 
     ref1 = "<built-in bound method 'list.count(value, /)'>"
     ref1_backup = "<built-in bound method 'list.count(...)'>"
-    ref2 = "<method 'list.count(self, value, /)'>"
-    ref2_backup = "<method 'list.count(...)'>"
+    ref2 = "<method descriptor 'list.count(self, value, /)'>"
+    ref2_backup = "<method descriptor 'list.count(...)'>"
     ref3 = "<built-in function 'hasattr(obj, name, /)'>"
     ref4 = "<class 'list(iterable=(), /)'>"
     ref4_backup = "<class 'list(...)'>"

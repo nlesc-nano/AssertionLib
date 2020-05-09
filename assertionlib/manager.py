@@ -1,8 +1,4 @@
-"""
-assertionlib.manager
-====================
-
-A module containing the actual :class:`AssertionManager` class.
+"""A module containing the actual :class:`AssertionManager` class.
 
 Index
 -----
@@ -52,6 +48,7 @@ Assertions based on the builtin :mod:`operator` module.
     AssertionManager.sub
     AssertionManager.truediv
     AssertionManager.truth
+    AssertionManager.length_hint
 
 Assertions based on the builtin :mod:`os.path` module.
 
@@ -88,7 +85,7 @@ Assertions based on the builtin :mod:`builtins` module.
     AssertionManager.any
     AssertionManager.all
     AssertionManager.isdisjoint
-
+    AssertionManager.round
 
 Miscellaneous assertions.
 
@@ -145,6 +142,7 @@ Assertions based on the builtin :mod:`operator` module
 .. automethod:: AssertionManager.sub
 .. automethod:: AssertionManager.truediv
 .. automethod:: AssertionManager.truth
+.. automethod:: AssertionManager.length_hint
 
 Assertions based on the builtin :mod:`os.path` module
 -----------------------------------------------------
@@ -172,6 +170,7 @@ Assertions based on the builtin :mod:`builtins` module
 .. automethod:: AssertionManager.any
 .. automethod:: AssertionManager.all
 .. automethod:: AssertionManager.isdisjoint
+.. automethod:: AssertionManager.round
 
 Miscellaneous assertions
 ------------------------
@@ -190,6 +189,7 @@ import reprlib
 import builtins
 import textwrap
 import operator
+import functools
 from types import MappingProxyType
 from string import ascii_lowercase
 from inspect import Parameter
@@ -409,8 +409,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
                                 f"observed {self.repr(exception)} "
                                 f"of type {exception.__class__.__name__!r}")
             elif exception is AssertionError:
-                raise ValueError("{exception.__name__!r} is not allowed as value "
-                                 "for the {'exception'!r} parameter")
+                raise ValueError(f"{exception.__name__!r} is not allowed as value "
+                                 f"for the {'exception'!r} parameter")
             exc_type = exception
 
         output: Any = None
@@ -573,6 +573,8 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
     \\*args : :data:`~typing.Any`
         Positional arguments supplied to **func**.
 
+    Keyword Arguments
+    -----------------
     invert : :class:`bool`
         If :data:`True`, invert the output of the assertion: :code:`not func(a, b, **kwargs)`.
 
@@ -601,16 +603,16 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         # Construct a string-reprensentation of the to-be assert function
         try:
             name: str = getattr(func, '__qualname__', func.__name__)
-        except AttributeError as _ex:
+        except AttributeError:
             if not callable(func):
                 raise TypeError(f"{'func'!r} expected a callable object; observed type: "
                                 f"{func.__class__.__name__!r}")
 
-            try:  # func could potentially be a functools.partial object
-                _func = func.func  # type: ignore
-                name = getattr(_func, '__qualname__', _func.__name__)
-            except Exception:
-                raise _ex
+            # func could potentially be a functools.partial object
+            if isinstance(func, functools.partial):
+                name = repr(func)
+            else:
+                name = func.__class__.__name__.lower()
 
         # Construct a signature of the to-be asserted function
         try:
