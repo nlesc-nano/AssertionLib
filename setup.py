@@ -51,6 +51,8 @@ setup(
         'assertion',
         'assertions',
         'assertion-library',
+        'testing',
+        'unit-testing',
         'python-3',
         'python-3-6',
         'python-3-7',
