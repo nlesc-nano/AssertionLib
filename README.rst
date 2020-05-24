@@ -1,24 +1,28 @@
-.. image:: https://travis-ci.org/nlesc-nano/AssertionLib.svg?branch=master
-   :target: https://travis-ci.org/nlesc-nano/AssertionLib
 .. image:: https://readthedocs.org/projects/assertionlib/badge/?version=latest
-   :target: https://assertionlib.readthedocs.io/en/latest/
+    :target: https://assertionlib.readthedocs.io/en/latest/
 .. image:: https://badge.fury.io/py/AssertionLib.svg
-   :target: https://badge.fury.io/py/AssertionLib
+    :target: https://badge.fury.io/py/AssertionLib
+.. image:: https://travis-ci.org/nlesc-nano/AssertionLib.svg?branch=master
+    :target: https://travis-ci.org/nlesc-nano/AssertionLib
 .. image:: https://github.com/nlesc-nano/AssertionLib/workflows/Python%20package/badge.svg
-   :target: https://github.com/nlesc-nano/AssertionLib/actions
+    :target: https://github.com/nlesc-nano/AssertionLib/actions
+.. image:: https://codecov.io/gh/nlesc-nano/AssertionLib/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/nlesc-nano/AssertionLib
+.. image:: https://zenodo.org/badge/214183943.svg
+    :target: https://zenodo.org/badge/latestdoi/214183943
 
 |
 
 .. image:: https://img.shields.io/badge/python-3.6-blue.svg
-   :target: https://docs.python.org/3.6/
+    :target: https://docs.python.org/3.6/
 .. image:: https://img.shields.io/badge/python-3.7-blue.svg
-   :target: https://docs.python.org/3.7/
+    :target: https://docs.python.org/3.7/
 .. image:: https://img.shields.io/badge/python-3.8-blue.svg
-   :target: https://docs.python.org/3.8/
+    :target: https://docs.python.org/3.8/
 
 
 ##################
-AssertionLib 2.3.1
+AssertionLib 2.3.2
 ##################
 
 A package for performing assertions and providing informative exception messages.
