@@ -19,6 +19,11 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 * Added codecov and zenodo badges.
 
 
+2.3.2
+*****
+* Added codecov and zenodo badges.
+
+
 2.3.1
 *****
 * Added support for the ``python stup.py test`` command.
