@@ -59,12 +59,17 @@ setup(
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Libraries',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8'
+        'Programming Language :: Python :: 3.8',
+        'Topic :: Software Development :: Libraries',
+        'Topic :: Software Development :: Testing',
+        'Typing :: Typed'
     ],
     python_requires='>=3.6',
     setup_requires=['pytest-runner'] + docs_require,

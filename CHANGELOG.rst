@@ -12,6 +12,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 * Added support for the ``python stup.py build_sphinx`` command.
 * Added a `GitHub Actions <https://github.com/features/actions>`_ workflow for automatic PyPi publishing.
 * Enabled `codecov <https://codecov.io/>`_ for the GitHub Action tests.
+* Updated the classifiers in ``setup.py``.
 
 
 2.3.0
