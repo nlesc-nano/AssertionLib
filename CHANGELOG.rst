@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+2.3.1
+*****
+* Added support for the ``python stup.py test`` command.
+* Added support for the ``python stup.py build_sphinx`` command.
+* Added a `GitHub Actions <https://github.com/features/actions>`_ workflow for automatic PyPi publishing.
+* Enabled `codecov <https://codecov.io/>`_ for the GitHub Action tests.
+
+
 2.3.0
 *****
 * Added the ``AssertionManager.xor()``, ``AssertionManager.isdisjoint()`` and ``AssertionManager.length_hint()`` methods.

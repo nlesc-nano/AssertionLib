@@ -15,6 +15,23 @@ with open(os.path.join(here, 'assertionlib', '__version__.py')) as f:
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
+# Requirements for building the documentation
+docs_require = [
+    'sphinx>=2.1',
+    'sphinx_rtd_theme'
+]
+
+# Requirements for running tests
+tests_require = [
+    'pytest>=4.1.0',
+    'pytest-cov',
+    'pytest-flake8>=1.0.5',
+    'pytest-pydocstyle>=2.1',
+    'numpy',
+    'typing-extensions>=3.7.4; python_version<"3.8"',
+    'pytest-mypy>=0.6.2'
+]
+
 setup(
     name='AssertionLib',
     version=version['__version__'],
@@ -50,26 +67,7 @@ setup(
         'Programming Language :: Python :: 3.8'
     ],
     python_requires='>=3.6',
-    test_suite='tests',
-    tests_require=[
-        'pytest>=4.1.0',
-        'pytest-cov',
-        'pytest-flake8>=1.0.4',
-        'pytest-pydocstyle>=2.1',
-        'numpy',
-        'typing-extensions>=3.7.4; python_version<"3.8"',
-        'pytest-mypy>=0.6.2'
-    ],
-    extras_require={
-        'doc': ['sphinx>=2.1', 'sphinx_rtd_theme'],
-        'test': [
-            'pytest>=4.1.0',
-            'pytest-cov',
-            'pytest-flake8>=1.0.5',
-            'pytest-pydocstyle>=2.1',
-            'numpy',
-            'typing-extensions>=3.7.4; python_version<"3.8"',
-            'pytest-mypy>=0.6.2'
-        ],
-    }
+    setup_requires=['pytest-runner'] + docs_require,
+    tests_require=tests_require,
+    extras_require={'doc': docs_require, 'test': tests_require}
 )

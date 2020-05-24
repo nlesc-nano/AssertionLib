@@ -8,12 +8,11 @@ on:
         branches:
             - master
     pull_request:
-        branches:
-            - master
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        name: Python ${{ matrix.python-version }} on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
         strategy:
             matrix:
                 os: [ubuntu-latest, macos-latest, windows-latest]
@@ -28,8 +27,23 @@ jobs:
                   os: ${{ matrix.os }}
                   python-version: ${{ matrix.python-version }}
 
+            - name: Python info
+              run: |
+                which python
+                python --version
+
             - name: Install dependencies
-              run: pip install -e .[test]; pip install git+https://github.com/numpy/numpy-stubs@master
+              run: |
+                pip install -e .[test]
+                pip install git+https://github.com/numpy/numpy-stubs@master
 
             - name: Test with pytest
-              run: pytest assertionlib tests
+              run: |
+                pytest assertionlib
+                pytest tests
+
+            - name: Run codecov
+              uses: codecov/codecov-action@v1
+              with:
+                  file: ./coverage.xml
+                  name: codecov-umbrella
