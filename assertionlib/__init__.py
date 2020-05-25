@@ -7,7 +7,7 @@ from .manager import assertion, AssertionManager
 from .dataclass import AbstractDataClass
 from .functions import load_readme
 
-__doc__ = load_readme()
+__doc__ = load_readme(encoding='utf-8')
 del load_readme
 
 __author__ = "B. F. van Beek"

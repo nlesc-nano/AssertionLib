@@ -9,10 +9,11 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 # To update the package version number, edit assertionlib/__version__.py
 version: Dict[str, str] = {}
-with open(os.path.join(here, 'assertionlib', '__version__.py')) as f:
+version_path = os.path.join(here, 'assertionlib', '__version__.py')
+with open(version_path, encoding='utf-8') as f:
     exec(f.read(), version)
 
-with open('README.rst') as readme_file:
+with open('README.rst', encoding='utf-8') as readme_file:
     readme = readme_file.read()
 
 # Requirements for building the documentation
@@ -23,7 +24,7 @@ docs_require = [
 
 # Requirements for running tests
 tests_require = [
-    'pytest>=4.1.0',
+    'pytest>=5.4.0',
     'pytest-cov',
     'pytest-flake8>=1.0.5',
     'pytest-pydocstyle>=2.1',
