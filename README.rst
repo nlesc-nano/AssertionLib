@@ -2,8 +2,6 @@
     :target: https://assertionlib.readthedocs.io/en/latest/
 .. image:: https://badge.fury.io/py/AssertionLib.svg
     :target: https://badge.fury.io/py/AssertionLib
-.. image:: https://travis-ci.org/nlesc-nano/AssertionLib.svg?branch=master
-    :target: https://travis-ci.org/nlesc-nano/AssertionLib
 .. image:: https://github.com/nlesc-nano/AssertionLib/workflows/Python%20package/badge.svg
     :target: https://github.com/nlesc-nano/AssertionLib/actions
 .. image:: https://codecov.io/gh/nlesc-nano/AssertionLib/branch/master/graph/badge.svg
@@ -22,7 +20,7 @@
 
 
 ##################
-AssertionLib 2.3.2
+AssertionLib 2.3.3
 ##################
 
 A package for performing assertions and providing informative exception messages.
