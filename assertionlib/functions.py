@@ -257,7 +257,7 @@ message : :class:`str`, optional
 
 See also
 --------
-{domain}:
+{domain}
 {summary}
 """
 
@@ -308,7 +308,7 @@ def create_assertion_doc(func: Callable) -> str:
         <BLANKLINE>
         See also
         --------
-        :func:`isinstance()<python:isinstance>`:
+        :func:`isinstance()<python:isinstance>`
             Return whether an object is an instance of a class or of a subclass thereof.
         <BLANKLINE>
             A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
@@ -338,9 +338,12 @@ def create_assertion_doc(func: Callable) -> str:
         kv = sgn.parameters.items()
         sgn_str = '(' + ', '.join((k if v.default is _empty else f'{k}={k}') for k, v in kv) + ')'
 
+    indent = 4 * ' '
+
     name = getattr(func, '__qualname__', func.__name__)
     domain = get_sphinx_domain(func)
-    summary = textwrap.indent(func.__doc__ or 'No description.', 4 * ' ')
+    _summary = textwrap.dedent(indent + (func.__doc__ or 'No description.'))
+    summary = textwrap.indent(_summary, indent)
 
     parameters = ''
     for k, v in sgn.parameters.items():
