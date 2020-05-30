@@ -412,7 +412,11 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
         Raised if **func** is neither a class or a (builtin) function or method.
 
     """
-    name: str = getattr(func, '__qualname__', func.__name__)
+    try:
+        name: str = getattr(func, '__qualname__', func.__name__)  # type: ignore
+    except AttributeError as ex:
+        raise TypeError("'func' expects a callable with the '__name__' attribute; "
+                        f"observed type: {func.__class__.__name__!r}") from ex
 
     # Extract the __module__ from **func**
     try:
@@ -432,14 +436,11 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
         directive = 'class'
 
     # Return the domain as either :func:`...`, :meth:`...` or :class:`...`
-    try:
-        if module != 'builtins':
-            return f':{directive}:`~{module}.{name}`'
-        else:
-            parenthesis = '()' if directive in {'func', 'meth'} else ''
-            return f':{directive}:`{name}{parenthesis}<python:{name}>`'
-    except UnboundLocalError as ex:
-        raise TypeError(f"{name!r} is neither a (builtin) function, method nor class") from ex
+    if module != 'builtins':
+        return f':{directive}:`~{module}.{name}`'
+    else:
+        parenthesis = '()' if directive in {'func', 'meth'} else ''
+        return f':{directive}:`{name}{parenthesis}<python:{name}>`'
 
 
 #: An immutable mapping of to-be replaced substrings and their replacements.
@@ -449,7 +450,7 @@ README_MAPPING: Mapping[str, str] = MappingProxyType({
 })
 
 
-def load_readme(readme: Union[str, os.PathLike] = 'README.rst',
+def load_readme(readme: Union[str, bytes, int, os.PathLike],
                 replace: Mapping[str, str] = README_MAPPING,
                 **kwargs: Any) -> str:
     r"""Load and return the content of a readme file located in the same directory as this file.
@@ -461,11 +462,11 @@ def load_readme(readme: Union[str, os.PathLike] = 'README.rst',
     readme : :class:`str`
         The name of the readme file.
 
-    replace : :class:`dict` [:class:`str`, :class:`str`]
+    replace : :class:`~Collections.abc.Mapping` [:class:`str`, :class:`str`]
         A mapping of to-be replaced substrings contained within the readme file.
 
     \**kwargs : :data:`~typing.Any`
-        Optional keyword arguments for the :meth:`~io.TextIOBase.read` method.
+        Optional keyword arguments for :func:`open`.
 
     Returns
     -------
@@ -473,9 +474,8 @@ def load_readme(readme: Union[str, os.PathLike] = 'README.rst',
         The content of ``../README.rst``.
 
     """
-    readme_abs: str = os.path.join(os.path.dirname(__file__), readme)
-    with open(readme_abs, 'r') as f:
-        ret: str = f.read(**kwargs)
+    with open(readme, **kwargs) as f:
+        ret: str = f.read()
     for old, new in replace.items():
         ret = ret.replace(old, new)
     return ret
