@@ -76,7 +76,7 @@ setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        'Nano-Utils>=0.4.1`'
+        'Nano-Utils>=0.4.1'
     ],
     setup_requires=['pytest-runner'] + docs_require,
     tests_require=tests_require,
