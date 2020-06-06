@@ -24,26 +24,26 @@ jobs:
             - name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
               uses: actions/setup-python@v1
               with:
-                  os: ${{ matrix.os }}
-                  python-version: ${{ matrix.python-version }}
-
-            - name: Python info
-              run: |
-                which python
-                python --version
+                python-version: ${{ matrix.python-version }}
 
             - name: Install dependencies
               run: |
                 pip install -e .[test]
                 pip install git+https://github.com/numpy/numpy-stubs@master
 
-            - name: Test with pytest
+            - name: Python info
               run: |
-                pytest assertionlib
-                pytest tests
+                which python
+                python --version
+
+            - name: Installed packages
+              run: pip list
+
+            - name: Test with pytest
+              run: pytest
 
             - name: Run codecov
               uses: codecov/codecov-action@v1
               with:
-                  file: ./coverage.xml
-                  name: codecov-umbrella
+                file: ./coverage.xml
+                name: codecov-umbrella

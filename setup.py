@@ -75,6 +75,9 @@ setup(
         'Typing :: Typed'
     ],
     python_requires='>=3.6',
+    install_requires=[
+        'Nano-Utils>=0.4.1`'
+    ],
     setup_requires=['pytest-runner'] + docs_require,
     tests_require=tests_require,
     extras_require={'doc': docs_require, 'test': tests_require}

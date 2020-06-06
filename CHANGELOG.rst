@@ -5,6 +5,14 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+3.0.0
+*****
+* Added `Nano-Utils <https://github.com/nlesc-nano/Nano-Utils>`_ as a dependency;
+  moved a number of functions there.
+* Removed `requirements.txt` in favor of `.readthedocs.yml`.
+* Removed travis tests in favor of GitHub Actions.
+* Removed `CITATION.cff` in favor of Zenodo.
+
 
 2.3.2
 *****
