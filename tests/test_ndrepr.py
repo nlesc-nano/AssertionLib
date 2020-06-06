@@ -10,9 +10,9 @@ try:
 except ImportError as ex:
     NUMPY_EX = ex
 
+from nanoutils import ignore_if
 from assertionlib import assertion
 from assertionlib.ndrepr import aNDRepr, NDRepr
-from assertionlib.functions import skip_if
 
 
 def test_float() -> None:
@@ -73,7 +73,7 @@ def test_callables() -> None:
     assertion.eq(mod, ref6)
 
 
-@skip_if(NUMPY_EX)
+@ignore_if(NUMPY_EX)
 def test_signature() -> None:
     """Tests for :meth:`NDRepr.repr_Signature`."""
     sgn1 = inspect.signature(len)
@@ -88,7 +88,7 @@ def test_signature() -> None:
     assertion.eq(str2, ref2)
 
 
-@skip_if(NUMPY_EX)
+@ignore_if(NUMPY_EX)
 def test_ndarray() -> None:
     """Tests for :meth:`NDRepr.repr_ndarray`."""
     ar1 = np.ones((10, 10), dtype=float)

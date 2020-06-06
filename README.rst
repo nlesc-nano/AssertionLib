@@ -2,8 +2,6 @@
     :target: https://assertionlib.readthedocs.io/en/latest/
 .. image:: https://badge.fury.io/py/AssertionLib.svg
     :target: https://badge.fury.io/py/AssertionLib
-.. image:: https://travis-ci.org/nlesc-nano/AssertionLib.svg?branch=master
-    :target: https://travis-ci.org/nlesc-nano/AssertionLib
 .. image:: https://github.com/nlesc-nano/AssertionLib/workflows/Python%20package/badge.svg
     :target: https://github.com/nlesc-nano/AssertionLib/actions
 .. image:: https://codecov.io/gh/nlesc-nano/AssertionLib/branch/master/graph/badge.svg
@@ -22,32 +20,27 @@
 
 
 ##################
-AssertionLib 2.3.2
+AssertionLib 3.0.0
 ##################
-
 A package for performing assertions and providing informative exception messages.
 
 
 Installation
 ************
-
-AssertionLib has no external dependencies and can be installed as following:
-
 * PyPi: ``pip install AssertionLib``
 * GitHub: ``pip install git+https://github.com/nlesc-nano/AssertionLib``
 
 
 Usage
 *****
-
 A comprehensive overview of all available assertion methods is
 provided in the documentation_.
 A few examples of some basic assertion:
 
 .. code:: python
 
-    >>> from assertionlib import assertion
     >>> import numpy as np
+    >>> from assertionlib import assertion
 
     # Assert the output of specific callables
     >>> assertion.eq(5, 5)  # 5 == 5
@@ -65,7 +58,7 @@ A few examples of some basic assertion:
     # Apply post-processing before conducting the assertion
     >>> ar_large = np.ones(10)
     >>> ar_small = np.zeros(10)
-    >>> assertion.gt(ar_large, ar_small, post_process=all)  # all(ar_large > ar_small)
+    >>> assertion.gt(ar_large, ar_small, post_process=np.all)  # all(ar_large > ar_small)
 
     # Perform an assertion which will raise an AssertionError
     >>> assertion.eq(5, 6, message='Fancy custom error message')  # 5 == 6
@@ -126,6 +119,11 @@ during/before the assertion process:
       ...
     TypeError: object of type 'int' has no len()
 
+
+.. code:: python
+
+    >>> from assertionlib import assertion
+
     >>> assertion.len(5, exception=TypeError)  # i.e. len(5) should raise a TypeError
     >>> assertion.len([5], exception=TypeError)
     Traceback (most recent call last):
@@ -143,10 +141,9 @@ method and adding it to an instance with ``AssertionManager.add_to_instance()``:
 
 .. code:: python
 
-    >>> from typing import Any
     >>> from assertionlib import assertion
 
-    >>> def my_fancy_func(a: Any) -> bool:
+    >>> def my_fancy_func(a: object) -> bool:
     ...     return False
 
     # Approach #1, supply to-be asserted callable to assertion.assert_()
@@ -159,6 +156,11 @@ method and adding it to an instance with ``AssertionManager.add_to_instance()``:
 
     output: bool = False
     a: int = 5
+
+
+.. code:: python
+
+    >>> from assertionlib import assertion
 
     # Approach #2, permanantly add a new bound method using assertion.add_to_instance()
     >>> assertion.add_to_instance(my_fancy_func)

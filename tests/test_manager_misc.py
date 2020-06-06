@@ -5,9 +5,9 @@ from sys import version_info
 from typing import Optional, cast, Callable
 from functools import partial
 
+from nanoutils import ignore_if
 from assertionlib import assertion, AssertionManager
 from assertionlib.manager import _Str, _NoneException  # type: ignore
-from assertionlib.functions import skip_if
 
 try:
     import numpy as np  # type: ignore
@@ -200,7 +200,7 @@ def test_call() -> None:
     assertion.__call__(len([]), invert=True)
 
 
-@skip_if(NUMPY_EX)
+@ignore_if(NUMPY_EX)
 def test_shape_eq() -> None:
     """Test :meth:`AssertionManager.shape_eq`."""
     ar1: np.ndarray = np.random.rand(10, 10)

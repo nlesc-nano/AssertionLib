@@ -7,7 +7,6 @@ Index
     get_sphinx_domain
     create_assertion_doc
     bind_callable
-    skip_if
     to_positional
 
 API
@@ -15,7 +14,6 @@ API
 .. autofunction:: get_sphinx_domain
 .. autofunction:: create_assertion_doc
 .. autofunction:: bind_callable
-.. autofunction:: skip_if
 .. autofunction:: to_positional
 
 """
@@ -23,8 +21,6 @@ API
 import os
 import sys
 import textwrap
-import warnings
-import functools
 from types import MappingProxyType, MethodType
 from typing import (
     Callable,
@@ -37,7 +33,6 @@ from typing import (
     Iterable,
     List,
     Tuple,
-    cast,
     TYPE_CHECKING
 )
 from inspect import (
@@ -50,6 +45,8 @@ from inspect import (
     ismethoddescriptor,
     isclass
 )
+
+from nanoutils import set_docstring
 
 if sys.version_info < (3, 7):
     COMMA = ','
@@ -64,7 +61,7 @@ else:
     IntEnum = 'enum.IntEnum'
 
 __all__ = [
-    'set_docstring', 'get_sphinx_domain', 'create_assertion_doc', 'bind_callable', 'skip_if'
+    'get_sphinx_domain', 'create_assertion_doc', 'bind_callable', 'to_positional'
 ]
 
 T = TypeVar('T')
@@ -89,14 +86,6 @@ DEFAULT_PRM: Tuple[Parameter, Parameter] = (
     Parameter('args', Parameter.VAR_POSITIONAL, annotation=Any),
     Parameter('kwargs', Parameter.VAR_KEYWORD, annotation=Any)
 )
-
-
-def set_docstring(docstring: Optional[str]) -> Callable[[FT], FT]:
-    """A decorator for assigning docstrings."""
-    def wrapper(func: FT) -> FT:
-        func.__doc__ = docstring
-        return func
-    return wrapper
 
 
 def _to_positional(iterable: Iterable[Parameter]) -> List[Parameter]:
@@ -257,7 +246,7 @@ message : :class:`str`, optional
 
 See also
 --------
-{domain}:
+{domain}
 {summary}
 """
 
@@ -281,10 +270,10 @@ def create_assertion_doc(func: Callable) -> str:
         Parameters
         ----------
         obj
-            The positional-only argument ``obj``  of :func:`isinstance()<python:isinstance>`.
+            The positional-only argument ``obj`` of :func:`isinstance()<python:isinstance>`.
         <BLANKLINE>
         class_or_tuple
-            The positional-only argument ``class_or_tuple``  of :func:`isinstance()<python:isinstance>`.
+            The positional-only argument ``class_or_tuple`` of :func:`isinstance()<python:isinstance>`.
         <BLANKLINE>
         <BLANKLINE>
         Keyword Arguments
@@ -308,8 +297,8 @@ def create_assertion_doc(func: Callable) -> str:
         <BLANKLINE>
         See also
         --------
-        :func:`isinstance()<python:isinstance>`:
-            Return whether an object is an instance of a class or of a subclass thereof.
+        :func:`isinstance()<python:isinstance>`
+                Return whether an object is an instance of a class or of a subclass thereof.
         <BLANKLINE>
             A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
             check against. This is equivalent to ``isinstance(x, A) or isinstance(x, B)
@@ -338,14 +327,17 @@ def create_assertion_doc(func: Callable) -> str:
         kv = sgn.parameters.items()
         sgn_str = '(' + ', '.join((k if v.default is _empty else f'{k}={k}') for k, v in kv) + ')'
 
+    indent = 4 * ' '
+
     name = getattr(func, '__qualname__', func.__name__)
     domain = get_sphinx_domain(func)
-    summary = textwrap.indent(func.__doc__ or 'No description.', 4 * ' ')
+    _summary = textwrap.dedent(indent + (func.__doc__ or 'No description.'))
+    summary = textwrap.indent(_summary, indent)
 
     parameters = ''
     for k, v in sgn.parameters.items():
         prm_type = PARAM_NAME_MAPPING[v.kind]
-        parameters += f'{k}\n    The {prm_type} argument ``{k}``  of {domain}.\n\n'
+        parameters += f'{k}\n    The {prm_type} argument ``{k}`` of {domain}.\n\n'
 
     return BASE_DOCSTRING.format(
         parameters=parameters, name=name, signature=sgn_str, domain=domain, summary=summary
@@ -412,7 +404,11 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
         Raised if **func** is neither a class or a (builtin) function or method.
 
     """
-    name: str = getattr(func, '__qualname__', func.__name__)
+    try:
+        name: str = getattr(func, '__qualname__', func.__name__)  # type: ignore
+    except AttributeError as ex:
+        raise TypeError("'func' expects a callable with the '__name__' attribute; "
+                        f"observed type: {func.__class__.__name__!r}") from ex
 
     # Extract the __module__ from **func**
     try:
@@ -432,14 +428,11 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
         directive = 'class'
 
     # Return the domain as either :func:`...`, :meth:`...` or :class:`...`
-    try:
-        if module != 'builtins':
-            return f':{directive}:`~{module}.{name}`'
-        else:
-            parenthesis = '()' if directive in {'func', 'meth'} else ''
-            return f':{directive}:`{name}{parenthesis}<python:{name}>`'
-    except UnboundLocalError as ex:
-        raise TypeError(f"{name!r} is neither a (builtin) function, method nor class") from ex
+    if module != 'builtins':
+        return f':{directive}:`~{module}.{name}`'
+    else:
+        parenthesis = '()' if directive in {'func', 'meth'} else ''
+        return f':{directive}:`{name}{parenthesis}<python:{name}>`'
 
 
 #: An immutable mapping of to-be replaced substrings and their replacements.
@@ -449,7 +442,7 @@ README_MAPPING: Mapping[str, str] = MappingProxyType({
 })
 
 
-def load_readme(readme: Union[str, os.PathLike] = 'README.rst',
+def load_readme(readme: Union[str, bytes, int, os.PathLike],
                 replace: Mapping[str, str] = README_MAPPING,
                 **kwargs: Any) -> str:
     r"""Load and return the content of a readme file located in the same directory as this file.
@@ -461,11 +454,11 @@ def load_readme(readme: Union[str, os.PathLike] = 'README.rst',
     readme : :class:`str`
         The name of the readme file.
 
-    replace : :class:`dict` [:class:`str`, :class:`str`]
+    replace : :class:`~Collections.abc.Mapping` [:class:`str`, :class:`str`]
         A mapping of to-be replaced substrings contained within the readme file.
 
     \**kwargs : :data:`~typing.Any`
-        Optional keyword arguments for the :meth:`~io.TextIOBase.read` method.
+        Optional keyword arguments for :func:`open`.
 
     Returns
     -------
@@ -473,64 +466,8 @@ def load_readme(readme: Union[str, os.PathLike] = 'README.rst',
         The content of ``../README.rst``.
 
     """
-    readme_abs: str = os.path.join(os.path.dirname(__file__), readme)
-    with open(readme_abs, 'r') as f:
-        ret: str = f.read(**kwargs)
+    with open(readme, **kwargs) as f:
+        ret: str = f.read()
     for old, new in replace.items():
         ret = ret.replace(old, new)
     return ret
-
-
-NoneFunc = Callable[..., None]
-
-
-@set_docstring(f"""A decorator which causes function calls to be ignored if :code:`bool(condition) is True`.
-
-A :exc:`UserWarning` is issued if **condition** evaluates to :data:`True`.
-
-Examples
---------
-.. code:: python
-
-    >>> import warnings
-    >>> from assertionlib.functions import skip_if
-
-    >>> condition = Exception("Error")
-
-    >>> def func1() -> None:
-    ...     print(True)
-
-    >>> @skip_if(condition)
-    ... def func2() -> None:
-    ...     print(True)
-
-    >>> func1()
-    True
-
-    >>> with warnings.catch_warnings():  # Convert the warning into a raised exception
-    ...     warnings.simplefilter("error", UserWarning)
-    ...     func2()
-    Traceback (most recent call last):
-      ...
-    UserWarning: Exception('Error'{COMMA}) evaluated to True; skipping call to func2(...)
-
-""")  # noqa: E501
-def skip_if(condition: Any) -> Callable[[FT], Union[FT, NoneFunc]]:
-    """Placeholder."""
-    def skip() -> None:
-        return None
-
-    def decorator(func: FT) -> Union[FT, NoneFunc]:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Optional[T]:
-            if not condition:
-                return cast(T, func(*args, **kwargs))
-
-            exc = UserWarning(f"{condition!r:.70} evaluated to True; skipping call to {func.__name__}(...)")  # noqa: E501
-            if isinstance(condition, BaseException):
-                exc.__cause__ = condition
-
-            warnings.warn(exc, stacklevel=2)
-            return cast(None, skip())
-        return wrapper
-    return decorator

@@ -1,9 +1,9 @@
-"""Tests for the :mod:`AbstractDataClass<assertionlib.dataclass.AbstractDataClass>` class."""
+"""Tests for the :class:`~assertionlib.dataclass.AbstractDataClass>` class."""
 
+import copy
 import typing
 
-from assertionlib import assertion
-from assertionlib.dataclass import AbstractDataClass
+from assertionlib import assertion, AbstractDataClass
 
 
 def test_hashable() -> None:
@@ -48,6 +48,10 @@ def test_repr() -> None:
             self.b = b
             self.c = c
 
+    class TestClass2(AbstractDataClass):
+        def __init__(self):
+            super().__init__()
+
     self = TestClass(1, 'bob', [1, 2, 3, 4, 5])
     ref1 = """TestClass(
     a = 1,
@@ -64,6 +68,8 @@ def test_repr() -> None:
     d = {object.__repr__(self).rstrip('>').rsplit(maxsplit=1)[1]}
 )"""
     assertion.str_eq(self, ref2)
+
+    assertion.eq(repr(TestClass2()), 'TestClass2()')
 
 
 def test_eq() -> None:
@@ -138,6 +144,8 @@ def test_hash() -> None:
         ref4 ^= hash((k, id(v)))
     assertion.eq(hash(obj4), ref4)
 
+    assertion.eq(obj4._hash_fallback(), id(obj4))
+
 
 def test_copy() -> None:
     """Tests for :meth:`AbstractDataClass.copy`."""
@@ -151,18 +159,26 @@ def test_copy() -> None:
     obj1 = TestClass({1: 1}, {1, 2, 3}, [1, 2, 3, 4, 5])
     obj2 = obj1.copy(deep=False)
     obj3 = obj1.copy(deep=True)
+    obj4 = copy.copy(obj1)
+    obj5 = copy.deepcopy(obj1)
 
     assertion.eq(obj1, obj2)
     assertion.eq(obj1, obj3)
+    assertion.eq(obj1, obj4)
+    assertion.eq(obj1, obj5)
 
     attr_tup = ('a', 'b', 'c')
     for k in attr_tup:
         v1 = getattr(obj1, k)
         v2 = getattr(obj2, k)
         v3 = getattr(obj3, k)
+        v4 = getattr(obj4, k)
+        v5 = getattr(obj5, k)
 
         assertion.is_(v1, v2)
         assertion.is_not(v1, v3)
+        assertion.is_(v1, v4)
+        assertion.is_not(v1, v5)
 
 
 def test_as_dict() -> None:

@@ -310,10 +310,10 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         which in turn should produce a string representation of passed objects.
         If ``None``, default the builtin :func:`repr` function.
 
-    _repr_fallback : :class:`Callable[[Any], str]<collections.abc.Callable>`
+    repr_fallback : :class:`Callable[[Any], str]<collections.abc.Callable>`
         A fallback value in case :attr:`AssertionManager.repr_instance` is ``None``.
 
-    _maxstring_fallback : :class:`int`
+    maxstring_fallback : :class:`int`
         A fallback value in case :attr:`AssertionManager.repr_instance` is ``None``.
 
     """
