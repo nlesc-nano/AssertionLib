@@ -152,8 +152,3 @@ class _SupportsEq(Protocol[T_contra, RT_co]):
 class _SupportsNe(Protocol[T_contra, RT_co]):
     @abstractmethod
     def __ne__(self, x: T_contra) -> RT_co: ...  # type: ignore
-
-@type_check_only
-class _SupportsBool(Protocol):
-    @abstractmethod
-    def __bool__(self) -> bool: ...
