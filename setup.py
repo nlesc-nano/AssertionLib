@@ -18,7 +18,7 @@ with open('README.rst', encoding='utf-8') as readme_file:
 
 # Requirements for building the documentation
 docs_require = [
-    'sphinx>=2.1,<3.1',
+    'sphinx>=2.4,<3.1',
     'sphinx_rtd_theme'
 ]
 
@@ -87,5 +87,9 @@ setup(
     ],
     setup_requires=['pytest-runner'] + docs_require,
     tests_require=tests_require,
-    extras_require={'doc': docs_require, 'test': tests_require}
+    extras_require={
+        'doc': docs_require,
+        'test': tests_require,
+        'build': build_require
+    }
 )
