@@ -2,7 +2,7 @@
 
 import operator
 from sys import version_info
-from typing import Optional, cast, Callable
+from typing import Optional, Callable
 from functools import partial
 
 from nanoutils import ignore_if
@@ -10,7 +10,7 @@ from assertionlib import assertion, AssertionManager
 from assertionlib.manager import _Str, _NoneException  # type: ignore
 
 try:
-    import numpy as np  # type: ignore
+    import numpy as np
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
     NUMPY_EX = ex
@@ -85,7 +85,7 @@ def test_as_dict() -> None:
     """Test :meth:`AssertionManager.as_dict` and :meth:`AssertionManager.from_dict`."""
     cls = type(assertion)
     dct = assertion.as_dict()
-    new = cast(AssertionManager, cls.from_dict(dct))
+    new = cls.from_dict(dct)
     assertion.eq(vars(assertion.repr_instance), vars(new.repr_instance))
 
 
@@ -270,6 +270,42 @@ def test_isdisjoint() -> None:
     assertion.isdisjoint([[1]], [2], exception=TypeError)
     assertion.isdisjoint(_Test1(), [2], exception=TypeError)
     assertion.isdisjoint(_Test2(), [2], exception=TypeError)
+
+
+def test_issuperset() -> None:
+    """Test :meth:`AssertionManager.issuperset`."""
+    class _Test1():
+        issuperset = False
+
+    class _Test2():
+        def issuperset(self): return False
+
+    assertion.issuperset([1, 2], [2])
+    assertion.issuperset({1, 2}, [2])
+    assertion.issuperset({1, 2}, {2})
+    assertion.issuperset([1, 2], [3], invert=True)
+    assertion.issuperset(5, 6, 7, 8, exception=TypeError)
+    assertion.issuperset([[1]], [2], exception=TypeError)
+    assertion.issuperset(_Test1(), [2], exception=TypeError)
+    assertion.issuperset(_Test2(), [2], exception=TypeError)
+
+
+def test_issubset() -> None:
+    """Test :meth:`AssertionManager.issubset`."""
+    class _Test1():
+        issubset = False
+
+    class _Test2():
+        def issubset(self): return False
+
+    assertion.issubset([1], [1, 2])
+    assertion.issubset({1}, [1, 2])
+    assertion.issubset({1}, {1, 2})
+    assertion.issubset([1], [2, 3], invert=True)
+    assertion.issubset(5, 6, 7, 8, exception=TypeError)
+    assertion.issubset([[1]], [2], exception=TypeError)
+    assertion.issubset(_Test1(), [2], exception=TypeError)
+    assertion.issubset(_Test2(), [2], exception=TypeError)
 
 
 def test_round() -> None:

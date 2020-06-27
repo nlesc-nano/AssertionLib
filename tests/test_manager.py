@@ -3,7 +3,7 @@
 from typing import Optional
 
 try:
-    import numpy as np  # type: ignore
+    import numpy as np
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
     NUMPY_EX = ex

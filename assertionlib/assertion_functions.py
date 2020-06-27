@@ -8,6 +8,8 @@ Index
     str_eq
     shape_eq
     isdisjoint
+    issuperset
+    issubset
     function_eq
 
 API
@@ -16,6 +18,8 @@ API
 .. autofunction:: str_eq
 .. autofunction:: shape_eq
 .. autofunction:: isdisjoint
+.. autofunction:: issuperset
+.. autofunction:: issubset
 .. autofunction:: function_eq
 
 """
@@ -37,11 +41,11 @@ from typing import (
 from .functions import to_positional
 
 if TYPE_CHECKING:
-    from numpy import ndarray  # type: ignore
+    from numpy import ndarray
 else:
     ndarray = 'numpy.ndarray'
 
-__all__ = ['len_eq', 'str_eq', 'shape_eq', 'isdisjoint', 'function_eq']
+__all__ = ['len_eq', 'str_eq', 'shape_eq', 'isdisjoint', 'issuperset', 'issubset', 'function_eq']
 
 T = TypeVar('T')
 IT = TypeVar('IT', bound=Union[None, dis.Instruction])
@@ -100,8 +104,8 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
     b : :class:`numpy.ndarray` or :class:`tuple` [:class:`int`, ...]
         A NumPy array or a tuple of integers representing the shape of **a**.
 
-    """  # noqa
-    return a.shape == getattr(b, 'shape', b)
+    """  # noqa: E501
+    return a.shape == getattr(b, 'shape', b)  # type: ignore
 
 
 @to_positional
@@ -133,6 +137,68 @@ def isdisjoint(a: Iterable[Hashable], b: Iterable[Hashable]) -> bool:
         if callable(a.isdisjoint):  # type: ignore
             raise ex
         return set(a).isdisjoint(b)
+
+
+@to_positional
+def issuperset(a: Iterable[Hashable], b: Iterable[Hashable]) -> bool:
+    """Check if **a** contains all elements from **b**.
+
+    Parameters
+    ----------
+    a/b : :class:`~collections.abc.Iterable` [:class:`~collections.abc.Hashable`]
+        Two to-be compared iterables.
+        Note that both iterables must consist of hashable objects.
+
+    See Also
+    --------
+    :meth:`set.issuperset()<frozenset.issuperset>`
+        Test whether every element in **other** is in the set.
+
+    """
+    try:
+        return a.issuperset(b)  # type: ignore
+
+    # **a** does not have the isdisjoint method
+    except AttributeError:
+        return set(a).issuperset(b)
+
+    # **a.issuperset** is not a callable or
+    # **a** and/or **b** do not consist of hashable elements
+    except TypeError as ex:
+        if callable(a.issuperset):  # type: ignore
+            raise ex
+        return set(a).issuperset(b)
+
+
+@to_positional
+def issubset(a: Iterable[Hashable], b: Iterable[Hashable]) -> bool:
+    """Check if **b** contains all elements in **a**.
+
+    Parameters
+    ----------
+    a/b : :class:`~collections.abc.Iterable` [:class:`~collections.abc.Hashable`]
+        Two to-be compared iterables.
+        Note that both iterables must consist of hashable objects.
+
+    See Also
+    --------
+    :meth:`set.issubset()<frozenset.issubset>`
+        Test whether every element in the set is in **other**.
+
+    """
+    try:
+        return a.issubset(b)  # type: ignore
+
+    # **a** does not have the isdisjoint method
+    except AttributeError:
+        return set(a).issubset(b)
+
+    # **a.issubset** is not a callable or
+    # **a** and/or **b** do not consist of hashable elements
+    except TypeError as ex:
+        if callable(a.issubset):  # type: ignore
+            raise ex
+        return set(a).issubset(b)
 
 
 @to_positional

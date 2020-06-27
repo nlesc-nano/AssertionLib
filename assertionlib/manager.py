@@ -85,6 +85,8 @@ Assertions based on the builtin :mod:`builtins` module.
     AssertionManager.any
     AssertionManager.all
     AssertionManager.isdisjoint
+    AssertionManager.issuperset
+    AssertionManager.issubset
     AssertionManager.round
 
 Miscellaneous assertions.
@@ -170,6 +172,8 @@ Assertions based on the builtin :mod:`builtins` module
 .. automethod:: AssertionManager.any
 .. automethod:: AssertionManager.all
 .. automethod:: AssertionManager.isdisjoint
+.. automethod:: AssertionManager.issuperset
+.. automethod:: AssertionManager.issubset
 .. automethod:: AssertionManager.round
 
 Miscellaneous assertions
@@ -200,8 +204,10 @@ from typing import (
 
 from .ndrepr import aNDRepr
 from .functions import bind_callable, set_docstring
-from .assertion_functions import len_eq, str_eq, shape_eq, function_eq, isdisjoint
 from .dataclass import AbstractDataClass, _MetaADC
+from .assertion_functions import (
+    len_eq, str_eq, shape_eq, function_eq, isdisjoint, issuperset, issubset
+)
 
 if sys.version_info < (3, 7):
     COMMA = ','
@@ -239,7 +245,7 @@ class _MetaAM(_MetaADC):
         os.path.isfile, os.path.isdir, os.path.isabs, os.path.islink, os.path.ismount,
         math.isclose, math.isfinite, math.isinf, math.isnan,
         isinstance, issubclass, callable, hasattr, len, any, all, round,
-        len_eq, str_eq, shape_eq, function_eq, isdisjoint
+        len_eq, str_eq, shape_eq, function_eq, isdisjoint, issubset, issuperset
     })
 
     def __new__(mcls, name, bases, namespace) -> '_MetaAM':  # noqa: N804

@@ -18,8 +18,14 @@ with open('README.rst', encoding='utf-8') as readme_file:
 
 # Requirements for building the documentation
 docs_require = [
-    'sphinx>=2.1',
+    'sphinx>=2.1,<3.1',
     'sphinx_rtd_theme'
+]
+
+# Requirements for building wheels
+build_require = [
+    'twine',
+    'wheel'
 ]
 
 # Requirements for running tests
@@ -32,6 +38,7 @@ tests_require = [
     'typing-extensions>=3.7.4; python_version<"3.8"',
     'pytest-mypy>=0.6.2'
 ]
+tests_require += build_require
 
 setup(
     name='AssertionLib',

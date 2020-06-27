@@ -405,7 +405,7 @@ def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE
 
     """
     try:
-        name: str = getattr(func, '__qualname__', func.__name__)  # type: ignore
+        name: str = getattr(func, '__qualname__', func.__name__)
     except AttributeError as ex:
         raise TypeError("'func' expects a callable with the '__name__' attribute; "
                         f"observed type: {func.__class__.__name__!r}") from ex

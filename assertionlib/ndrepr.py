@@ -63,10 +63,10 @@ from itertools import chain, islice
 from .functions import set_docstring
 
 if TYPE_CHECKING:
-    from scm.plams import Molecule, Atom, Bond, Settings  # type: ignore
-    from numpy import ndarray  # type: ignore
-    from pandas import DataFrame, Series  # type: ignore
-    from h5py import Dataset  # type: ignore
+    from scm.plams import Molecule, Atom, Bond, Settings
+    from numpy import ndarray
+    from pandas import DataFrame, Series
+    from h5py import Dataset
 
     from types import (BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType, MethodType)
     if sys.version_info >= (3, 7):
