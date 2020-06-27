@@ -5,6 +5,12 @@ Change Log
 All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
+
+3.1.0
+*****
+* Added `assertion.issuperset()` and `assertion.issubset()`.
+
+
 3.0.0
 *****
 * Added `Nano-Utils <https://github.com/nlesc-nano/Nano-Utils>`_ as a dependency;
