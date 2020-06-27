@@ -272,6 +272,42 @@ def test_isdisjoint() -> None:
     assertion.isdisjoint(_Test2(), [2], exception=TypeError)
 
 
+def test_issuperset() -> None:
+    """Test :meth:`AssertionManager.issuperset`."""
+    class _Test1():
+        issuperset = False
+
+    class _Test2():
+        def issuperset(self): return False
+
+    assertion.issuperset([1, 2], [2])
+    assertion.issuperset({1, 2}, [2])
+    assertion.issuperset({1, 2}, {2})
+    assertion.issuperset([1, 2], [3], invert=True)
+    assertion.issuperset(5, 6, 7, 8, exception=TypeError)
+    assertion.issuperset([[1]], [2], exception=TypeError)
+    assertion.issuperset(_Test1(), [2], exception=TypeError)
+    assertion.issuperset(_Test2(), [2], exception=TypeError)
+
+
+def test_issubset() -> None:
+    """Test :meth:`AssertionManager.issubset`."""
+    class _Test1():
+        issubset = False
+
+    class _Test2():
+        def issubset(self): return False
+
+    assertion.issubset([1], [1, 2])
+    assertion.issubset({1}, [1, 2])
+    assertion.issubset({1}, {1, 2})
+    assertion.issubset([1], [2, 3], invert=True)
+    assertion.issubset(5, 6, 7, 8, exception=TypeError)
+    assertion.issubset([[1]], [2], exception=TypeError)
+    assertion.issubset(_Test1(), [2], exception=TypeError)
+    assertion.issubset(_Test2(), [2], exception=TypeError)
+
+
 def test_round() -> None:
     """Test :meth:`AssertionManager.round`."""
     assertion.round(0.6)
