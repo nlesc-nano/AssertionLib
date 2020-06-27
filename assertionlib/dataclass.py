@@ -43,6 +43,7 @@ from typing import (
 __all__ = ['AbstractDataClass']
 
 T = TypeVar('T')
+TT = TypeVar('TT', bound='_MetaADC')
 AT = TypeVar('AT', bound='AbstractDataClass')
 FT = TypeVar('FT', bound=Callable[..., Any])
 
@@ -73,9 +74,12 @@ def recursion_safeguard(fallback: FT) -> Callable[[FT], FT]:
 
 
 class _MetaADC(ABCMeta):
-    def __new__(mcls, name, bases, namespace) -> '_MetaADC':  # noqa: N804
-        cls = cast(_MetaADC, super().__new__(mcls, name, bases, namespace))
-        if not cls._HASHABLE:  # type: ignore
+    _HASHABLE: bool = NotImplemented
+
+    def __new__(mcls: Type[TT], name: str, bases: Tuple[type, ...],
+                namespace: Dict[str, Any]) -> TT:
+        cls = cast(TT, super().__new__(mcls, name, bases, namespace))
+        if not cls._HASHABLE:
             setattr(cls, '__hash__', mcls._hash_template1)
         else:
             func = recursion_safeguard(cls._repr_fallback)(mcls._hash_template2)  # type: ignore
@@ -83,12 +87,12 @@ class _MetaADC(ABCMeta):
         return cls
 
     @staticmethod
-    def _hash_template1(self) -> NoReturn:
+    def _hash_template1(self: 'AbstractDataClass') -> NoReturn:
         """Unhashable type; raise a :exc:`TypeError`."""
         raise TypeError(f"Unhashable type: {self.__class__.__name__!r}")
 
     @staticmethod
-    def _hash_template2(self) -> int:
+    def _hash_template2(self: 'AbstractDataClass') -> int:
         """Return the hash of this instance.
 
         The returned hash is constructed from two components:
@@ -319,7 +323,7 @@ class AbstractDataClass(metaclass=_MetaADC):
     @staticmethod
     def _eq(v1: Any, v2: Any) -> bool:
         """Return if **v1** and **v2** are equivalent."""
-        return v1 == v2
+        return cast(bool, v1 == v2)
 
     def copy(self: AT, deep: bool = False) -> AT:
         """Return a shallow or deep copy of this instance.
@@ -341,7 +345,7 @@ class AbstractDataClass(metaclass=_MetaADC):
         copy_func = cast(Callable[[T], T], copy.deepcopy if deep else return_arg)
 
         cls = type(self)
-        ret = cls.__new__(cls)
+        ret: AT = cls.__new__(cls)
         for k, v in self._iter_attrs():
             setattr(ret, k, copy_func(v))
         return ret
@@ -451,7 +455,7 @@ class AbstractDataClass(metaclass=_MetaADC):
 
             # Update docstring
             if func.__doc__ is None and cls_func.__doc__ is not None:
-                doc_new = cls_func.__doc__.replace(cls.__name__, sub_cls_name)  # type: ignore
+                doc_new = cls_func.__doc__.replace(cls.__name__, sub_cls_name)
                 func.__doc__ = doc_new
 
             return func

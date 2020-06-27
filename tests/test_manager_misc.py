@@ -2,7 +2,7 @@
 
 import operator
 from sys import version_info
-from typing import Optional, cast, Callable
+from typing import Optional, Callable
 from functools import partial
 
 from nanoutils import ignore_if
@@ -10,7 +10,7 @@ from assertionlib import assertion, AssertionManager
 from assertionlib.manager import _Str, _NoneException  # type: ignore
 
 try:
-    import numpy as np  # type: ignore
+    import numpy as np
     NUMPY_EX: Optional[ImportError] = None
 except ImportError as ex:
     NUMPY_EX = ex
@@ -85,7 +85,7 @@ def test_as_dict() -> None:
     """Test :meth:`AssertionManager.as_dict` and :meth:`AssertionManager.from_dict`."""
     cls = type(assertion)
     dct = assertion.as_dict()
-    new = cast(AssertionManager, cls.from_dict(dct))
+    new = cls.from_dict(dct)
     assertion.eq(vars(assertion.repr_instance), vars(new.repr_instance))
 
 

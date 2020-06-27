@@ -41,7 +41,7 @@ from typing import (
 from .functions import to_positional
 
 if TYPE_CHECKING:
-    from numpy import ndarray  # type: ignore
+    from numpy import ndarray
 else:
     ndarray = 'numpy.ndarray'
 
@@ -104,8 +104,8 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
     b : :class:`numpy.ndarray` or :class:`tuple` [:class:`int`, ...]
         A NumPy array or a tuple of integers representing the shape of **a**.
 
-    """  # noqa
-    return a.shape == getattr(b, 'shape', b)
+    """  # noqa: E501
+    return a.shape == getattr(b, 'shape', b)  # type: ignore
 
 
 @to_positional
