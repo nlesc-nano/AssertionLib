@@ -22,6 +22,12 @@ docs_require = [
     'sphinx_rtd_theme'
 ]
 
+# Requirements for building wheels
+build_require = [
+    'twine',
+    'wheel'
+]
+
 # Requirements for running tests
 tests_require = [
     'pytest>=5.4.0',
@@ -32,6 +38,7 @@ tests_require = [
     'typing-extensions>=3.7.4; python_version<"3.8"',
     'pytest-mypy>=0.6.2'
 ]
+tests_require += build_require
 
 setup(
     name='AssertionLib',
