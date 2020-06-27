@@ -18,7 +18,7 @@ with open('README.rst', encoding='utf-8') as readme_file:
 
 # Requirements for building the documentation
 docs_require = [
-    'sphinx>=2.1',
+    'sphinx>=2.1,<3.1',
     'sphinx_rtd_theme'
 ]
 
