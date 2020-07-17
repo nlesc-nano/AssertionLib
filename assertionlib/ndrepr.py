@@ -101,14 +101,14 @@ else:
 
 try:
     import numpy as np
-    NUMPY_EX: Optional[ImportError] = None
-except ImportError as ex:
+    NUMPY_EX: Optional[Exception] = None
+except Exception as ex:
     NUMPY_EX = ex
 
 try:
     import pandas as pd
-    PANDAS_EX: Optional[ImportError] = None
-except ImportError as ex:
+    PANDAS_EX: Optional[Exception] = None
+except Exception as ex:
     PANDAS_EX = ex
 
 __all__ = ['NDRepr', 'aNDRepr']

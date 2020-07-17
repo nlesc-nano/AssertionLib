@@ -6,8 +6,8 @@ from typing import Optional
 
 try:
     import numpy as np
-    NUMPY_EX: Optional[ImportError] = None
-except ImportError as ex:
+    NUMPY_EX: Optional[Exception] = None
+except Exception as ex:
     NUMPY_EX = ex
 
 from nanoutils import ignore_if
