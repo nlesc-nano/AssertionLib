@@ -5,6 +5,8 @@ from sys import version_info
 from typing import Optional
 
 import pytest
+from assertionlib import assertion
+from assertionlib.ndrepr import aNDRepr, NDRepr
 
 try:
     import numpy as np
@@ -12,8 +14,11 @@ try:
 except Exception as ex:
     NUMPY_EX = ex
 
-from assertionlib import assertion
-from assertionlib.ndrepr import aNDRepr, NDRepr
+try:
+    import pandas as pd
+    PANDAS_EX: Optional[Exception] = None
+except Exception as ex:
+    PANDAS_EX = ex
 
 
 def test_float() -> None:
@@ -99,6 +104,36 @@ def test_ndarray() -> None:
     ref2 = 'array([[1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       ...,\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1],\n       [1, 1, 1, ..., 1, 1, 1]])'  # noqa
     str1 = aNDRepr.repr(ar1)
     str2 = aNDRepr.repr(ar2)
+
+    assertion.eq(str1, ref1)
+    assertion.eq(str2, ref2)
+
+
+@pytest.mark.skipif(PANDAS_EX, reason=str(PANDAS_EX))
+def test_dataframe() -> None:
+    """Tests for :meth:`NDRepr.repr_DataFrame`."""
+    df1 = pd.DataFrame(np.ones((10, 10), dtype=float))
+    df2 = pd.DataFrame(np.ones((10, 10), dtype=int))
+
+    ref1 = '     0    1    2  ...    7    8    9\n0  1.0  1.0  1.0  ...  1.0  1.0  1.0\n1  1.0  1.0  1.0  ...  1.0  1.0  1.0\n2  1.0  1.0  1.0  ...  1.0  1.0  1.0\n3  1.0  1.0  1.0  ...  1.0  1.0  1.0\n4  1.0  1.0  1.0  ...  1.0  1.0  1.0\n5  1.0  1.0  1.0  ...  1.0  1.0  1.0\n6  1.0  1.0  1.0  ...  1.0  1.0  1.0\n7  1.0  1.0  1.0  ...  1.0  1.0  1.0\n8  1.0  1.0  1.0  ...  1.0  1.0  1.0\n9  1.0  1.0  1.0  ...  1.0  1.0  1.0\n\n[10 rows x 10 columns]'  # noqa: E501
+    ref2 = '   0  1  2  ...  7  8  9\n0  1  1  1  ...  1  1  1\n1  1  1  1  ...  1  1  1\n2  1  1  1  ...  1  1  1\n3  1  1  1  ...  1  1  1\n4  1  1  1  ...  1  1  1\n5  1  1  1  ...  1  1  1\n6  1  1  1  ...  1  1  1\n7  1  1  1  ...  1  1  1\n8  1  1  1  ...  1  1  1\n9  1  1  1  ...  1  1  1\n\n[10 rows x 10 columns]'  # noqa: E501
+    str1 = aNDRepr.repr(df1)
+    str2 = aNDRepr.repr(df2)
+
+    assertion.eq(str1, ref1)
+    assertion.eq(str2, ref2)
+
+
+@pytest.mark.skipif(PANDAS_EX, reason=str(PANDAS_EX))
+def test_series() -> None:
+    """Tests for :meth:`NDRepr.repr_Series`."""
+    s1 = pd.Series(np.ones(10, dtype='float64'))
+    s2 = pd.Series(np.ones(10, dtype='int64'))
+
+    ref1 = '0    1.0\n1    1.0\n2    1.0\n3    1.0\n4    1.0\n5    1.0\n6    1.0\n7    1.0\n8    1.0\n9    1.0\ndtype: float64'  # noqa: E501
+    ref2 = '0    1\n1    1\n2    1\n3    1\n4    1\n5    1\n6    1\n7    1\n8    1\n9    1\ndtype: int64'  # noqa: E501
+    str1 = aNDRepr.repr(s1)
+    str2 = aNDRepr.repr(s2)
 
     assertion.eq(str1, ref1)
     assertion.eq(str2, ref2)

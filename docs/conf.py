@@ -73,17 +73,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
-    'sphinx.ext.duration',
-    'sphinx.ext.doctest'
+    'sphinx.ext.duration'
 ]
-
-
-# Python code that is treated like it were put in a testsetup directive for
-# every file that is tested, and for every group.
-# You can use this to e.g. import modules you will always need in your doctests.
-doctest_global_setup = """
-from assertionlib.ndrepr import NUMPY_EX, PANDAS_EX
-"""
 
 
 # Add any paths that contain templates here, relative to this directory.
