@@ -4,13 +4,14 @@ import inspect
 from sys import version_info
 from typing import Optional
 
+import pytest
+
 try:
     import numpy as np
     NUMPY_EX: Optional[Exception] = None
 except Exception as ex:
     NUMPY_EX = ex
 
-from nanoutils import ignore_if
 from assertionlib import assertion
 from assertionlib.ndrepr import aNDRepr, NDRepr
 
@@ -73,7 +74,7 @@ def test_callables() -> None:
     assertion.eq(mod, ref6)
 
 
-@ignore_if(NUMPY_EX)
+@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
 def test_signature() -> None:
     """Tests for :meth:`NDRepr.repr_Signature`."""
     sgn1 = inspect.signature(len)
@@ -88,7 +89,7 @@ def test_signature() -> None:
     assertion.eq(str2, ref2)
 
 
-@ignore_if(NUMPY_EX)
+@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
 def test_ndarray() -> None:
     """Tests for :meth:`NDRepr.repr_ndarray`."""
     ar1 = np.ones((10, 10), dtype=float)
