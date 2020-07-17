@@ -53,39 +53,13 @@ IT = TypeVar('IT', bound=Union[None, dis.Instruction])
 
 @to_positional
 def len_eq(a: Sized, b: int) -> bool:
-    """Check if the length of **a** is equivalent to **b**: :code:`len(a) == b`.
-
-    Parameters
-    ----------
-    a : :class:`~collections.abc.Sized`
-        The object whose size will be evaluated.
-
-    b : :class:`int`
-        The integer that will be matched against the size of **a**.
-
-    """
+    """Check if the length of **a** is equivalent to **b**: :code:`len(a) == b`."""
     return len(a) == b
 
 
 @to_positional
 def str_eq(a: T, b: str, *, str_converter: Callable[[T], str] = repr) -> bool:
-    """Check if the string-representation of **a** is equivalent to **b**: :code:`repr(a) == b`.
-
-    Parameters
-    ----------
-    a : :class:`T<typing.TypeVar>`
-        An object whose string represention will be evaluated.
-
-    b : :class:`str`
-        The string that will be matched against the string-output of **a**.
-
-    Keyword Arguments
-    -----------------
-    str_converter : :data:`Callable[[T], str]<typing.Callable>`
-        The callable for constructing **a**'s string representation.
-        Uses :func:`repr` by default.
-
-    """
+    """Check if the string-representation of **a** is equivalent to **b**: :code:`repr(a) == b`."""
     return str_converter(a) == b
 
 
@@ -96,34 +70,13 @@ def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
     **b** should be either an object with the ``shape`` attribute (*e.g.* a NumPy array)
     or a :class:`tuple` representing a valid array shape.
 
-    Parameters
-    ----------
-    a : :class:`numpy.ndarray`
-        A NumPy array.
-
-    b : :class:`numpy.ndarray` or :class:`tuple` [:class:`int`, ...]
-        A NumPy array or a tuple of integers representing the shape of **a**.
-
     """  # noqa: E501
     return a.shape == getattr(b, 'shape', b)  # type: ignore
 
 
 @to_positional
 def isdisjoint(a: Iterable[Hashable], b: Iterable[Hashable]) -> bool:
-    """Check if **a** has no elements in **b**.
-
-    Parameters
-    ----------
-    a/b : :class:`~collections.abc.Iterable` [:class:`~collections.abc.Hashable`]
-        Two to-be compared iterables.
-        Note that both iterables must consist of hashable objects.
-
-    See Also
-    --------
-    :meth:`set.isdisjoint()<frozenset.isdisjoint>`
-        Return ``True`` if two sets have a null intersection.
-
-    """
+    """Check if **a** has no elements in **b**."""
     try:
         return a.isdisjoint(b)  # type: ignore
 
@@ -141,20 +94,7 @@ def isdisjoint(a: Iterable[Hashable], b: Iterable[Hashable]) -> bool:
 
 @to_positional
 def issuperset(a: Iterable[Hashable], b: Iterable[Hashable]) -> bool:
-    """Check if **a** contains all elements from **b**.
-
-    Parameters
-    ----------
-    a/b : :class:`~collections.abc.Iterable` [:class:`~collections.abc.Hashable`]
-        Two to-be compared iterables.
-        Note that both iterables must consist of hashable objects.
-
-    See Also
-    --------
-    :meth:`set.issuperset()<frozenset.issuperset>`
-        Test whether every element in **other** is in the set.
-
-    """
+    """Check if **a** contains all elements from **b**."""
     try:
         return a.issuperset(b)  # type: ignore
 
@@ -172,20 +112,7 @@ def issuperset(a: Iterable[Hashable], b: Iterable[Hashable]) -> bool:
 
 @to_positional
 def issubset(a: Iterable[Hashable], b: Iterable[Hashable]) -> bool:
-    """Check if **b** contains all elements in **a**.
-
-    Parameters
-    ----------
-    a/b : :class:`~collections.abc.Iterable` [:class:`~collections.abc.Hashable`]
-        Two to-be compared iterables.
-        Note that both iterables must consist of hashable objects.
-
-    See Also
-    --------
-    :meth:`set.issubset()<frozenset.issubset>`
-        Test whether every element in the set is in **other**.
-
-    """
+    """Check if **b** contains all elements in **a**."""
     try:
         return a.issubset(b)  # type: ignore
 
@@ -207,27 +134,6 @@ def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
 
     **func1** and **func2** should be instances of :data:`~types.FunctionType`
     or any other object with access to the :attr:`__code__` attribute.
-
-    Parameters
-    ----------
-    func1/func2 : :data:`~types.FunctionType`
-        Two functions.
-
-    Examples
-    --------
-    .. code:: python
-
-        >>> from assertionlib.assertion_functions import function_eq
-
-        >>> func1 = lambda x: x + 5
-        >>> func2 = lambda x: x + 5
-        >>> func3 = lambda x: 5 + x
-
-        >>> print(function_eq(func1, func2))
-        True
-
-        >>> print(function_eq(func1, func3))
-        False
 
     """
     code1 = None

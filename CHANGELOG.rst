@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+3.1.2
+*****
+* Enabled tests for Python 3.9.
+* Enable `Cancel Workflow Action <https://github.com/marketplace/actions/cancel-workflow-action>`_ for the unit tests.
+* Added tests for building documentation.
+
+
+3.1.1
+*****
+* Minor changes.
+
+
 3.1.0
 *****
 * Added `assertion.issuperset()` and `assertion.issubset()`.

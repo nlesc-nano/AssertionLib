@@ -34,10 +34,12 @@ tests_require = [
     'pytest-cov',
     'pytest-flake8>=1.0.5',
     'pytest-pydocstyle>=2.1',
-    'numpy',
+    'numpy; python_version<"3.9"',
+    'pandas; python_version<"3.9"',
     'typing-extensions>=3.7.4; python_version<"3.8"',
     'pytest-mypy>=0.6.2'
 ]
+tests_require += docs_require
 tests_require += build_require
 
 setup(
@@ -64,7 +66,8 @@ setup(
         'python-3',
         'python-3-6',
         'python-3-7',
-        'python-3-8'
+        'python-3-8',
+        'python-3-9'
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -77,13 +80,15 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Testing',
         'Typing :: Typed'
     ],
     python_requires='>=3.6',
     install_requires=[
-        'Nano-Utils>=0.4.1'
+        'Nano-Utils>=0.4.1; python_version<"3.9"',
+        'Nano-Utils>=1.1.2; python_version>="3.9"'
     ],
     setup_requires=['pytest-runner'] + docs_require,
     tests_require=tests_require,
