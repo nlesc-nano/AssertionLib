@@ -130,7 +130,8 @@ class NDRepr(reprlib.Repr):
     --------
     See :mod:`reprlib` for more details.
 
-    code:: python
+    .. doctest:: python
+        :skipif: NUMPY_EX is not None
 
         >>> from assertionlib.ndrepr import aNDRepr
         >>> import numpy as np
