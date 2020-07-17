@@ -60,6 +60,8 @@ import textwrap
 from typing import Any, Dict, Callable, Union, Tuple, Optional, Mapping, List, TYPE_CHECKING
 from itertools import chain, islice
 
+from nanoutils import raise_if
+
 from .functions import set_docstring
 
 if TYPE_CHECKING:
@@ -406,11 +408,9 @@ class NDRepr(reprlib.Repr):
 
     # NumPy- and Pandas-related methods
 
+    @raise_if(NUMPY_EX)
     def repr_ndarray(self, obj: ndarray, level: int) -> str:
         """Create a :class:`str` representation of a :class:`numpy.ndarray` instance."""
-        if NUMPY_EX is not None:
-            raise NUMPY_EX
-
         if level <= 0:
             return f'{obj.__class__.__name__}(...)'
 
@@ -422,11 +422,9 @@ class NDRepr(reprlib.Repr):
         with np.printoptions(**kwargs):
             return builtins.repr(obj)
 
+    @raise_if(PANDAS_EX)
     def repr_DataFrame(self, obj: DataFrame, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a :class:`pandas.DataFrame` instance."""
-        if PANDAS_EX is not None:
-            raise PANDAS_EX
-
         if level <= 0:
             return f'{obj.__class__.__name__}(...)'
 
