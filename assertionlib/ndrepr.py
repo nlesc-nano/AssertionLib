@@ -137,6 +137,8 @@ class NDRepr(reprlib.Repr):
 
         >>> from assertionlib.ndrepr import aNDRepr
 
+        >>> print(NUMPY_EX, PANDAS_EX, sep='\n')
+
         >>> import numpy as np
         >>> import pandas as pd
 
