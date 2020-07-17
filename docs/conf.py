@@ -78,6 +78,14 @@ extensions = [
 ]
 
 
+# Python code that is treated like it were put in a testsetup directive for
+# every file that is tested, and for every group.
+# You can use this to e.g. import modules you will always need in your doctests.
+doctest_global_setup = """
+from assertionlib.ndrepr import NUMPY_EX, PANDAS_EX
+"""
+
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -250,24 +258,6 @@ napoleon_use_admonition_for_notes = True
 # False to use the .. rubric:: directive instead.
 # Defaults to False.
 napoleon_use_admonition_for_references = True
-
-
-# Python code that is treated like it were put in a testsetup directive for
-# every file that is tested, and for every group.
-# You can use this to e.g. import modules you will always need in your doctests.
-doctest_global_setup = """
-try:
-    import numpy as np
-    NUMPY_EX = None
-except Exception as ex1:
-    NUMPY_EX = ex1
-
-try:
-    import pandas as pd
-    PANDAS_EX = None
-except Exception as ex2:
-    PANDAS_EX = ex2
-"""
 
 
 # A string of reStructuredText that will be included at the end of every source file that is read.
