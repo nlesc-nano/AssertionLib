@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+3.1.2
+*****
+* Enabled tests for Python 3.9.
+
+
+3.1.1
+*****
+* Minor changes.
+
+
 3.1.0
 *****
 * Added `assertion.issuperset()` and `assertion.issubset()`.
