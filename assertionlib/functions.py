@@ -228,8 +228,7 @@ Parameters
 Keyword Arguments
 -----------------
 invert : :class:`bool`
-    If :data:`True`, invert the output of the assertion:
-    :code:`assert not {name}{signature}`.
+    If :data:`True`, invert the output of the assertion: :code:`assert not {name}{signature}`.
 
 exception : :class:`type` [:exc:`Exception`], optional
     Assert that **exception** is raised during/before the assertion operation.
@@ -279,8 +278,7 @@ def create_assertion_doc(func: Callable) -> str:
         Keyword Arguments
         -----------------
         invert : :class:`bool`
-            If :data:`True`, invert the output of the assertion:
-            :code:`assert not isinstance(obj, class_or_tuple)`.
+            If :data:`True`, invert the output of the assertion: :code:`assert not isinstance(obj, class_or_tuple)`.
         <BLANKLINE>
         exception : :class:`type` [:exc:`Exception`], optional
             Assert that **exception** is raised during/before the assertion operation.
