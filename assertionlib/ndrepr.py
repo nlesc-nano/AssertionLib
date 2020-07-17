@@ -133,13 +133,15 @@ class NDRepr(reprlib.Repr):
     See :mod:`reprlib` for more details.
 
     .. doctest:: python
-        :skipif: NUMPY_EX is not None
+        :skipif: NUMPY_EX is not None or PANDAS_EX is not None
 
         >>> from assertionlib.ndrepr import aNDRepr
-        >>> import numpy as np
 
-        >>> object = np.ones((100, 100), dtype=float)
-        >>> print(aNDRepr.repr(object))
+        >>> import numpy as np
+        >>> import pandas as pd
+
+        >>> array = np.ones((100, 100), dtype=float)
+        >>> print(aNDRepr.repr(array))
         array([[1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
                [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
                [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
@@ -147,6 +149,24 @@ class NDRepr(reprlib.Repr):
                [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
                [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000],
                [1.0000, 1.0000, 1.0000, ..., 1.0000, 1.0000, 1.0000]])
+
+        >>> df = pd.DataFrame(array)
+        >>> print(aNDRepr.repr(df))
+             0    1    2   ...   97   98   99
+        0   1.0  1.0  1.0  ...  1.0  1.0  1.0
+        1   1.0  1.0  1.0  ...  1.0  1.0  1.0
+        2   1.0  1.0  1.0  ...  1.0  1.0  1.0
+        3   1.0  1.0  1.0  ...  1.0  1.0  1.0
+        4   1.0  1.0  1.0  ...  1.0  1.0  1.0
+        ..  ...  ...  ...  ...  ...  ...  ...
+        95  1.0  1.0  1.0  ...  1.0  1.0  1.0
+        96  1.0  1.0  1.0  ...  1.0  1.0  1.0
+        97  1.0  1.0  1.0  ...  1.0  1.0  1.0
+        98  1.0  1.0  1.0  ...  1.0  1.0  1.0
+        99  1.0  1.0  1.0  ...  1.0  1.0  1.0
+
+        [100 rows x 100 columns]
+
 
     Parameters
     ----------

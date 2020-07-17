@@ -233,7 +233,7 @@ napoleon_use_admonition_for_references = True
 # every file that is tested, and for every group.
 # You can use this to e.g. import modules you will always need in your doctests.
 doctest_global_setup = """
-from assertionlib.ndrepr import NUMPY_EX
+from assertionlib.ndrepr import NUMPY_EX, PANDAS_EX
 """
 
 

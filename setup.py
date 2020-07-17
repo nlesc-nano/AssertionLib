@@ -35,6 +35,7 @@ tests_require = [
     'pytest-flake8>=1.0.5',
     'pytest-pydocstyle>=2.1',
     'numpy',
+    'pandas',
     'typing-extensions>=3.7.4; python_version<"3.8"',
     'pytest-mypy>=0.6.2'
 ]
