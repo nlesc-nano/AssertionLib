@@ -11,8 +11,8 @@ from assertionlib.manager import _Str, _NoneException  # type: ignore
 
 try:
     import numpy as np
-    NUMPY_EX: Optional[ImportError] = None
-except ImportError as ex:
+    NUMPY_EX: Optional[Exception] = None
+except Exception as ex:
     NUMPY_EX = ex
 
 
