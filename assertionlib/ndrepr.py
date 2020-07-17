@@ -119,7 +119,7 @@ BuiltinType = Union[BuiltinFunctionType, BuiltinMethodType]
 
 
 class NDRepr(reprlib.Repr):
-    """A subclass of :class:`reprlib.Repr` with methods for handling additional object types.
+    r"""A subclass of :class:`reprlib.Repr` with methods for handling additional object types.
 
     Has additional methods for handling:
 
