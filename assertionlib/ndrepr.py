@@ -164,9 +164,8 @@ class NDRepr(reprlib.Repr):
         97  1.0  1.0  1.0  ...  1.0  1.0  1.0
         98  1.0  1.0  1.0  ...  1.0  1.0  1.0
         99  1.0  1.0  1.0  ...  1.0  1.0  1.0
-
+        <BLANKLINE>
         [100 rows x 100 columns]
-
 
     Parameters
     ----------
