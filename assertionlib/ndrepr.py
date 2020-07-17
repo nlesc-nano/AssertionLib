@@ -119,7 +119,7 @@ BuiltinType = Union[BuiltinFunctionType, BuiltinMethodType]
 
 
 class NDRepr(reprlib.Repr):
-    r"""A subclass of :class:`reprlib.Repr` with methods for handling additional object types.
+    """A subclass of :class:`reprlib.Repr` with methods for handling additional object types.
 
     Has additional methods for handling:
 
@@ -136,8 +136,6 @@ class NDRepr(reprlib.Repr):
         :skipif: NUMPY_EX is not None or PANDAS_EX is not None
 
         >>> from assertionlib.ndrepr import aNDRepr
-
-        >>> print(NUMPY_EX, PANDAS_EX, sep='\n')
 
         >>> import numpy as np
         >>> import pandas as pd
