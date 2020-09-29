@@ -1,7 +1,6 @@
 """Tests for the :class:`AssertionManager<assertionlib.manager.AssertionManager>` class."""
 
 import operator
-from sys import version_info
 from typing import Optional, Callable
 from functools import partial
 
@@ -325,18 +324,17 @@ def test_get_exc_message() -> None:
     func1 = len
     args = (1,)
 
-    str1 = assertion._get_exc_message(ex, func1, *args, invert=False, output=None)  # type: ignore
-    str2 = assertion._get_exc_message(ex, func1, *args, invert=True, output=None)  # type: ignore
-    comma = ',' if version_info.minor < 7 else ''   # For Python 3.6 and later
-    ref1 = f"""output = len(obj); assert output
+    str1: str = assertion._get_exc_message(ex, func1, *args, invert=False, output=None)  # type: ignore[attr-defined]  # noqa: E501
+    str2: str = assertion._get_exc_message(ex, func1, *args, invert=True, output=None)  # type: ignore[attr-defined]  # noqa: E501
+    ref1 = """output = len(obj); assert output
 
-exception: TypeError = TypeError("object of type 'int' has no len()"{comma})
+exception: TypeError = "object of type 'int' has no len()"
 
 output: NoneType = None
 obj: int = 1"""
-    ref2 = f"""output = not len(obj); assert output
+    ref2 = """output = not len(obj); assert output
 
-exception: TypeError = TypeError("object of type 'int' has no len()"{comma})
+exception: TypeError = "object of type 'int' has no len()"
 
 output: NoneType = None
 obj: int = 1"""
@@ -344,17 +342,17 @@ obj: int = 1"""
     assertion.eq(str1, ref1)
     assertion.eq(str2, ref2)
 
-    func2: Callable = assertion._get_exc_message  # type: ignore
+    func2: Callable = assertion._get_exc_message  # type: ignore[attr-defined]
     assertion.assert_(func2, ex, 1, exception=TypeError)
 
     func3 = partial(len)
-    str3 = assertion._get_exc_message(ex, func3)  # type: ignore
+    str3 = assertion._get_exc_message(ex, func3)  # type: ignore[attr-defined]
     assertion.contains(str3, 'functools.partial(<built-in function len>)')
 
     class Func():
         def __call__(self): pass
 
-    str4 = assertion._get_exc_message(ex, Func())  # type: ignore
+    str4: str = assertion._get_exc_message(ex, Func())  # type: ignore[attr-defined]
     assertion.contains(str4, 'output = func(); assert output')
 
 
