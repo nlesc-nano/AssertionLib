@@ -144,7 +144,7 @@ def test_assert_() -> None:
     assertion.assert_(len, [1], bob=1, exception=TypeError)
 
     try:
-        assertion.assert_(len, [1], exception=bool)  # type: ignore
+        assertion.assert_(len, [1], exception=bool)
     except TypeError:
         pass
     else:
@@ -201,7 +201,7 @@ def test_call() -> None:
     assertion.__call__(len([]), invert=True)
 
 
-@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
+@pytest.mark.skipif(bool(NUMPY_EX), reason=str(NUMPY_EX))
 def test_shape_eq() -> None:
     """Test :meth:`AssertionManager.shape_eq`."""
     ar1: np.ndarray = np.random.rand(10, 10)

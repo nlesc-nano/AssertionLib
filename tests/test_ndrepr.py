@@ -79,7 +79,7 @@ def test_callables() -> None:
     assertion.eq(mod, ref6)
 
 
-@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
+@pytest.mark.skipif(bool(NUMPY_EX), reason=str(NUMPY_EX))
 def test_signature() -> None:
     """Tests for :meth:`NDRepr.repr_Signature`."""
     sgn1 = inspect.signature(len)
@@ -94,7 +94,7 @@ def test_signature() -> None:
     assertion.eq(str2, ref2)
 
 
-@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
+@pytest.mark.skipif(bool(NUMPY_EX), reason=str(NUMPY_EX))
 def test_ndarray() -> None:
     """Tests for :meth:`NDRepr.repr_ndarray`."""
     ar1 = np.ones((10, 10), dtype=float)
@@ -109,7 +109,7 @@ def test_ndarray() -> None:
     assertion.eq(str2, ref2)
 
 
-@pytest.mark.skipif(PANDAS_EX, reason=str(PANDAS_EX))
+@pytest.mark.skipif(bool(PANDAS_EX), reason=str(PANDAS_EX))
 def test_dataframe() -> None:
     """Tests for :meth:`NDRepr.repr_DataFrame`."""
     df1 = pd.DataFrame(np.ones((10, 10), dtype=float))
@@ -124,7 +124,7 @@ def test_dataframe() -> None:
     assertion.eq(str2, ref2)
 
 
-@pytest.mark.skipif(PANDAS_EX, reason=str(PANDAS_EX))
+@pytest.mark.skipif(bool(PANDAS_EX), reason=str(PANDAS_EX))
 def test_series() -> None:
     """Tests for :meth:`NDRepr.repr_Series`."""
     s1 = pd.Series(np.ones(10, dtype='float64'))
