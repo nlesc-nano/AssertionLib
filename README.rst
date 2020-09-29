@@ -22,7 +22,7 @@
 
 
 ##################
-AssertionLib 3.1.2
+AssertionLib 3.1.3
 ##################
 A package for performing assertions and providing informative exception messages.
 
