@@ -203,7 +203,7 @@ from typing import (
 )
 
 from .ndrepr import aNDRepr
-from .functions import bind_callable, set_docstring
+from .functions import bind_callable
 from .dataclass import AbstractDataClass, _MetaADC
 from .assertion_functions import (
     len_eq, str_eq, shape_eq, function_eq, isdisjoint, issuperset, issubset
@@ -452,52 +452,52 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
             else:
                 raise exc from ex
 
-    @set_docstring(f"""Equivalent to :code:`assert value`.
-
-    Examples
-    --------
-    .. code:: python
-
-        >>> from assertionlib import assertion
-
-        >>> assertion(5 == 5)
-        >>> assertion(5 == 6)
-        Traceback (most recent call last):
-            ...
-        AssertionError: output = (value); assert output
-        <BLANKLINE>
-        exception: AssertionError = AssertionError(None{COMMA})
-        <BLANKLINE>
-        output: bool = False
-        value: bool = False
-
-
-    Parameters
-    ----------
-    value : :class:`T<typing.TypeVar>`
-        The to-be asserted value.
-
-    Keyword Arguments
-    -----------------
-    invert : :class:`bool`
-        If :data:`True`, invert the output of the assertion:
-        :code:`assert not value`.
-
-    post_process : :data:`Callable[[T], bool]<typing.Callable>`, optional
-        Apply post-processing to the to-be asserted data before asserting aforementioned data.
-        Example functions would be the likes of :func:`any()<python:any>` and
-        :func:`all()<python:all>`.
-
-    message : :class:`str`, optional
-        A custom error message to-be passed to the ``assert`` statement.
-
-
-    :rtype: :data:`None`
-
-    """)
     def __call__(self, value: T, *, invert: bool = False,
                  post_process: Optional[Callable[[T], Any]] = None,
                  message: Optional[str] = None) -> None:
+        """Equivalent to :code:`assert value`.
+
+        Examples
+        --------
+        .. code:: python
+
+            >>> from assertionlib import assertion
+
+            >>> assertion(5 == 5)
+            >>> assertion(5 == 6)
+            Traceback (most recent call last):
+                ...
+            AssertionError: output = (value); assert output
+            <BLANKLINE>
+            exception: AssertionError = 'None'
+            <BLANKLINE>
+            output: bool = False
+            value: bool = False
+
+
+        Parameters
+        ----------
+        value : :class:`T<typing.TypeVar>`
+            The to-be asserted value.
+
+        Keyword Arguments
+        -----------------
+        invert : :class:`bool`
+            If :data:`True`, invert the output of the assertion:
+            :code:`assert not value`.
+
+        post_process : :data:`Callable[[T], bool]<typing.Callable>`, optional
+            Apply post-processing to the to-be asserted data before asserting aforementioned data.
+            Example functions would be the likes of :func:`any()<python:any>` and
+            :func:`all()<python:all>`.
+
+        message : :class:`str`, optional
+            A custom error message to-be passed to the ``assert`` statement.
+
+
+        :rtype: :data:`None`
+
+        """
         return self.assert_(_return_value, value, invert=invert,
                             post_process=post_process, message=message)
 
@@ -543,67 +543,67 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
 
     # Private methods
 
-    @set_docstring(f"""Return a formatted exception message for failed assertions.
-
-    Examples
-    --------
-    .. code:: python
-
-        >>> def contains(a, b):
-        ...     return b in a
-
-        >>> ex = TypeError('Fancy custom exception')
-        >>> a = [1, 2, 3, 4]
-        >>> b = 5
-
-        >>> msg = assertion._get_exc_message(ex, contains, a, b)
-        >>> raise AssertionError(msg)
-        Traceback (most recent call last):
-            ...
-        AssertionError: output = contains(a, b); assert output
-        <BLANKLINE>
-        exception: TypeError = TypeError('Fancy custom exception'{COMMA})
-        <BLANKLINE>
-        output: NoneType = None
-        a: list = [1, 2, 3, 4]
-        b: int = 5
-
-    Parameters
-    ----------
-    ex : :class:`Exception`
-        The exception raised by :meth:`AssertionManager.assert_`.
-
-    func : :class:`~collections.abc.Callable`
-        The callable whose output has been evaluated.
-
-    \\*args : :data:`~typing.Any`
-        Positional arguments supplied to **func**.
-
-    Keyword Arguments
-    -----------------
-    invert : :class:`bool`
-        If :data:`True`, invert the output of the assertion: :code:`not func(a, b, **kwargs)`.
-
-    output : :data:`~typing.Any`, optional
-        The output value of :code:`func(*args, **kwargs)` or :code:`not func(*args, **kwargs)`.
-
-    post_process : :class:`~collections.abc.Callable`, optional
-        Apply post-processing to the to-be asserted data before asserting aforementioned data.
-        Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
-
-    \\**kwargs : :data:`~typing.Any`, optional
-        Further optional keyword arguments supplied to **func**.
-
-    Returns
-    -------
-    :class:`str`
-        A newly-formatted exception message to-be raised by :meth:`AssertionManager.assert_`.
-
-    """)
     def _get_exc_message(self, ex: Exception, func: Callable[..., T], *args: Any,
                          invert: bool = False, output: Any = None,
                          post_process: Optional[Callable[[T], Any]] = None,
                          **kwargs: Any) -> str:
+        r"""Return a formatted exception message for failed assertions.
+
+        Examples
+        --------
+        .. code:: python
+
+            >>> def contains(a, b):
+            ...     return b in a
+
+            >>> ex = TypeError('Fancy custom exception')
+            >>> a = [1, 2, 3, 4]
+            >>> b = 5
+
+            >>> msg = assertion._get_exc_message(ex, contains, a, b)
+            >>> raise AssertionError(msg)
+            Traceback (most recent call last):
+                ...
+            AssertionError: output = contains(a, b); assert output
+            <BLANKLINE>
+            exception: TypeError = 'Fancy custom exception'
+            <BLANKLINE>
+            output: NoneType = None
+            a: list = [1, 2, 3, 4]
+            b: int = 5
+
+        Parameters
+        ----------
+        ex : :class:`Exception`
+            The exception raised by :meth:`AssertionManager.assert_`.
+
+        func : :class:`~collections.abc.Callable`
+            The callable whose output has been evaluated.
+
+        \\*args : :data:`~typing.Any`
+            Positional arguments supplied to **func**.
+
+        Keyword Arguments
+        -----------------
+        invert : :class:`bool`
+            If :data:`True`, invert the output of the assertion: :code:`not func(a, b, **kwargs)`.
+
+        output : :data:`~typing.Any`, optional
+            The output value of :code:`func(*args, **kwargs)` or :code:`not func(*args, **kwargs)`.
+
+        post_process : :class:`~collections.abc.Callable`, optional
+            Apply post-processing to the to-be asserted data before asserting aforementioned data.
+            Example functions would be the likes of :func:`~builtins.any` and :func:`~builtins.all`.
+
+        \\**kwargs : :data:`~typing.Any`, optional
+            Further optional keyword arguments supplied to **func**.
+
+        Returns
+        -------
+        :class:`str`
+            A newly-formatted exception message to-be raised by :meth:`AssertionManager.assert_`.
+
+        """
         __tracebackhide__ = True
 
         # Construct a string-reprensentation of the to-be assert function
@@ -693,7 +693,7 @@ class AssertionManager(AbstractDataClass, metaclass=_MetaAM):
         """  # noqa
         __tracebackhide__ = True
 
-        _value_str = f'{self.repr(value)}' if not isinstance(value, Exception) else repr(value)
+        _value_str = f'{self.repr(value)}' if not isinstance(value, Exception) else repr(str(value))
         key_str = f'{key}: {value.__class__.__name__} ='
 
         # Put the value on a newline if it is too long or contains a newline character

@@ -185,7 +185,7 @@ def test_lt() -> None:
     assertion.lt([], 6, exception=TypeError)
 
 
-@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
+@pytest.mark.skipif(bool(NUMPY_EX), reason=str(NUMPY_EX))
 def test_matmul() -> None:
     """Test :meth:`AssertionManager.matmul`."""
     assertion.matmul(np.ones(2), np.ones(2))
@@ -236,7 +236,7 @@ def test_not() -> None:
     assertion.not_(5, 6, 7, 8, exception=TypeError)
 
 
-@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
+@pytest.mark.skipif(bool(NUMPY_EX), reason=str(NUMPY_EX))
 def test_not_np() -> None:
     """Test :meth:`AssertionManager.not_` with a NumPy array."""
     assertion.not_(np.random.rand(10), exception=ValueError)
@@ -260,7 +260,7 @@ def test_xor() -> None:
     assertion.xor(5, 6, 7, 8, exception=TypeError)
 
 
-@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
+@pytest.mark.skipif(bool(NUMPY_EX), reason=str(NUMPY_EX))
 def test_or_np() -> None:
     """Test :meth:`AssertionManager.not_` with a NumPy array."""
     array: np.ndarray = np.random.rand(10)
@@ -325,7 +325,7 @@ def test_truth() -> None:
     assertion.truth(5, 6, 7, 8, exception=TypeError)
 
 
-@pytest.mark.skipif(NUMPY_EX, reason=str(NUMPY_EX))
+@pytest.mark.skipif(bool(NUMPY_EX), reason=str(NUMPY_EX))
 def test_truth_np() -> None:
     """Test :meth:`AssertionManager.truth` with a NumPy array."""
     array: np.ndarray = np.random.rand(10)
