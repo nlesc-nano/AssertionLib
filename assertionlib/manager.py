@@ -198,7 +198,7 @@ from types import MappingProxyType
 from string import ascii_lowercase
 from inspect import Parameter
 from typing import (
-    Callable, Any, Type, Set, Optional, Mapping, Sequence, cast, Iterable,
+    Callable, Any, Type, Set, Optional, Mapping, Sequence, Iterable,
     FrozenSet, TypeVar, NoReturn, Union
 )
 
@@ -249,7 +249,7 @@ class _MetaAM(_MetaADC):
     })
 
     def __new__(mcls, name, bases, namespace) -> '_MetaAM':  # noqa: N804
-        cls = cast('_MetaAM', super().__new__(mcls, name, bases, namespace))
+        cls = super().__new__(mcls, name, bases, namespace)
 
         operator_set: Set[str] = set(operator.__all__) - mcls.EXCLUDE  # type: ignore
 

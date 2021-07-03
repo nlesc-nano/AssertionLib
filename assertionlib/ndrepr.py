@@ -57,7 +57,7 @@ import inspect
 import reprlib
 import builtins
 import textwrap
-from typing import Any, Dict, Callable, Union, Tuple, Optional, Mapping, List, TYPE_CHECKING
+from typing import Any, Callable, Union, Tuple, Optional, Mapping, List, TYPE_CHECKING
 from itertools import chain, islice
 
 from nanoutils import raise_if
@@ -65,6 +65,7 @@ from nanoutils import raise_if
 from .functions import set_docstring
 
 if TYPE_CHECKING:
+    import numpy as np
     from scm.plams import Molecule, Atom, Bond, Settings
     from numpy import ndarray
     from pandas import DataFrame, Series
@@ -73,7 +74,6 @@ if TYPE_CHECKING:
     from types import (BuiltinFunctionType, BuiltinMethodType, ModuleType, FunctionType, MethodType)
     if sys.version_info >= (3, 7):
         from types import MethodDescriptorType
-
     else:
         from typing_extensions import Protocol
 
@@ -85,6 +85,43 @@ if TYPE_CHECKING:
             __objclass__: type
             def __call__(self, *args: Any, **kwargs: Any) -> Any: ...  # noqa: E302
             def __get__(self, obj: Any, type: type = ...) -> Any: ...  # noqa: E302
+
+    if sys.version_info >= (3, 8):
+        from typing import TypedDict, Literal
+    else:
+        from typing_extensions import TypedDict, Literal
+
+    class _FormatDict(TypedDict, total=False):
+        bool: Callable[[np.bool_], str]
+        int: Callable[[np.integer[Any]], str]
+        timedelta: Callable[[np.timedelta64], str]
+        datetime: Callable[[np.datetime64], str]
+        float: Callable[[np.floating[Any]], str]
+        longfloat: Callable[[np.longdouble], str]
+        complexfloat: Callable[[np.complexfloating[Any, Any]], str]
+        longcomplexfloat: Callable[[np.clongdouble], str]
+        void: Callable[[np.void], str]
+        numpystr: Callable[[Union[str, bytes]], str]
+        object: Callable[[object], str]
+        all: Callable[[object], str]
+        int_kind: Callable[[np.integer[Any]], str]
+        float_kind: Callable[[np.floating[Any]], str]
+        complex_kind: Callable[[np.complexfloating[Any, Any]], str]
+        str_kind: Callable[[Union[str, bytes]], str]
+
+    class _FormatOptions(TypedDict, total=False):
+        precision: int
+        threshold: int
+        edgeitems: int
+        linewidth: int
+        suppress: bool
+        nanstr: str
+        infstr: str
+        formatter: Optional[_FormatDict]
+        sign: Literal["-", "+", " "]
+        floatmode: Literal["fixed", "unique", "maxprec", "maxprec_equal"]
+        legacy: Literal[False, "1.13"]
+
 else:
     Molecule = 'scm.plams.mol.molecule.Molecule'
     Atom = 'scm.plams.mol.molecule.Atom'
@@ -100,6 +137,8 @@ else:
     FunctionType = "builtins.function"
     MethodType = "builtins.method"
     MethodDescriptorType = "builtins.method_descriptor"
+    _FormatDict = "assertionlib.ndrepr._FormatDict"
+    _FormatOptions = "assertionlib.ndrepr._FormatOptions"
 
 try:
     import numpy as np
@@ -204,7 +243,7 @@ class NDRepr(reprlib.Repr):
         self.maxDataFrame: int = 12
         self.maxMolecule: int = 6
         self.maxSettings: int = self.maxdict
-        self.np_printoptions: Mapping[str, Any] = {}
+        self.np_printoptions: _FormatOptions = {}
         self.pd_printoptions: Mapping[str, Any] = {}
 
         # Update attributes based on **kwargs; raise an error if a key is unrecognized
@@ -394,9 +433,11 @@ class NDRepr(reprlib.Repr):
         if level <= 0:
             return f'{obj.__class__.__name__}(...)'
 
-        kwargs = {'threshold': self.maxndarray,
-                  'edgeitems': self.maxndarray // 2,
-                  'formatter': self._get_ndformatter(obj)}
+        kwargs: _FormatOptions = {
+            'threshold': self.maxndarray,
+            'edgeitems': self.maxndarray // 2,
+            'formatter': self._get_ndformatter(obj),
+        }
         kwargs.update(self.np_printoptions)
 
         with np.printoptions(**kwargs):
@@ -435,7 +476,7 @@ class NDRepr(reprlib.Repr):
         """Create a :class:`str` representation of a :class:`h5py.Dataset` instance."""
         return repr(obj)
 
-    def _get_ndformatter(self, obj: ndarray) -> Dict[str, Callable[[Union[int, float]], str]]:
+    def _get_ndformatter(self, obj: ndarray) -> _FormatDict:
         """Return a value for the **formatter** argument in :func:`numpy.printoptions`."""
         if obj.dtype != float and obj.dtype != int:
             return {}
