@@ -37,9 +37,7 @@ jobs:
                 run: pip install wheel
 
             -   name: Install dependencies
-                run: |
-                    pip install -e .[test]
-                    pip install git+https://github.com/numpy/numpy-stubs@master
+                run: pip install -e .[test]
 
             -   name: Python info
                 run: |
