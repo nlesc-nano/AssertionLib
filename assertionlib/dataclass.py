@@ -78,7 +78,7 @@ class _MetaADC(ABCMeta):
 
     def __new__(mcls: Type[TT], name: str, bases: Tuple[type, ...],
                 namespace: Dict[str, Any]) -> TT:
-        cls = cast(TT, super().__new__(mcls, name, bases, namespace))
+        cls = super().__new__(mcls, name, bases, namespace)
         if not cls._HASHABLE:
             setattr(cls, '__hash__', mcls._hash_template1)
         else:
