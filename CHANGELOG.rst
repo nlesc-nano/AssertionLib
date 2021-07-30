@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+3.2.0
+*****
+* Added three new ``NDRepr`` methods.
+* Added a missing ``AssertionManager.assert_`` overload.
+
+
 3.1.3
 *****
 * Updated the typehints.
