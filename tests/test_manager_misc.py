@@ -143,7 +143,7 @@ def test_assert_() -> None:
     assertion.assert_(len, [1], bob=1, exception=TypeError)
 
     try:
-        assertion.assert_(len, [1], exception=bool)
+        assertion.assert_(len, [1], exception=bool)  # type: ignore[arg-type]
     except TypeError:
         pass
     else:
