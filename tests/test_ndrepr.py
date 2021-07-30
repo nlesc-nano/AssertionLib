@@ -137,3 +137,27 @@ def test_series() -> None:
 
     assertion.eq(str1, ref1)
     assertion.eq(str2, ref2)
+
+
+def test_dict_keys() -> None:
+    """Test for :meth:`NDRepr.repr_dict_keys`."""
+    dct = {"a": 1, "b": 2}
+    string = aNDRepr.repr(dct.keys())
+    ref = "dict_keys(['a', 'b'])"
+    assertion.eq(string, ref)
+
+
+def test_dict_values() -> None:
+    """Test for :meth:`NDRepr.repr_dict_values`."""
+    dct = {"a": 1, "b": 2}
+    string = aNDRepr.repr(dct.values())
+    ref = "dict_values([1, 2])"
+    assertion.eq(string, ref)
+
+
+def test_dict_items() -> None:
+    """Test for :meth:`NDRepr.repr_dict_items`."""
+    dct = {"a": 1, "b": 2}
+    string = aNDRepr.repr(dct.items())
+    ref = "dict_items([('a', 1), ('b', 2)])"
+    assertion.eq(string, ref)

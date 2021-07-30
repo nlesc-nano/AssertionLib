@@ -20,6 +20,9 @@ Type-specific repr methods:
     NDRepr.repr_builtin_function_or_method
     NDRepr.repr_type
     NDRepr.repr_module
+    NDRepr.repr_dict_keys
+    NDRepr.repr_dict_values
+    NDRepr.repr_dict_items
     NDRepr.repr_Molecule
     NDRepr.repr_Settings
     NDRepr.repr_Atom
@@ -41,6 +44,9 @@ API
 .. automethod:: NDRepr.repr_builtin_function_or_method
 .. automethod:: NDRepr.repr_type
 .. automethod:: NDRepr.repr_module
+.. automethod:: NDRepr.repr_dict_keys
+.. automethod:: NDRepr.repr_dict_values
+.. automethod:: NDRepr.repr_dict_items
 .. automethod:: NDRepr.repr_Molecule
 .. automethod:: NDRepr.repr_Settings
 .. automethod:: NDRepr.repr_Atom
@@ -57,8 +63,21 @@ import inspect
 import reprlib
 import builtins
 import textwrap
-from typing import Any, Callable, Union, Tuple, Optional, Mapping, List, TYPE_CHECKING
 from itertools import chain, islice
+from typing import (
+    Any,
+    Callable,
+    Union,
+    Tuple,
+    Optional,
+    Mapping,
+    List,
+    TYPE_CHECKING,
+    KeysView,
+    ValuesView,
+    ItemsView,
+)
+
 
 from nanoutils import raise_if
 
@@ -306,6 +325,21 @@ class NDRepr(reprlib.Repr):
     def repr_module(self, obj: ModuleType, level: int) -> str:
         """Create a :class:`str` representation of a module."""
         return f"<module '{obj.__name__}'>"
+
+    def repr_dict_keys(self, obj: KeysView[Any], level: int) -> str:
+        """Create a :class:`str` representation of a :class:`~typing.KeysView`."""
+        name = type(obj).__name__
+        return f"{name}({self.repr_list(obj, level)})"  # type: ignore[arg-type]
+
+    def repr_dict_values(self, obj: ValuesView[Any], level: int) -> str:
+        """Create a :class:`str` representation of a :class:`~typing.ValuesView`."""
+        name = type(obj).__name__
+        return f"{name}({self.repr_list(obj, level)})"  # type: ignore[arg-type]
+
+    def repr_dict_items(self, obj: ItemsView[Any, Any], level: int) -> str:
+        """Create a :class:`str` representation of a :class:`~typing.ItemsView`."""
+        name = type(obj).__name__
+        return f"{name}({self.repr_list(obj, level)})"  # type: ignore[arg-type]
 
     def repr_Signature(self, obj: inspect.Signature, level: int) -> str:  # noqa: N802
         """Create a :class:`str` representation of a :class:`~inspect.Signature` instance."""
