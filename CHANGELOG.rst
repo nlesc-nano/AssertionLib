@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 
+3.2.1
+*****
+* Increase the ``NDRepr.maxstring`` default to 800.
+* Fixed the signature of ``assertion.str_eq``.
+
+
 3.2.0
 *****
 * Added three new ``NDRepr`` methods.
