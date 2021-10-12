@@ -44,10 +44,39 @@ jobs:
                 run: pip list
 
             -   name: Test with pytest
-                run: pytest --flake8 --mypy
+                run: pytest --mypy
 
             -   name: Run codecov
                 uses: codecov/codecov-action@v2
                 with:
                     file: ./coverage.xml
                     name: codecov-umbrella
+
+    Linting:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v2
+
+            -   name: Set up Python 3.9 on ubuntu-latest
+                uses: actions/setup-python@v2
+                with:
+                    python-version: 3.9
+
+            -   name: Install linters
+                run: pip install flake8 pydocstyle
+
+            -   name: Python info
+                run: |
+                    which python
+                    python --version
+
+            -   name: Installed packages
+                run: pip list
+
+            -   name: Run flake8
+                run: flake8 docs assertionlib tests
+                continue-on-error: true
+
+            -   name: Run pydocstyle
+                run: pydocstyle docs assertionlib tests
+                continue-on-error: true
