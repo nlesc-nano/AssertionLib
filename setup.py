@@ -25,7 +25,7 @@ docs_require = [
 # Requirements for building wheels
 build_require = [
     'twine',
-    'wheel'
+    'wheel',
 ]
 
 tests_require_no_optional = [
