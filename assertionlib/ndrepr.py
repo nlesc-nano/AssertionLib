@@ -251,7 +251,7 @@ class NDRepr(reprlib.Repr):
     def __init__(self, **kwargs: Union[int, Mapping[str, Any]]) -> None:
         """Initialize an :class:`NDRepr` instance."""
         super().__init__()
-        self.maxstring: int = 80
+        self.maxstring: int = 800
 
         # New instance attributes
         self.maxSignature: int = self.maxstring - 20
