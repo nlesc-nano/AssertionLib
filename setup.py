@@ -28,15 +28,18 @@ build_require = [
     'wheel'
 ]
 
-# Requirements for running tests
-tests_require = [
+tests_require_no_optional = [
     'pytest>=5.4.0',
     'pytest-cov',
-    'numpy',
-    'pandas',
-    'typing-extensions>=3.7.4; python_version<"3.8"',
     'pytest-mypy>=0.6.2',
 ]
+
+# Requirements for running tests
+tests_require = [
+    'numpy',
+    'pandas',
+]
+tests_require += tests_require_no_optional
 tests_require += docs_require
 tests_require += build_require
 
@@ -65,7 +68,8 @@ setup(
         'python-3-6',
         'python-3-7',
         'python-3-8',
-        'python-3-9'
+        'python-3-9',
+        'python-3-10',
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -79,20 +83,22 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Testing',
-        'Typing :: Typed'
+        'Typing :: Typed',
     ],
     python_requires='>=3.6',
     install_requires=[
         'Nano-Utils>=0.4.1; python_version<"3.9"',
-        'Nano-Utils>=1.1.2; python_version>="3.9"'
+        'Nano-Utils>=1.1.2; python_version>="3.9"',
     ],
     setup_requires=['pytest-runner'] + docs_require,
     tests_require=tests_require,
     extras_require={
         'doc': docs_require,
         'test': tests_require,
-        'build': build_require
+        'test_no_optional': tests_require_no_optional,
+        'build': build_require,
     }
 )
