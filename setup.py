@@ -31,7 +31,6 @@ build_require = [
 tests_require_no_optional = [
     'pytest>=5.4.0',
     'pytest-cov',
-    'pytest-mypy>=0.6.2',
 ]
 
 # Requirements for running tests
