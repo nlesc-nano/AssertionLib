@@ -79,9 +79,7 @@ from typing import (
 )
 
 
-from nanoutils import raise_if
-
-from .functions import set_docstring
+from nanoutils import raise_if, set_docstring
 
 if TYPE_CHECKING:
     import numpy as np
@@ -367,7 +365,7 @@ class NDRepr(reprlib.Repr):
 
         return f'{param_accumulate}){ret}'
 
-    def _parse_callable(self, obj: Callable, level: int) -> Tuple[str, str]:
+    def _parse_callable(self, obj: Callable[..., Any], level: int) -> Tuple[str, str]:
         """Create a :class:`str` representation of the name and signature of a callable."""
         # Construct the name of the callable
         name: str = getattr(obj, '__qualname__', obj.__name__)
@@ -462,7 +460,7 @@ class NDRepr(reprlib.Repr):
     # NumPy- and Pandas-related methods
 
     @raise_if(NUMPY_EX)
-    def repr_ndarray(self, obj: ndarray, level: int) -> str:
+    def repr_ndarray(self, obj: "ndarray[Any, Any]", level: int) -> str:
         """Create a :class:`str` representation of a :class:`numpy.ndarray` instance."""
         if level <= 0:
             return f'{obj.__class__.__name__}(...)'
@@ -510,7 +508,7 @@ class NDRepr(reprlib.Repr):
         """Create a :class:`str` representation of a :class:`h5py.Dataset` instance."""
         return repr(obj)
 
-    def _get_ndformatter(self, obj: ndarray) -> _FormatDict:
+    def _get_ndformatter(self, obj: "ndarray[Any, Any]") -> _FormatDict:
         """Return a value for the **formatter** argument in :func:`numpy.printoptions`."""
         if obj.dtype != float and obj.dtype != int:
             return {}

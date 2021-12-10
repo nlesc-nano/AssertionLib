@@ -19,7 +19,8 @@
     :target: https://docs.python.org/3.8/
 .. image:: https://img.shields.io/badge/python-3.9-blue.svg
     :target: https://docs.python.org/3.9/
-
+.. image:: https://img.shields.io/badge/python-3.10-blue.svg
+    :target: https://docs.python.org/3.10/
 
 ##################
 AssertionLib 3.2.1

@@ -133,7 +133,7 @@ def to_positional(func: FT) -> FT:
     return func
 
 
-def bind_callable(class_type: Union[type, Any], func: Callable,
+def bind_callable(class_type: Union[type, Any], func: Callable[..., Any],
                   name: Optional[str] = None, warn: bool = True) -> None:
     """Take a callable and use it to create a new assertion method for **class_type**.
 
@@ -184,7 +184,7 @@ def bind_callable(class_type: Union[type, Any], func: Callable,
 def create_assertion_func(func: Callable[..., Any]) -> Callable[..., None]:
     """Construct an assertion function from **func**."""
 
-    def wrapper(self, *args: Any,
+    def wrapper(self: Any, *args: Any,
                 invert: bool = False,
                 exception: Optional[Type[Exception]] = None,
                 post_process: Optional[Callable[[Any], Any]] = None,
@@ -250,7 +250,7 @@ See also
 """
 
 
-def create_assertion_doc(func: Callable) -> str:
+def create_assertion_doc(func: Callable[..., Any]) -> str:
     r"""Create a new NumPy style assertion docstring from the docstring of **func**.
 
     The summary of **funcs'** docstring, if available, is added to the ``"See also"`` section,
@@ -343,19 +343,22 @@ def create_assertion_doc(func: Callable) -> str:
 
 
 #: A dictionary which translates certain __module__ values to an actual valid modules
-MODULE_DICT: Mapping[str, str] = MappingProxyType({
+MODULE_DICT = MappingProxyType({
     'genericpath': 'os.path',
     'posixpath': 'os.path',
     '_operator': 'operator'
 })
 
 
-def _is_builtin_func(func: Callable) -> bool:
+def _is_builtin_func(func: Callable[..., Any]) -> bool:
     """Check if **func** is a builtin function."""
     return isbuiltin(func) and '.' not in getattr(func, '__qualname__', '')
 
 
-def get_sphinx_domain(func: Callable, module_mapping: Mapping[str, str] = MODULE_DICT) -> str:
+def get_sphinx_domain(
+    func: Callable[..., Any],
+    module_mapping: Mapping[str, str] = MODULE_DICT,
+) -> str:
     """Create a Sphinx domain for **func**.
 
     Examples
@@ -440,7 +443,7 @@ README_MAPPING: Mapping[str, str] = MappingProxyType({
 })
 
 
-def load_readme(readme: Union[str, bytes, int, os.PathLike],
+def load_readme(readme: Union[str, bytes, int, "os.PathLike[str]", "os.PathLike[bytes]"],
                 replace: Mapping[str, str] = README_MAPPING,
                 **kwargs: Any) -> str:
     r"""Load and return the content of a readme file located in the same directory as this file.

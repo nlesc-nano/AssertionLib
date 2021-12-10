@@ -58,7 +58,7 @@ def recursion_safeguard(fallback: FT) -> Callable[[FT], FT]:
         running: Set[Tuple[int, int]] = set()
 
         @wraps(user_function)
-        def wrapper(self, *args: Any, **kwargs: Any) -> Any:
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             key = id(self), get_ident()
             if key in running:
                 return fallback(self, *args, **kwargs)

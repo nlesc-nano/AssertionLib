@@ -17,18 +17,15 @@ jobs:
             fail-fast: False
             matrix:
                 os: [ubuntu-latest, macos-latest, windows-latest]
-                python-version: [3.6, 3.7, 3.8, 3.9]
+                python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
                 special: ['']
                 include:
                     -   os: ubuntu-latest
                         special: '; pre-release'
-                        python-version: 3.9
+                        python-version: "3.10"
                     -   os: ubuntu-latest
                         special: '; no-optional'
-                        python-version: 3.9
-                    -   os: ubuntu-latest
-                        special: '; no-optional'
-                        python-version: '3.10'
+                        python-version: "3.10"
 
         steps:
             -   name: Cancel Previous Runs
@@ -45,16 +42,15 @@ jobs:
 
             -   name: Install dependencies
                 shell: bash
-                env:
-                    SPECIAL: ${{ matrix.special }}
                 run: |
-                    if [[ $SPECIAL == '; no-optional' ]]; then
-                        pip install -e .[test_no_optional]
-                    elif [[ $SPECIAL == '; pre-release' ]]; then
-                        pip install --pre -e .[test] --upgrade --force-reinstall
-                    else
-                        pip install -e .[test]
-                    fi
+                    case "${{ matrix.special }}" in
+                        '; no-optional')
+                            pip install -e .[test_no_optional] ;;
+                        '; pre-release')
+                            pip install --pre -e .[test] --upgrade --force-reinstall ;;
+                        *)
+                            pip install -e .[test] ;;
+                    esac
 
             -   name: Python info
                 run: |
@@ -66,14 +62,13 @@ jobs:
 
             -   name: Test with pytest
                 shell: bash
-                env:
-                    SPECIAL: ${{ matrix.special }}
                 run: |
-                    if [[ $SPECIAL == '; no-optional' ]]; then
-                        pytest --mypy
-                    else
-                        pytest --mypy --doctest-modules
-                    fi
+                    case "${{ matrix.special }}" in
+                        '; no-optional')
+                            pytest ;;
+                        *)
+                            pytest --doctest-modules ;;
+                    esac
 
             -   name: Run codecov
                 uses: codecov/codecov-action@v2
@@ -86,13 +81,15 @@ jobs:
         steps:
             -   uses: actions/checkout@v2
 
-            -   name: Set up Python 3.9 on ubuntu-latest
+            -   name: Set up Python 3.10 on ubuntu-latest
                 uses: actions/setup-python@v2
                 with:
-                    python-version: 3.9
+                    python-version: "3.10"
 
             -   name: Install linters
-                run: pip install flake8 pydocstyle
+                run: |
+                    pip install flake8 pydocstyle mypy
+                    pip install --pre -e .[test] --upgrade
 
             -   name: Python info
                 run: |
@@ -104,8 +101,9 @@ jobs:
 
             -   name: Run flake8
                 run: flake8 docs assertionlib tests
-                continue-on-error: true
 
             -   name: Run pydocstyle
-                run: pydocstyle docs assertionlib tests
-                continue-on-error: true
+                run: pydocstyle assertionlib
+
+            -   name: Run mypy
+                run: mypy assertionlib tests

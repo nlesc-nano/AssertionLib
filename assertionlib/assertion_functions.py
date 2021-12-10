@@ -28,6 +28,7 @@ import dis
 from types import FunctionType
 from itertools import zip_longest
 from typing import (
+    Any,
     Sized,
     Callable,
     TypeVar,
@@ -64,7 +65,7 @@ def str_eq(a: T, b: str, *, str_converter: Callable[[T], str] = repr) -> bool:
 
 
 @to_positional
-def shape_eq(a: ndarray, b: Union[ndarray, Tuple[int, ...]]) -> bool:
+def shape_eq(a: "ndarray[Any, Any]", b: Union["ndarray[Any, Any]", Tuple[int, ...]]) -> bool:
     """Check if the shapes of **a** and **b** are equivalent: :code:`a.shape == getattr(b, 'shape', b)`.
 
     **b** should be either an object with the ``shape`` attribute (*e.g.* a NumPy array)

@@ -6,7 +6,7 @@ import pytest
 from nanoutils import delete_finally
 
 try:
-    import wheel
+    import wheel  # noqa: F401
 except ModuleNotFoundError as ex:
     WHEEL_EX: "None | ModuleNotFoundError" = ex
 else:
