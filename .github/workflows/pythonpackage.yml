@@ -9,6 +9,10 @@ on:
             - master
     pull_request:
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
+
 jobs:
     build:
         name: ${{ matrix.os }} (py ${{ matrix.python-version }}${{ matrix.special }})
@@ -28,15 +32,10 @@ jobs:
                         python-version: "3.10"
 
         steps:
-            -   name: Cancel Previous Runs
-                uses: styfle/cancel-workflow-action@0.9.1
-                with:
-                    access_token: ${{ github.token }}
-
-            -   uses: actions/checkout@v2
+            -   uses: actions/checkout@v3
 
             -   name: Set up Python ${{ matrix.python-version }} on ${{ matrix.os }}
-                uses: actions/setup-python@v2
+                uses: actions/setup-python@v4
                 with:
                     python-version: ${{ matrix.python-version }}
 
@@ -71,7 +70,7 @@ jobs:
                     esac
 
             -   name: Run codecov
-                uses: codecov/codecov-action@v2
+                uses: codecov/codecov-action@v3
                 with:
                     file: ./coverage.xml
                     name: codecov-umbrella
@@ -79,12 +78,12 @@ jobs:
     Linting:
         runs-on: ubuntu-latest
         steps:
-            -   uses: actions/checkout@v2
+            -   uses: actions/checkout@v3
 
-            -   name: Set up Python 3.10 on ubuntu-latest
-                uses: actions/setup-python@v2
+            -   name: Set up Python on ubuntu-latest
+                uses: actions/setup-python@v4
                 with:
-                    python-version: "3.10"
+                    python-version: "3.x"
 
             -   name: Install linters
                 run: |
