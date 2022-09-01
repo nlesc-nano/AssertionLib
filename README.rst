@@ -22,9 +22,9 @@
 .. image:: https://img.shields.io/badge/python-3.10-blue.svg
     :target: https://docs.python.org/3.10/
 
-##################
-AssertionLib 3.2.1
-##################
+############
+AssertionLib
+############
 A package for performing assertions and providing informative exception messages.
 
 
