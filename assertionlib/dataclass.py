@@ -410,7 +410,7 @@ class AbstractDataClass(metaclass=_MetaADC):
             Construct a dictionary from this instance with all non-private instance variables.
 
         """
-        return cls(**dct)  # type: ignore
+        return cls(**dct)
 
     @classmethod
     def inherit_annotations(cls) -> Callable[[FT], FT]:

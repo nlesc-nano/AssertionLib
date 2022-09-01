@@ -15,7 +15,7 @@ from .manager import assertion, AssertionManager
 from .dataclass import AbstractDataClass
 from .functions import load_readme
 
-_README = os.path.join(__path__[0], 'README.rst')  # type: ignore
+_README = os.path.join(__path__[0], 'README.rst')
 __doc__ = load_readme(_README, encoding='utf-8')
 
 del _README, load_readme, os, sys, VersionInfo

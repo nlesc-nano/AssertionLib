@@ -72,7 +72,7 @@ def shape_eq(a: "ndarray[Any, Any]", b: Union["ndarray[Any, Any]", Tuple[int, ..
     or a :class:`tuple` representing a valid array shape.
 
     """  # noqa: E501
-    return a.shape == getattr(b, 'shape', b)  # type: ignore
+    return a.shape == getattr(b, 'shape', b)
 
 
 @to_positional
