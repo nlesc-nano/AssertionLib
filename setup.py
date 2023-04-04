@@ -62,6 +62,7 @@ setup(
         'python-3-8',
         'python-3-9',
         'python-3-10',
+        'python-3-11',
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -76,6 +77,7 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Testing',
         'Typing :: Typed',
