@@ -22,12 +22,6 @@ docs_require = [
     'sphinx_rtd_theme'
 ]
 
-# Requirements for building wheels
-build_require = [
-    'twine',
-    'wheel',
-]
-
 tests_require_no_optional = [
     'pytest>=5.4.0',
     'pytest-cov',
@@ -40,7 +34,6 @@ tests_require = [
 ]
 tests_require += tests_require_no_optional
 tests_require += docs_require
-tests_require += build_require
 
 setup(
     name='AssertionLib',
@@ -98,6 +91,5 @@ setup(
         'doc': docs_require,
         'test': tests_require,
         'test_no_optional': tests_require_no_optional,
-        'build': build_require,
     }
 )
