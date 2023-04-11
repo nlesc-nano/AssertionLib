@@ -215,19 +215,6 @@ def test_shape_eq() -> None:
     assertion.shape_eq(shape, ar1, exception=AttributeError)
 
 
-def test_function_eq() -> None:
-    """Test :meth:`AssertionManager.function_eq`."""
-    func1 = lambda x: x + 5  # noqa: E731
-    func2 = lambda x: x + 5  # noqa: E731
-    func3 = lambda x: 5 + x  # noqa: E731
-    func4 = lambda x: x / 5 + 9.0**2  # noqa: E731
-
-    assertion.function_eq(func1, func2)
-    assertion.function_eq(func1, func3, invert=True)
-    assertion.function_eq(func1, func4, invert=True)
-    assertion.function_eq(func1, None, exception=TypeError)
-
-
 def test_any() -> None:
     """Test :meth:`AssertionManager.any`."""
     assertion.any([True, True, False])

@@ -24,6 +24,7 @@ API
 
 """
 
+import warnings
 import dis
 from types import FunctionType
 from itertools import zip_longest
@@ -137,6 +138,11 @@ def function_eq(func1: FunctionType, func2: FunctionType) -> bool:
     or any other object with access to the :attr:`__code__` attribute.
 
     """
+    warnings.warn(
+        "`function_eq` is deprecated and will be removed in the future",
+        DeprecationWarning, stacklevel=2,
+    )
+
     code1 = None
     try:
         code1 = func1.__code__
