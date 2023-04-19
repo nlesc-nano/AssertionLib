@@ -8,7 +8,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 3.2.2
 *****
-* *placeholder*.
+* Add formal Python 3.11 support
+* Misc CI updates
+* Fix a missing README file in the assertionlib sdist distribution
 
 
 3.2.1
